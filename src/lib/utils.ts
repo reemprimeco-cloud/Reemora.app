@@ -28,3 +28,20 @@ export function slugify(text: string) {
       .replace(/(^-|-$)/g, "") || "course"
   );
 }
+
+/** Truthiness alone isn't enough to trust an env var as a URL — a stray
+ *  quote, missing scheme, or a value pasted into the wrong field (e.g. an
+ *  API key where a URL was expected) is still "truthy" but crashes
+ *  @supabase/supabase-js's / @supabase/ssr's client constructor with a hard
+ *  throw. Used to gate Supabase usage so a misconfigured env var degrades
+ *  to the seed-data fallback / unauthenticated-passthrough instead of
+ *  crashing the build or 500ing every request. */
+export function isValidHttpUrl(value: string | undefined): boolean {
+  if (!value) return false;
+  try {
+    const parsed = new URL(value);
+    return (parsed.protocol === "https:" || parsed.protocol === "http:") && Boolean(parsed.hostname);
+  } catch {
+    return false;
+  }
+}

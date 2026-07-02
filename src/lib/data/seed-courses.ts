@@ -1,4 +1,5 @@
 import type { CourseWithRelations } from "@/lib/types";
+import { isValidHttpUrl } from "@/lib/utils";
 
 /**
  * Fallback data used only when Supabase env vars are not configured, or a
@@ -252,5 +253,5 @@ export const SEED_SETTINGS = {
 };
 
 export const isSupabaseConfigured = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  isValidHttpUrl(process.env.NEXT_PUBLIC_SUPABASE_URL) && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
