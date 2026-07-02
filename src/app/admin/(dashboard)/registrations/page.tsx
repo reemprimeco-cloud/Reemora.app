@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { formatMoney } from "@/lib/utils";
+
+export const metadata: Metadata = { title: "Registrations" };
 
 interface RegistrationRow {
   id: string;

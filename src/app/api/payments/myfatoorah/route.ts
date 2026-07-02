@@ -3,35 +3,12 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createMyFatoorahPayment } from "@/lib/myfatoorah";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
+const MAX_SEATS = 10;
+
 export async function POST(request: Request) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
-
-  let body: {
-    courseScheduleId: string;
-    courseSlug: string;
-    courseTitle: string;
-    fullName: string;
-    email: string;
-    phone: string;
-    seats: number;
-    notes?: string;
-    unitPrice: number;
-    currency: string;
-  };
-
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
-  }
-
-  const { courseScheduleId, courseSlug, courseTitle, fullName, email, phone, seats, notes, unitPrice, currency } = body;
-
-  if (!courseScheduleId || !fullName || !email || !phone || !seats || seats < 1) {
-    return NextResponse.json({ error: "Missing required registration fields" }, { status: 400 });
-  }
-
-  const amount = Number((unitPrice * seats).toFixed(2));
 
   if (!isSupabaseConfigured) {
     return NextResponse.json(
@@ -40,7 +17,73 @@ export async function POST(request: Request) {
     );
   }
 
+  let body: {
+    courseScheduleId?: unknown;
+    fullName?: unknown;
+    email?: unknown;
+    phone?: unknown;
+    seats?: unknown;
+    notes?: unknown;
+  };
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const courseScheduleId = typeof body.courseScheduleId === "string" ? body.courseScheduleId.trim() : "";
+  const fullName = typeof body.fullName === "string" ? body.fullName.trim() : "";
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+  const notes = typeof body.notes === "string" ? body.notes.trim() : "";
+  const seats = typeof body.seats === "number" ? Math.trunc(body.seats) : NaN;
+
+  const fieldErrors: Record<string, string> = {};
+  if (!courseScheduleId) fieldErrors.courseScheduleId = "Missing course selection.";
+  if (fullName.length < 2) fieldErrors.fullName = "Please enter your full name.";
+  if (!EMAIL_RE.test(email)) fieldErrors.email = "Please enter a valid email address.";
+  if (!PHONE_RE.test(phone)) fieldErrors.phone = "Please enter a valid phone number.";
+  if (!Number.isFinite(seats) || seats < 1 || seats > MAX_SEATS) {
+    fieldErrors.seats = `Seats must be between 1 and ${MAX_SEATS}.`;
+  }
+
+  if (Object.keys(fieldErrors).length > 0) {
+    return NextResponse.json({ error: "Please fix the highlighted fields.", fieldErrors }, { status: 400 });
+  }
+
   const supabase = await createServiceRoleClient();
+
+  // Price, currency and course identity are always derived server-side —
+  // never trust amounts sent by the client, or a tampered request could
+  // register someone at an arbitrary price.
+  const { data: schedule, error: scheduleError } = await supabase
+    .from("course_schedule")
+    .select("id, seats_available, status, courses(id, slug, title, price, currency, is_published)")
+    .eq("id", courseScheduleId)
+    .maybeSingle();
+
+  if (scheduleError || !schedule) {
+    return NextResponse.json({ error: "This course cohort could not be found." }, { status: 404 });
+  }
+
+  const course = Array.isArray(schedule.courses) ? schedule.courses[0] : schedule.courses;
+  if (!course || !course.is_published) {
+    return NextResponse.json({ error: "This course is not currently available for registration." }, { status: 404 });
+  }
+
+  if (schedule.status === "cancelled" || schedule.status === "completed") {
+    return NextResponse.json({ error: "This cohort is no longer open for registration." }, { status: 409 });
+  }
+
+  if (seats > schedule.seats_available) {
+    return NextResponse.json(
+      { error: `Only ${schedule.seats_available} seat${schedule.seats_available === 1 ? "" : "s"} left for this cohort.` },
+      { status: 409 }
+    );
+  }
+
+  const amount = Number((course.price * seats).toFixed(2));
 
   const { data: registration, error: insertError } = await supabase
     .from("registrations")
@@ -52,7 +95,7 @@ export async function POST(request: Request) {
       seats,
       notes: notes || null,
       amount,
-      currency,
+      currency: course.currency,
       status: "pending",
     })
     .select()
@@ -68,7 +111,7 @@ export async function POST(request: Request) {
     .insert({
       registration_id: registration.id,
       amount,
-      currency,
+      currency: course.currency,
       status: "pending",
       method: "myfatoorah",
     })
@@ -86,11 +129,11 @@ export async function POST(request: Request) {
       customerEmail: email,
       customerPhone: phone,
       amount,
-      currency,
+      currency: course.currency,
       reference: payment.id,
-      itemName: courseTitle,
-      callbackUrl: `${siteUrl}/api/payments/callback?paymentRowId=${payment.id}&courseSlug=${courseSlug}`,
-      errorUrl: `${siteUrl}/register/${courseSlug}?status=failed&ref=${registration.id}`,
+      itemName: course.title,
+      callbackUrl: `${siteUrl}/api/payments/callback?paymentRowId=${payment.id}&courseSlug=${course.slug}`,
+      errorUrl: `${siteUrl}/register/${course.slug}?status=failed&ref=${registration.id}`,
     });
 
     await supabase.from("payments").update({ myfatoorah_invoice_id: String(invoiceId) }).eq("id", payment.id);

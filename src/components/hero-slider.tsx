@@ -134,7 +134,7 @@ export function HeroSlider() {
           <div className="hidden md:block">
             <div className="rounded-[22px] border border-white/20 bg-white/10 p-7 backdrop-blur-sm">
               <div className="relative mb-4.5 aspect-[4/3] w-full overflow-hidden rounded-[14px] bg-blue-100">
-                <Image src={slide.image} alt={slide.imageTitle} fill className="object-cover" />
+                <Image src={slide.image} alt={slide.imageTitle} fill priority sizes="(max-width: 768px) 0px, 40vw" className="object-cover" />
               </div>
               <h4 className="mb-1.5 text-lg font-semibold text-white">{slide.imageTitle}</h4>
               <p className="text-sm text-[#c6d3ea]">{slide.imageDesc}</p>

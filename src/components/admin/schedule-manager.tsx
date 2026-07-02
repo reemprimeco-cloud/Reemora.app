@@ -5,6 +5,7 @@ import { CalendarClock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { CourseSchedule, CourseWithRelations, ScheduleStatus } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
+import { useCloseOnEscape } from "@/lib/use-close-on-escape";
 
 type Row = CourseSchedule & { courseTitle: string };
 
@@ -29,6 +30,7 @@ export function ScheduleManager({ courses }: { courses: CourseWithRelations[] })
       <div className="mb-5 flex justify-end">
         <select
           defaultValue=""
+          aria-label="Add cohort to course"
           onChange={(e) => {
             const course = courses.find((c) => c.id === e.target.value);
             if (course) setEditing({ courseId: course.id, courseTitle: course.title, schedule: null });
@@ -74,6 +76,8 @@ export function ScheduleManager({ courses }: { courses: CourseWithRelations[] })
                     <td className="px-6 py-3.5">
                       <button
                         onClick={() => setEditing({ courseId: r.course_id, courseTitle: r.courseTitle, schedule: r })}
+                        aria-label={`Edit schedule for ${r.courseTitle}`}
+                        title="Edit schedule"
                         className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-c hover:border-blue-400 hover:text-blue-600"
                       >
                         <CalendarClock size={14} />
@@ -163,35 +167,37 @@ function ScheduleModal({
     onSaved(data as CourseSchedule);
   }
 
+  useCloseOnEscape(onClose);
+
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-navy-900/55 p-5" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="w-full max-w-[440px] rounded-[22px] bg-surface p-8 shadow-2xl">
-        <h3 className="mb-5.5 text-lg font-bold">{schedule ? "Edit Cohort" : "New Cohort"} — {courseTitle}</h3>
-        {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-300">{error}</div>}
+      <div role="dialog" aria-modal="true" aria-labelledby="schedule-modal-title" className="w-full max-w-[440px] rounded-[22px] bg-surface p-8 shadow-2xl">
+        <h3 id="schedule-modal-title" className="mb-5.5 text-lg font-bold">{schedule ? "Edit Cohort" : "New Cohort"} — {courseTitle}</h3>
+        {error && <div role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-300">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-[13.5px] font-semibold">Start Date</label>
-            <input type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} />
+            <label htmlFor="s-start" className="mb-1.5 block text-[13.5px] font-semibold">Start Date</label>
+            <input id="s-start" type="date" required value={startDate} onChange={(e) => setStartDate(e.target.value)} className={inputClass} />
           </div>
           <div>
-            <label className="mb-1.5 block text-[13.5px] font-semibold">End Date</label>
-            <input type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
+            <label htmlFor="s-end" className="mb-1.5 block text-[13.5px] font-semibold">End Date</label>
+            <input id="s-end" type="date" required value={endDate} onChange={(e) => setEndDate(e.target.value)} className={inputClass} />
           </div>
           <div>
-            <label className="mb-1.5 block text-[13.5px] font-semibold">Session Days</label>
-            <input required value={days} onChange={(e) => setDays(e.target.value)} placeholder="e.g. Sun, Tue" className={inputClass} />
+            <label htmlFor="s-days" className="mb-1.5 block text-[13.5px] font-semibold">Session Days</label>
+            <input id="s-days" required value={days} onChange={(e) => setDays(e.target.value)} placeholder="e.g. Sun, Tue" className={inputClass} />
           </div>
           <div>
-            <label className="mb-1.5 block text-[13.5px] font-semibold">Session Time</label>
-            <input required value={time} onChange={(e) => setTime(e.target.value)} placeholder="e.g. 6:00 PM - 9:00 PM" className={inputClass} />
+            <label htmlFor="s-time" className="mb-1.5 block text-[13.5px] font-semibold">Session Time</label>
+            <input id="s-time" required value={time} onChange={(e) => setTime(e.target.value)} placeholder="e.g. 6:00 PM - 9:00 PM" className={inputClass} />
           </div>
           <div>
-            <label className="mb-1.5 block text-[13.5px] font-semibold">Total Seats</label>
-            <input type="number" min={1} required value={seatsTotal} onChange={(e) => setSeatsTotal(parseInt(e.target.value) || 1)} className={inputClass} />
+            <label htmlFor="s-seats" className="mb-1.5 block text-[13.5px] font-semibold">Total Seats</label>
+            <input id="s-seats" type="number" min={1} required value={seatsTotal} onChange={(e) => setSeatsTotal(parseInt(e.target.value) || 1)} className={inputClass} />
           </div>
           <div>
-            <label className="mb-1.5 block text-[13.5px] font-semibold">Status</label>
-            <select value={status} onChange={(e) => setStatus(e.target.value as ScheduleStatus)} className={inputClass}>
+            <label htmlFor="s-status" className="mb-1.5 block text-[13.5px] font-semibold">Status</label>
+            <select id="s-status" value={status} onChange={(e) => setStatus(e.target.value as ScheduleStatus)} className={inputClass}>
               <option value="upcoming">Upcoming</option>
               <option value="ongoing">Ongoing</option>
               <option value="completed">Completed</option>

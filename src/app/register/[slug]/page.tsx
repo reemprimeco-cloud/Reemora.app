@@ -22,6 +22,7 @@ export async function generateStaticParams() {
 export const metadata: Metadata = {
   title: "Register",
   description: "Reserve your seat and complete secure payment via MyFatoorah.",
+  robots: { index: false, follow: true },
 };
 
 export default async function RegisterPage({ params }: Props) {

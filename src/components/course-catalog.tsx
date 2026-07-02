@@ -37,6 +37,7 @@ export function CourseCatalog({ courses }: { courses: CourseWithRelations[] }) {
             <input
               type="search"
               placeholder="Search courses..."
+              aria-label="Search courses"
               value={term}
               onChange={(e) => setTerm(e.target.value)}
               className="w-full rounded-full border border-border-c bg-surface-alt py-2.5 pl-10 pr-4 text-sm text-foreground outline-none focus:border-blue-400"
@@ -45,6 +46,7 @@ export function CourseCatalog({ courses }: { courses: CourseWithRelations[] }) {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
+            aria-label="Filter by category"
             className="min-w-[150px] rounded-full border border-border-c bg-surface-alt px-4 py-2.5 text-sm text-foreground outline-none focus:border-blue-400"
           >
             <option value="">All Categories</option>
@@ -55,6 +57,7 @@ export function CourseCatalog({ courses }: { courses: CourseWithRelations[] }) {
           <select
             value={level}
             onChange={(e) => setLevel(e.target.value)}
+            aria-label="Filter by level"
             className="min-w-[150px] rounded-full border border-border-c bg-surface-alt px-4 py-2.5 text-sm text-foreground outline-none focus:border-blue-400"
           >
             <option value="">All Levels</option>

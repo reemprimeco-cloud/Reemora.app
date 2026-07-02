@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { SEED_TESTIMONIALS } from "@/lib/data/seed-courses";
 import { TestimonialManager } from "@/components/admin/testimonial-manager";
 import type { Testimonial } from "@/lib/types";
+
+export const metadata: Metadata = { title: "Testimonials" };
 
 export default async function AdminTestimonialsPage() {
   let testimonials: Testimonial[] = SEED_TESTIMONIALS;

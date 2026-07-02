@@ -31,6 +31,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
     if (fullName.trim().length < 2) next.fullName = true;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) next.email = true;
     if (!/^[0-9+\s()-]{7,20}$/.test(phone.trim())) next.phone = true;
+    if (!Number.isFinite(seats) || seats < 1 || seats > 10) next.seats = true;
     if (!agreed) next.terms = true;
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -52,15 +53,11 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           courseScheduleId: schedule.id,
-          courseSlug: course.slug,
-          courseTitle: course.title,
           fullName,
           email,
           phone,
           seats,
           notes,
-          unitPrice: course.price,
-          currency: course.currency,
         }),
       });
 
@@ -69,6 +66,10 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
       if (res.ok && data.invoiceUrl) {
         window.location.href = data.invoiceUrl;
         return;
+      }
+
+      if (data.fieldErrors) {
+        setErrors((prev) => ({ ...prev, ...Object.fromEntries(Object.keys(data.fieldErrors).map((k) => [k, true])) }));
       }
 
       setAlert({
@@ -91,6 +92,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
       <div className="rounded-[22px] border border-border-c bg-surface p-7 sm:p-10">
         {alert && (
           <div
+            role="alert"
             className={cn(
               "mb-5 rounded-xl border px-4.5 py-3.5 text-sm",
               alert.type === "error" && "border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-300",
@@ -102,10 +104,11 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
           </div>
         )}
 
-        <form onSubmit={handleSubmit} noValidate>
+        <form onSubmit={handleSubmit} noValidate aria-label="Course registration form">
           <div className="mb-5">
-            <label className="mb-1.5 block text-[13.5px] font-semibold">Course</label>
+            <label htmlFor="reg-course" className="mb-1.5 block text-[13.5px] font-semibold">Course</label>
             <input
+              id="reg-course"
               disabled
               value={`${course.title} — ${formatMoney(course.price, course.currency)}`}
               className="w-full rounded-lg border border-border-c bg-surface-alt px-4 py-3 text-sm"
@@ -113,33 +116,33 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
           </div>
 
           <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <Field label="Full Name" error={errors.fullName} errorText="Please enter your full name.">
-              <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" className={inputClass(errors.fullName)} />
+            <Field id="reg-full-name" label="Full Name" error={errors.fullName} errorText="Please enter your full name.">
+              <input id="reg-full-name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" autoComplete="name" aria-invalid={errors.fullName || undefined} aria-describedby={errors.fullName ? "reg-full-name-error" : undefined} className={inputClass(errors.fullName)} />
             </Field>
-            <Field label="Email Address" error={errors.email} errorText="Please enter a valid email address.">
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={inputClass(errors.email)} />
+            <Field id="reg-email" label="Email Address" error={errors.email} errorText="Please enter a valid email address.">
+              <input id="reg-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" aria-invalid={errors.email || undefined} aria-describedby={errors.email ? "reg-email-error" : undefined} className={inputClass(errors.email)} />
             </Field>
-            <Field label="Phone Number" error={errors.phone} errorText="Please enter a valid phone number.">
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+965 XXXX XXXX" className={inputClass(errors.phone)} />
+            <Field id="reg-phone" label="Phone Number" error={errors.phone} errorText="Please enter a valid phone number.">
+              <input id="reg-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+965 XXXX XXXX" autoComplete="tel" aria-invalid={errors.phone || undefined} aria-describedby={errors.phone ? "reg-phone-error" : undefined} className={inputClass(errors.phone)} />
             </Field>
-            <Field label="Number of Seats">
-              <input type="number" min={1} max={10} value={seats} onChange={(e) => setSeats(Math.max(1, parseInt(e.target.value || "1", 10)))} className={inputClass(false)} />
+            <Field id="reg-seats" label="Number of Seats" error={errors.seats} errorText="Enter a number between 1 and 10.">
+              <input id="reg-seats" type="number" min={1} max={10} value={seats} onChange={(e) => setSeats(Math.max(1, parseInt(e.target.value || "1", 10)))} aria-invalid={errors.seats || undefined} aria-describedby={errors.seats ? "reg-seats-error" : undefined} className={inputClass(errors.seats)} />
             </Field>
           </div>
 
           <div className="mb-5">
-            <label className="mb-1.5 block text-[13.5px] font-semibold">
+            <label htmlFor="reg-notes" className="mb-1.5 block text-[13.5px] font-semibold">
               Notes <span className="font-normal text-ink-soft">(optional)</span>
             </label>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything we should know before the course starts?" className="min-h-[100px] w-full rounded-lg border border-border-c bg-surface-alt px-4 py-3 text-sm outline-none focus:border-blue-400 focus:bg-surface" />
+            <textarea id="reg-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything we should know before the course starts?" className="min-h-[100px] w-full rounded-lg border border-border-c bg-surface-alt px-4 py-3 text-sm outline-none focus:border-blue-400 focus:bg-surface" />
           </div>
 
           <div className="mb-6">
             <label className="flex items-start gap-2.5 text-[13.5px] text-ink-soft">
-              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5" />
+              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} aria-invalid={errors.terms || undefined} aria-describedby={errors.terms ? "reg-terms-error" : undefined} className="mt-0.5" />
               I agree to Reemora&apos;s terms of enrollment and cancellation policy.
             </label>
-            {errors.terms && <p className="mt-1 text-xs text-red-500">You must agree to the terms to continue.</p>}
+            {errors.terms && <p id="reg-terms-error" className="mt-1 text-xs text-red-500">You must agree to the terms to continue.</p>}
           </div>
 
           <button
@@ -153,7 +156,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
       </div>
 
       <div className="rounded-2xl bg-surface-alt p-6.5">
-        <h4 className="mb-4 text-lg font-bold">Order Summary</h4>
+        <h2 className="mb-4 text-lg font-bold">Order Summary</h2>
         {[
           ["Course", course.title],
           ["Start Date", formatDate(schedule.start_date)],
@@ -187,11 +190,13 @@ function inputClass(error?: boolean) {
 }
 
 function Field({
+  id,
   label,
   error,
   errorText,
   children,
 }: {
+  id: string;
   label: string;
   error?: boolean;
   errorText?: string;
@@ -199,9 +204,9 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-[13.5px] font-semibold">{label}</label>
+      <label htmlFor={id} className="mb-1.5 block text-[13.5px] font-semibold">{label}</label>
       {children}
-      {error && errorText && <p className="mt-1 text-xs text-red-500">{errorText}</p>}
+      {error && errorText && <p id={`${id}-error`} className="mt-1 text-xs text-red-500">{errorText}</p>}
     </div>
   );
 }

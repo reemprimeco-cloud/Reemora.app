@@ -7,6 +7,7 @@ import { getWebsiteSettings } from "@/lib/data/settings";
 export const metadata: Metadata = {
   title: "Contact",
   description: "Get in touch with the Reemora team.",
+  alternates: { canonical: "/contact" },
 };
 
 export default async function ContactPage() {

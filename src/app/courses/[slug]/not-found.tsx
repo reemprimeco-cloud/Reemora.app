@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getWebsiteSettings } from "@/lib/data/settings";
+
+export const metadata: Metadata = {
+  title: "Course Not Found",
+  robots: { index: false, follow: false },
+};
 
 export default async function CourseNotFound() {
   const settings = await getWebsiteSettings();

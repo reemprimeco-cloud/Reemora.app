@@ -34,21 +34,23 @@ function LoginForm() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-navy-900 via-navy-800 to-blue-600 p-5">
       <div className="w-full max-w-[400px] rounded-[22px] bg-surface p-11 text-center shadow-2xl">
         <Image src="/images/logo.png" alt="Reemora logo" width={130} height={34} className="mx-auto mb-6 h-8 w-auto dark:brightness-0 dark:invert" />
-        <h2 className="mb-2 text-2xl font-bold">Admin Login</h2>
+        <h1 className="mb-2 text-2xl font-bold">Admin Login</h1>
         <p className="mb-6.5 text-sm text-ink-soft">Sign in to manage courses, scheduling and registrations.</p>
 
         {error && (
-          <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+          <div role="alert" className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="text-left">
           <div className="mb-4">
-            <label className="mb-1.5 block text-[13.5px] font-semibold">Email</label>
+            <label htmlFor="login-email" className="mb-1.5 block text-[13.5px] font-semibold">Email</label>
             <input
+              id="login-email"
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-lg border border-border-c bg-surface-alt px-4 py-3 text-sm outline-none focus:border-blue-400"
@@ -56,10 +58,12 @@ function LoginForm() {
             />
           </div>
           <div className="mb-5">
-            <label className="mb-1.5 block text-[13.5px] font-semibold">Password</label>
+            <label htmlFor="login-password" className="mb-1.5 block text-[13.5px] font-semibold">Password</label>
             <input
+              id="login-password"
               type="password"
               required
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-lg border border-border-c bg-surface-alt px-4 py-3 text-sm outline-none focus:border-blue-400"

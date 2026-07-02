@@ -30,10 +30,10 @@ export function SiteHeader() {
   return (
     <header
       className={cn(
-        "fixed inset-x-0 top-0 z-50 transition-colors duration-300",
+        "fixed inset-x-0 top-0 z-50 backdrop-blur-md transition-colors duration-300",
         scrolled
-          ? "bg-surface/95 border-b border-border-c shadow-sm"
-          : "bg-surface/90"
+          ? "bg-surface border-b border-border-c shadow-sm"
+          : "bg-surface/70"
       )}
     >
       <div className="mx-auto flex h-[78px] max-w-[1180px] items-center justify-between px-6">
@@ -41,11 +41,12 @@ export function SiteHeader() {
           <Image src="/images/logo.png" alt="Reemora logo" width={130} height={34} priority className="h-8 w-auto dark:brightness-0 dark:invert" />
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
+              aria-current={pathname === link.href ? "page" : undefined}
               className={cn(
                 "rounded-full px-4 py-2.5 text-[14.5px] font-semibold transition-colors",
                 pathname === link.href
@@ -68,6 +69,8 @@ export function SiteHeader() {
           </Link>
           <button
             aria-label="Toggle menu"
+            aria-expanded={open}
+            aria-controls="mobile-nav"
             className="flex h-9 w-9 items-center justify-center rounded-full border border-border-c md:hidden"
             onClick={() => setOpen((v) => !v)}
           >
@@ -77,7 +80,7 @@ export function SiteHeader() {
       </div>
 
       {open && (
-        <nav className="border-t border-border-c bg-surface px-6 pb-6 pt-3 md:hidden">
+        <nav id="mobile-nav" aria-label="Mobile" className="border-t border-border-c bg-surface px-6 pb-6 pt-3 md:hidden">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}

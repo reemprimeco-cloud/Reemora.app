@@ -48,9 +48,9 @@ export function SettingsManager({ initialSettings }: { initialSettings: WebsiteS
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div className="rounded-2xl border border-border-c bg-surface p-7">
-        <h3 className="mb-5 font-bold">Site Settings</h3>
+        <h2 className="mb-5 font-bold">Site Settings</h2>
         {alert && (
-          <div className={`mb-4 rounded-lg border px-4 py-3 text-sm ${alert.type === "error" ? "border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-300" : "border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300"}`}>
+          <div role="alert" className={`mb-4 rounded-lg border px-4 py-3 text-sm ${alert.type === "error" ? "border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-300" : "border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300"}`}>
             {alert.message}
           </div>
         )}
@@ -71,16 +71,16 @@ export function SettingsManager({ initialSettings }: { initialSettings: WebsiteS
       </div>
 
       <div className="rounded-2xl border border-border-c bg-surface p-7">
-        <h3 className="mb-5 font-bold">Change Admin Password</h3>
+        <h2 className="mb-5 font-bold">Change Admin Password</h2>
         {pwAlert && (
-          <div className={`mb-4 rounded-lg border px-4 py-3 text-sm ${pwAlert.type === "error" ? "border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-300" : "border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300"}`}>
+          <div role="alert" className={`mb-4 rounded-lg border px-4 py-3 text-sm ${pwAlert.type === "error" ? "border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950 dark:text-red-300" : "border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300"}`}>
             {pwAlert.message}
           </div>
         )}
         <form onSubmit={handleChangePassword} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-[13.5px] font-semibold">New Password</label>
-            <input type="password" required minLength={6} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputClass} />
+            <label htmlFor="new-password" className="mb-1.5 block text-[13.5px] font-semibold">New Password</label>
+            <input id="new-password" type="password" required minLength={6} autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputClass} />
           </div>
           <button type="submit" disabled={pwSaving} className="w-full rounded-full border-2 border-transparent bg-navy-800 py-3.5 text-[15px] font-semibold text-white transition hover:bg-blue-600 disabled:opacity-60">
             {pwSaving ? "Updating..." : "Update Password"}
@@ -94,10 +94,11 @@ export function SettingsManager({ initialSettings }: { initialSettings: WebsiteS
 const inputClass = "w-full rounded-lg border border-border-c bg-surface-alt px-4 py-3 text-sm outline-none focus:border-blue-400 focus:bg-surface";
 
 function Field({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+  const id = React.useId();
   return (
     <div>
-      <label className="mb-1.5 block text-[13.5px] font-semibold">{label}</label>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} className={inputClass} />
+      <label htmlFor={id} className="mb-1.5 block text-[13.5px] font-semibold">{label}</label>
+      <input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} className={inputClass} />
     </div>
   );
 }

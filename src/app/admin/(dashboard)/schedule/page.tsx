@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { getAllCoursesForAdmin } from "@/lib/data/courses";
 import { ScheduleManager } from "@/components/admin/schedule-manager";
+
+export const metadata: Metadata = { title: "Scheduling" };
 
 export default async function AdminSchedulePage() {
   const courses = await getAllCoursesForAdmin();

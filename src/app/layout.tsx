@@ -55,6 +55,16 @@ export const metadata: Metadata = {
   },
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "EducationalOrganization",
+  name: "Reemora",
+  url: siteUrl,
+  logo: `${siteUrl}/images/logo.png`,
+  description:
+    "Reemora trains founders, developers and teams to design, build and launch AI-powered applications through hands-on, expert-led courses.",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -63,6 +73,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${poppins.variable} ${inter.variable} antialiased`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

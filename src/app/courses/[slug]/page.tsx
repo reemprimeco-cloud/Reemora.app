@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getCourseBySlug, getCourses } from "@/lib/data/courses";
-import { primarySchedule } from "@/lib/course-utils";
+import { courseImageSrc, primarySchedule } from "@/lib/course-utils";
 import { getWebsiteSettings } from "@/lib/data/settings";
 import { formatDate, formatMoney } from "@/lib/utils";
 
@@ -26,6 +26,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: course.title,
     description: course.short_description,
+    alternates: { canonical: `/courses/${course.slug}` },
+    openGraph: {
+      title: course.title,
+      description: course.short_description,
+      type: "website",
+      images: course.image_url ? [course.image_url] : ["/images/logo.png"],
+    },
   };
 }
 
@@ -34,11 +41,41 @@ export default async function CourseDetailPage({ params }: Props) {
   const [course, settings] = await Promise.all([getCourseBySlug(slug), getWebsiteSettings()]);
   if (!course) notFound();
 
-  const image = course.image_url || `/images/courses/${course.slug}.svg`;
+  const image = courseImageSrc(course);
   const schedule = primarySchedule(course);
+
+  const courseJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: course.title,
+    description: course.short_description,
+    provider: {
+      "@type": "Organization",
+      name: "Reemora",
+      sameAs: process.env.NEXT_PUBLIC_SITE_URL || "https://reemora.app",
+    },
+    ...(schedule && {
+      hasCourseInstance: {
+        "@type": "CourseInstance",
+        courseMode: "Onsite",
+        startDate: schedule.start_date ?? undefined,
+        endDate: schedule.end_date ?? undefined,
+      },
+    }),
+    offers: {
+      "@type": "Offer",
+      price: course.price,
+      priceCurrency: course.currency,
+      availability: schedule && schedule.seats_available > 0 ? "https://schema.org/InStock" : "https://schema.org/SoldOut",
+    },
+  };
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd) }}
+      />
       <SiteHeader />
       <main className="pb-20 pt-[130px]">
         <div className="mx-auto max-w-[1180px] px-6">
@@ -48,7 +85,7 @@ export default async function CourseDetailPage({ params }: Props) {
           <div className="grid grid-cols-1 items-start gap-11 lg:grid-cols-[1.5fr_1fr]">
             <div>
               <div className="relative mb-7.5 aspect-video overflow-hidden rounded-[22px] shadow-lg">
-                <Image src={image} alt={course.title} fill className="object-cover" />
+                <Image src={image} alt={course.title} fill priority sizes="(max-width: 1024px) 100vw, 60vw" className="object-cover" />
               </div>
               <span className="mb-3 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">
                 {course.category?.name ?? "Course"} · {course.level}
@@ -56,7 +93,7 @@ export default async function CourseDetailPage({ params }: Props) {
               <h1 className="mb-4 text-[32px] font-bold sm:text-[38px]">{course.title}</h1>
               <p className="mb-8.5 text-[16.5px] text-ink-soft">{course.description}</p>
 
-              <h3 className="mb-3.5 text-lg font-bold">What you&apos;ll learn</h3>
+              <h2 className="mb-3.5 text-lg font-bold">What you&apos;ll learn</h2>
               <ul className="mb-5">
                 {course.curriculum.map((item, i) => (
                   <li key={item} className="flex items-center gap-3 border-b border-border-c py-3 text-[14.5px] last:border-none">
@@ -70,7 +107,7 @@ export default async function CourseDetailPage({ params }: Props) {
             </div>
 
             <div className="sticky top-[100px] rounded-[22px] border border-border-c bg-surface p-7.5 shadow-sm">
-              <h3 className="mb-4.5 text-2xl font-bold">{formatMoney(course.price, course.currency)}</h3>
+              <h2 className="mb-4.5 text-2xl font-bold">{formatMoney(course.price, course.currency)}</h2>
               {[
                 ["Instructor", course.instructor?.full_name ?? "Reemora Certified Trainer"],
                 ["Duration", `${course.duration_weeks} weeks`],

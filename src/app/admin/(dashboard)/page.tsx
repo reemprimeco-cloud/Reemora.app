@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { formatMoney } from "@/lib/utils";
+
+export const metadata: Metadata = { title: "Dashboard" };
 
 interface RegistrationRow {
   id: string;
@@ -56,7 +59,7 @@ export default async function AdminDashboardPage() {
 
       <div className="overflow-hidden rounded-2xl border border-border-c bg-surface">
         <div className="border-b border-border-c px-6 py-5">
-          <h3 className="font-bold">Recent Registrations</h3>
+          <h2 className="font-bold">Recent Registrations</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

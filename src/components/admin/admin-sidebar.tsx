@@ -35,22 +35,25 @@ export function AdminSidebar() {
       <Link href="/" className="mb-6 block px-2.5 pt-1.5">
         <Image src="/images/logo.png" alt="Reemora logo" width={120} height={30} className="h-7 w-auto brightness-0 invert" />
       </Link>
-      {LINKS.map((link) => {
-        const active = pathname === link.href;
-        return (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={cn(
-              "flex items-center gap-2.5 rounded-lg px-3.5 py-3 text-sm font-semibold transition-colors",
-              active ? "bg-white/10 text-white" : "hover:bg-white/5 hover:text-white"
-            )}
-          >
-            <link.icon size={16} />
-            {link.label}
-          </Link>
-        );
-      })}
+      <nav aria-label="Admin" className="flex flex-col gap-1.5">
+        {LINKS.map((link) => {
+          const active = pathname === link.href;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "flex items-center gap-2.5 rounded-lg px-3.5 py-3 text-sm font-semibold transition-colors",
+                active ? "bg-white/10 text-white" : "hover:bg-white/5 hover:text-white"
+              )}
+            >
+              <link.icon size={16} aria-hidden="true" />
+              {link.label}
+            </Link>
+          );
+        })}
+      </nav>
       <button
         onClick={handleLogout}
         className="mt-auto flex items-center justify-center gap-2 rounded-full border border-white/15 bg-transparent py-3 text-sm font-semibold text-white transition hover:bg-white/10"

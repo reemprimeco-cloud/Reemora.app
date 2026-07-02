@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Layers, Rocket, Award, CalendarClock, Download, GraduationCap } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -123,7 +124,7 @@ export default async function HomePage() {
               </div>
             </Reveal>
             <Reveal delay={100}>
-              <h3 className="mb-2 text-[15px] font-bold uppercase tracking-wide text-blue-600">About Your Trainer</h3>
+              <span className="mb-2 block text-[15px] font-bold uppercase tracking-wide text-blue-600">About Your Trainer</span>
               <h2 className="mb-4.5 text-[28px] font-bold sm:text-4xl">{instructor?.title ?? "Founder & Lead Trainer"} at {settings.site_name}</h2>
               <p className="mb-6.5 text-ink-soft">{instructor?.bio}</p>
 
@@ -133,7 +134,7 @@ export default async function HomePage() {
                     <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full bg-blue-500 shadow-[0_0_0_4px_var(--color-blue-100)]" />
                     <div>
                       <span className="text-xs font-bold text-blue-600">{item.date}</span>
-                      <h4 className="text-[15.5px] font-bold">{item.title}</h4>
+                      <h3 className="text-[15.5px] font-bold">{item.title}</h3>
                       <p className="text-sm text-ink-soft">{item.desc}</p>
                     </div>
                   </div>
@@ -170,14 +171,13 @@ export default async function HomePage() {
                     <div className="overflow-hidden rounded-2xl border border-border-c bg-surface transition-all hover:-translate-y-1.5 hover:shadow-lg">
                       <div className="relative flex aspect-[4/3] items-center justify-center border-b border-border-c bg-gradient-to-br from-blue-100 to-surface text-blue-500">
                         {cert.image_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={cert.image_url} alt={cert.title} className="h-full w-full object-cover" />
+                          <Image src={cert.image_url} alt={cert.title} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
                         ) : (
                           <GraduationCap size={40} />
                         )}
                       </div>
                       <div className="p-5">
-                        <h4 className="mb-1 text-[15.5px] font-bold">{cert.title}</h4>
+                        <h3 className="mb-1 text-[15.5px] font-bold">{cert.title}</h3>
                         <span className="text-[12.5px] text-ink-soft">{cert.issuing_body || "Placeholder — replace with certificate image"}</span>
                       </div>
                     </div>
@@ -193,15 +193,17 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="py-24">
-          <div className="mx-auto max-w-[1180px] px-6">
-            <Reveal className="mx-auto mb-13 max-w-xl text-center">
-              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Student Voices</span>
-              <h2 className="text-[28px] font-bold sm:text-4xl">What our students say</h2>
-            </Reveal>
-            <TestimonialSlider testimonials={testimonials} />
-          </div>
-        </section>
+        {testimonials.length > 0 && (
+          <section className="py-24">
+            <div className="mx-auto max-w-[1180px] px-6">
+              <Reveal className="mx-auto mb-13 max-w-xl text-center">
+                <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Student Voices</span>
+                <h2 className="text-[28px] font-bold sm:text-4xl">What our students say</h2>
+              </Reveal>
+              <TestimonialSlider testimonials={testimonials} />
+            </div>
+          </section>
+        )}
 
         <section className="pb-24">
           <Reveal className="mx-auto max-w-[1180px] px-6">

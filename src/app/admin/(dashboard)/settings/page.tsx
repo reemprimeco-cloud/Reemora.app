@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { getWebsiteSettings } from "@/lib/data/settings";
 import { SettingsManager } from "@/components/admin/settings-manager";
+
+export const metadata: Metadata = { title: "Settings" };
 
 export default async function AdminSettingsPage() {
   const settings = await getWebsiteSettings();

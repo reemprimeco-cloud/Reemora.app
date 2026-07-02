@@ -18,7 +18,6 @@ export async function GET(request: Request) {
 
   try {
     const mfStatus = await getMyFatoorahPaymentStatus(paymentId);
-    const isPaid = mfStatus.InvoiceStatus === "Paid";
 
     const { data: payment } = await supabase
       .from("payments")
@@ -28,6 +27,15 @@ export async function GET(request: Request) {
 
     if (!payment) {
       return NextResponse.redirect(`${redirectBase}?status=failed`);
+    }
+
+    // Only trust "Paid" when the invoice MyFatoorah confirms also matches
+    // the amount we originally requested — guards against a stale or
+    // mismatched paymentId being replayed against a different invoice.
+    const amountMatches = Math.abs(Number(mfStatus.InvoiceValue) - Number(payment.amount)) < 0.01;
+    const isPaid = mfStatus.InvoiceStatus === "Paid" && amountMatches;
+    if (mfStatus.InvoiceStatus === "Paid" && !amountMatches) {
+      console.error(`payment callback: amount mismatch for payment ${paymentRowId} — expected ${payment.amount}, got ${mfStatus.InvoiceValue}`);
     }
 
     await supabase

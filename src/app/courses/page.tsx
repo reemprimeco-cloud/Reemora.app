@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "Course Catalog",
   description:
     "Browse Reemora's full catalog of AI app-development courses, including dates, pricing and details.",
+  alternates: { canonical: "/courses" },
 };
 
 export const revalidate = 60;

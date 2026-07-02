@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { getAllCoursesForAdmin } from "@/lib/data/courses";
 import { getCategories } from "@/lib/data/categories";
 import { getInstructors } from "@/lib/data/instructors";
 import { CourseManager } from "@/components/admin/course-manager";
+
+export const metadata: Metadata = { title: "Courses" };
 
 export default async function AdminCoursesPage() {
   const [courses, categories, instructors] = await Promise.all([

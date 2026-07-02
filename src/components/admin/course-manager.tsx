@@ -7,6 +7,9 @@ import { createClient } from "@/lib/supabase/client";
 import type { CourseCategory, CourseWithRelations, Instructor } from "@/lib/types";
 import { formatMoney } from "@/lib/utils";
 import { CourseEditorModal } from "@/components/admin/course-editor-modal";
+import { useToast } from "@/components/toast-provider";
+import { useConfirm } from "@/components/confirm-dialog";
+import { courseImageSrc } from "@/lib/course-utils";
 
 const COURSE_SELECT = "*, category:course_categories(*), instructor:instructors(*), schedules:course_schedule(*)";
 
@@ -21,6 +24,8 @@ export function CourseManager({
 }) {
   const [courses, setCourses] = React.useState(initialCourses);
   const [editing, setEditing] = React.useState<CourseWithRelations | null | "new">(null);
+  const { showToast } = useToast();
+  const confirm = useConfirm();
 
   async function refresh() {
     const supabase = createClient();
@@ -29,14 +34,15 @@ export function CourseManager({
   }
 
   async function handleDelete(course: CourseWithRelations) {
-    if (!confirm(`Delete "${course.title}"? This cannot be undone.`)) return;
+    if (!(await confirm(`Delete "${course.title}"? This cannot be undone.`))) return;
     const supabase = createClient();
     const { error } = await supabase.from("courses").delete().eq("id", course.id);
     if (error) {
-      alert(error.message);
+      showToast("error", error.message);
       return;
     }
     setCourses((prev) => prev.filter((c) => c.id !== course.id));
+    showToast("success", `"${course.title}" deleted.`);
   }
 
   return (
@@ -70,7 +76,7 @@ export function CourseManager({
                   <tr key={c.id} className="border-t border-border-c">
                     <td className="px-6 py-3">
                       <div className="relative h-10 w-14 overflow-hidden rounded-md bg-blue-100">
-                        <Image src={c.image_url || `/images/courses/${c.slug}.svg`} alt="" fill className="object-cover" />
+                        <Image src={courseImageSrc(c)} alt={c.title} fill className="object-cover" />
                       </div>
                     </td>
                     <td className="px-6 py-3 font-medium">{c.title}</td>
@@ -84,10 +90,10 @@ export function CourseManager({
                     </td>
                     <td className="px-6 py-3">
                       <div className="flex gap-2">
-                        <button onClick={() => setEditing(c)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-c hover:border-blue-400 hover:text-blue-600">
+                        <button onClick={() => setEditing(c)} aria-label={`Edit ${c.title}`} title="Edit" className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-c hover:border-blue-400 hover:text-blue-600">
                           <Pencil size={14} />
                         </button>
-                        <button onClick={() => handleDelete(c)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-c hover:border-red-300 hover:text-red-500">
+                        <button onClick={() => handleDelete(c)} aria-label={`Delete ${c.title}`} title="Delete" className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-c hover:border-red-300 hover:text-red-500">
                           <Trash2 size={14} />
                         </button>
                       </div>

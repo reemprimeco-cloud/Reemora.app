@@ -3,10 +3,10 @@ import Image from "next/image";
 import { Clock, CalendarDays, Users } from "lucide-react";
 import type { CourseWithRelations } from "@/lib/types";
 import { formatDate, formatMoney } from "@/lib/utils";
-import { primarySchedule } from "@/lib/course-utils";
+import { courseImageSrc, primarySchedule } from "@/lib/course-utils";
 
 export function CourseCard({ course }: { course: CourseWithRelations }) {
-  const image = course.image_url || `/images/courses/${course.slug}.svg`;
+  const image = courseImageSrc(course);
   const schedule = primarySchedule(course);
 
   return (
@@ -22,6 +22,7 @@ export function CourseCard({ course }: { course: CourseWithRelations }) {
           src={image}
           alt={course.title}
           fill
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
       </div>
