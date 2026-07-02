@@ -108,4 +108,4 @@ All fields pass through a `clean(value, maxLength)` helper that type-checks, tri
 
 - Every route validates input shape defensively (`typeof` checks on the parsed JSON body) before touching the database — a malformed or missing body never reaches Supabase.
 - Field-level errors are always returned as `fieldErrors: Record<string, string>` alongside a generic top-level `error` string, so the frontend can highlight the specific invalid field while still having a fallback message to display.
-- Unexpected failures are logged via `console.error` (visible in Netlify function logs) and returned as a generic, non-leaking error message to the client — internal error details (stack traces, database error codes) are never sent to the browser.
+- Unexpected failures are logged via `console.error` (visible in Vercel → Deployments → Logs) and returned as a generic, non-leaking error message to the client — internal error details (stack traces, database error codes) are never sent to the browser.

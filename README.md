@@ -101,10 +101,12 @@ Admin CRUD (courses, categories, schedule, trainer/certificates, testimonials, s
 - **Course images** — uploaded per-course from `/admin/courses` (stored in the `course-images` bucket); branded SVG placeholders in `public/images/courses/` are used until then.
 - **Footer contact details / social links** — edit via `/admin/settings` (`website_settings` table).
 
-## Deployment (Netlify + reemora.app)
+## Deployment (Vercel + reemora.app)
 
 1. Provision the Supabase project, run `supabase/schema.sql` in the SQL Editor, and create + promote an admin user (see above).
-2. Create a Netlify site from this repo. `netlify.toml` is already configured with the `@netlify/plugin-nextjs` build plugin.
-3. Set the environment variables above in Netlify site settings.
-4. Point `reemora.app` at Netlify (Netlify → Domain settings → Add custom domain, then update the domain's DNS — typically an `A`/`ALIAS` record to Netlify's load balancer and a `CNAME` for `www`).
+2. Import this repo into Vercel — it's a standard Next.js 15 App Router project, so Vercel auto-detects the framework and build settings with no `vercel.json` required.
+3. Set the environment variables above in Vercel → Project Settings → Environment Variables.
+4. Point `reemora.app` at Vercel (Project → Settings → Domains → Add, then update the domain's DNS — an `A` record to Vercel's IP for the apex and a `CNAME` to `cname.vercel-dns.com` for `www`).
+
+Full walkthrough and checklist: [docs/Deployment.md](./docs/Deployment.md) and [docs/DeploymentChecklist.md](./docs/DeploymentChecklist.md).
 5. Deploy.

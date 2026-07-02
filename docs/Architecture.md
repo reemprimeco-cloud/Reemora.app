@@ -13,7 +13,7 @@ Reemora is a Next.js 15 (App Router) application backed by Supabase (Postgres, A
 | Auth | Supabase Auth (email/password), session refreshed via middleware |
 | Storage | Supabase Storage (`course-images`, `site-assets` public buckets) |
 | Payments | MyFatoorah (hosted payment page + server-to-server status checks) |
-| Hosting | Netlify (`@netlify/plugin-nextjs`) |
+| Hosting | Vercel (zero-config Next.js deployment) |
 
 ## High-level request flow
 

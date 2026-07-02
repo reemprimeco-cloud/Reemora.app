@@ -35,7 +35,7 @@ This `/docs` set: Architecture, Database, Deployment, Admin Guide, API reference
 
 ## In progress / next up
 
-- **Deploy to Netlify and connect the `reemora.app` domain** — the app is deploy-ready (`netlify.toml` configured); this is the last step before public launch. See [Deployment.md](./Deployment.md).
+- **Deploy to Vercel and connect the `reemora.app` domain** — the app is deploy-ready (zero-config Next.js project, no `vercel.json` required); this is the last step before public launch. See [Deployment.md](./Deployment.md).
 - **Replace placeholder content** — trainer CV PDF, certificate images, at least one real course photo — via the admin panel per [AdminGuide.md](./AdminGuide.md#content-to-replace-before-launch).
 - **Live end-to-end payment verification** — a real registration should be run against the MyFatoorah **test** environment post-deploy before switching to live keys.
 

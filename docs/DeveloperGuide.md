@@ -79,4 +79,4 @@ Then manually exercise the change in the browser — for UI changes, check both 
 
 ## Debugging Supabase connectivity
 
-`isSupabaseConfigured` (`src/lib/data/seed-courses.ts`) is `true` only when both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are set. Every data-fetch function logs a `console.error` with the function name and underlying error before falling back to seed data — check the terminal (dev) or Netlify function logs (production) for these when a page renders seed data unexpectedly.
+`isSupabaseConfigured` (`src/lib/data/seed-courses.ts`) is `true` only when both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are set. Every data-fetch function logs a `console.error` with the function name and underlying error before falling back to seed data — check the terminal (dev) or Vercel → Deployments → Logs (production) for these when a page renders seed data unexpectedly.

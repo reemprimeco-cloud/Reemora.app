@@ -20,7 +20,7 @@ This document summarizes the full Release Candidate (RC) audit performed on the 
 - Added seat-availability and cohort-status checks (rejects registration for cancelled/completed cohorts or when seats are exhausted, with a `409` response).
 - Added payment amount verification in the MyFatoorah callback handler (`src/app/api/payments/callback/route.ts`): the invoice amount returned by the gateway is compared against the stored payment amount before marking a registration as paid.
 - Rewrote the contact form API (`src/app/api/contact/route.ts`) with strict server-side input sanitization: type checks, per-field max-length caps, and email format validation, returning structured `fieldErrors`.
-- Hardened HTTP response headers in `netlify.toml`: added `Permissions-Policy`, `Strict-Transport-Security`, and a scoped `Content-Security-Policy` (self + `*.supabase.co` + MyFatoorah domains), alongside the existing `X-Frame-Options`, `X-Content-Type-Options`, and `Referrer-Policy`.
+- Hardened HTTP response headers via `next.config.ts`'s `headers()` function: added `Permissions-Policy`, `Strict-Transport-Security`, and a scoped `Content-Security-Policy` (self + `*.supabase.co` + MyFatoorah domains), alongside the existing `X-Frame-Options`, `X-Content-Type-Options`, and `Referrer-Policy`. (Originally added to `netlify.toml`, moved to `next.config.ts` when the deployment target switched to Vercel — see [RELEASE_v1.md](./RELEASE_v1.md).)
 - `next.config.ts`: disabled the `X-Powered-By` header (`poweredByHeader: false`) and enabled `reactStrictMode`.
 - Course image uploads in the admin panel now validate file type (`image/*`) and enforce a 5MB size limit before upload.
 - Row Level Security (RLS) policies remain enforced on all 13 Supabase tables; admin-only writes are gated by an `is_admin()` helper checked against the authenticated user's role.
@@ -86,11 +86,11 @@ This document summarizes the full Release Candidate (RC) audit performed on the 
 
 ## Known Environment Limitation (Not a Code Defect)
 
-This development sandbox's network egress policy blocks the configured Supabase project host, so local verification of live database reads/writes could not be performed end-to-end in this environment. All public-facing pages fall back to a fully-typed in-repo seed dataset (`src/lib/data/seed-courses.ts`) when Supabase is unreachable, which is how the responsive/accessibility/UX audit in this document was performed and verified locally. The Supabase schema, RLS policies, and API routes were validated independently against a local PostgreSQL instance with stubbed `auth`/`storage` schemas before this audit began. No code changes are required to connect to the real Supabase project — only network access from the deployment environment (Netlify) is required, which is unrestricted.
+This development sandbox's network egress policy blocks the configured Supabase project host, so local verification of live database reads/writes could not be performed end-to-end in this environment. All public-facing pages fall back to a fully-typed in-repo seed dataset (`src/lib/data/seed-courses.ts`) when Supabase is unreachable, which is how the responsive/accessibility/UX audit in this document was performed and verified locally. The Supabase schema, RLS policies, and API routes were validated independently against a local PostgreSQL instance with stubbed `auth`/`storage` schemas before this audit began. No code changes are required to connect to the real Supabase project — only network access from the deployment environment (Vercel) is required, which is unrestricted.
 
 ---
 
 ## Remaining Follow-Ups (Outside RC Scope)
 
-- Deploy to Netlify and connect the `reemora.app` domain.
+- Deploy to Vercel and connect the `reemora.app` domain.
 - Replace remaining placeholder content (trainer CV PDF, certificate images) with real assets via the admin panel before public launch.
