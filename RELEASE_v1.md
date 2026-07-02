@@ -1,7 +1,7 @@
 # Reemora Platform — Release v1.0.0
 
 **Release date:** 2026-07-02
-**Commit:** `2be6fc9`
+**Commit:** `5de8f28`
 **Branch:** `claude/reemora-website-design-wl54sk`
 **Status:** Production-ready — pending infrastructure deployment only
 
@@ -73,7 +73,7 @@ The deployment target was switched from Netlify to Vercel as of this release. Th
 
 ## Source code
 
-Tracked in this Git repository, verified as of commit `2be6fc9`: **101 files**, ~1.2 MB (excluding `node_modules`/`.next`, which are build artifacts, not source). The archive shipped alongside this release (`reemora-source-v1.0.0.tar.gz`) is a `git archive` of this exact commit — byte-identical to what's in the repository, with no untracked or ignored files.
+Tracked in this Git repository, verified as of commit `5de8f28`: **105 files**, ~1.2 MB (excluding `node_modules`/`.next`, which are build artifacts, not source). The archive shipped alongside this release (`reemora-source-v1.0.0.tar.gz`) is a `git archive` of this exact commit — byte-identical to what's in the repository, with no untracked or ignored files.
 
 Top-level layout:
 
@@ -82,7 +82,7 @@ src/app/            Routes (public pages, admin panel, API routes, sitemap/robot
 src/components/      Reusable UI + admin CRUD components
 src/lib/             Supabase clients, data-access layer, types, utilities
 supabase/            SQL migrations + concatenated schema.sql
-docs/                Full documentation set (10 files)
+docs/                Full documentation set (11 files, including the index)
 public/              Static assets (logo, course placeholder images, CV placeholder)
 ```
 
@@ -125,4 +125,4 @@ Full reference including what's secret vs. public and where each is used: [docs/
 
 ## Handover
 
-This repository, at commit `2be6fc9` on branch `claude/reemora-website-design-wl54sk`, plus the accompanying packaged archive, constitute the complete v1.0.0 release. To go live, follow [docs/DeploymentChecklist.md](./docs/DeploymentChecklist.md) top to bottom.
+This repository, at commit `5de8f28` on branch `claude/reemora-website-design-wl54sk`, plus the accompanying packaged archive, constitute the complete v1.0.0 release. To go live, follow [docs/DeploymentChecklist.md](./docs/DeploymentChecklist.md) top to bottom.
