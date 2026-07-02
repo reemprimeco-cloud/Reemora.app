@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — Reemora</title>
+<link rel="icon" href="images/logo.png">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .register-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; align-items: start; }
+  @media (max-width: 900px) { .register-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand"><img src="images/logo.png" alt="Reemora logo"></a>
+    <nav class="nav-links">
+      <a href="index.html" data-page="index.html">Home</a>
+      <a href="courses.html" data-page="courses.html">Courses</a>
+      <a href="index.html#about">About &amp; CV</a>
+      <a href="index.html#certificates">Certificates</a>
+    </nav>
+    <div class="nav-cta">
+      <a href="admin.html" class="btn btn-ghost btn-sm">Admin</a>
+      <button class="nav-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<section style="padding-top:130px;">
+  <div class="container">
+    <a href="courses.html" class="back-link">&larr; Back to Course Catalog</a>
+    <div class="section-head">
+      <span class="eyebrow">Registration</span>
+      <h2>Reserve your seat</h2>
+      <p>Fill in your details below. You'll be redirected to a secure MyFatoorah payment page to complete your registration.</p>
+    </div>
+
+    <div class="register-grid">
+      <div class="form-card">
+        <div class="alert alert-error" id="form-alert"></div>
+        <form id="register-form" novalidate>
+          <div class="field full">
+            <label for="course-select">Course</label>
+            <select id="course-select" required></select>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label for="full-name">Full Name</label>
+              <input type="text" id="full-name" required placeholder="Your full name">
+              <span class="field-error">Please enter your full name.</span>
+            </div>
+            <div class="field">
+              <label for="email">Email Address</label>
+              <input type="email" id="email" required placeholder="you@example.com">
+              <span class="field-error">Please enter a valid email address.</span>
+            </div>
+            <div class="field">
+              <label for="phone">Phone Number</label>
+              <input type="tel" id="phone" required placeholder="+965 XXXX XXXX">
+              <span class="field-error">Please enter a valid phone number.</span>
+            </div>
+            <div class="field">
+              <label for="seats">Number of Seats</label>
+              <input type="number" id="seats" min="1" max="10" value="1" required>
+            </div>
+          </div>
+          <div class="field full">
+            <label for="notes">Notes <span class="hint">(optional)</span></label>
+            <textarea id="notes" placeholder="Anything we should know before the course starts?"></textarea>
+          </div>
+          <div class="field full">
+            <label class="checkbox-row">
+              <input type="checkbox" id="terms" required>
+              <span>I agree to Reemora's terms of enrollment and cancellation policy.</span>
+            </label>
+            <span class="field-error" id="terms-error">You must agree to the terms to continue.</span>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Proceed to Secure Payment</button>
+        </form>
+      </div>
+
+      <div class="order-summary" id="order-summary">
+        <h4>Order Summary</h4>
+        <div class="order-line"><span>Course</span><span id="sum-course">—</span></div>
+        <div class="order-line"><span>Start Date</span><span id="sum-date">—</span></div>
+        <div class="order-line"><span>Price per seat</span><span id="sum-price">—</span></div>
+        <div class="order-line"><span>Seats</span><span id="sum-seats">1</span></div>
+        <div class="order-line total"><span>Total Due</span><span id="sum-total">—</span></div>
+        <div class="pay-badges">
+          <span>🔒 Secure Checkout</span>
+          <span>MyFatoorah</span>
+          <span>KNET · Visa · Mastercard</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> Reemora. All rights reserved.</span>
+      <span>Build Apps with AI</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+<script src="js/register.js"></script>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+</body>
+</html>

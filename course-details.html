@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course Details — Reemora</title>
+<link rel="icon" href="images/logo.png">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .details-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 44px; align-items: start; }
+  .details-hero-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: var(--radius-lg); margin-bottom: 30px; box-shadow: var(--shadow-md); }
+  .curriculum-list li { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
+  .curriculum-list li:last-child { border-bottom: none; }
+  .curriculum-list span.num { width: 26px; height: 26px; border-radius: 50%; background: var(--blue-100); color: var(--blue-600); font-weight: 700; font-size: 12.5px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .sticky-card { position: sticky; top: 100px; }
+  .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-row span.label { color: var(--ink-soft); }
+  .info-row span.val { font-weight: 700; color: var(--navy-800); }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand"><img src="images/logo.png" alt="Reemora logo"></a>
+    <nav class="nav-links">
+      <a href="index.html" data-page="index.html">Home</a>
+      <a href="courses.html" data-page="courses.html" class="active">Courses</a>
+      <a href="index.html#about">About &amp; CV</a>
+      <a href="index.html#certificates">Certificates</a>
+    </nav>
+    <div class="nav-cta">
+      <a href="admin.html" class="btn btn-ghost btn-sm">Admin</a>
+      <button class="nav-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<section style="padding-top:130px; padding-bottom:80px;">
+  <div class="container" id="course-content">
+    <div class="empty-state">Loading course…</div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> Reemora. All rights reserved.</span>
+      <span>Build Apps with AI</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/main.js"></script>
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  const id = qs('id');
+  const course = id ? ReemoraStore.getCourseById(id) : null;
+  const host = document.getElementById('course-content');
+
+  if (!course) {
+    host.innerHTML = `
+      <div class="empty-state">
+        <h2 style="margin-bottom:10px;">Course not found</h2>
+        <p style="margin-bottom:24px;">This course may have been removed or the link is incorrect.</p>
+        <a href="courses.html" class="btn btn-primary">Back to Course Catalog</a>
+      </div>
+    `;
+  } else {
+    document.title = `${course.title} — Reemora`;
+    const img = course.image || `images/courses/${course.id}.svg`;
+    host.innerHTML = `
+      <a href="courses.html" class="back-link">&larr; Back to Course Catalog</a>
+      <div class="details-grid">
+        <div>
+          <img class="details-hero-img" src="${img}" onerror="this.src='images/courses/placeholder.svg'" alt="${course.title}">
+          <span class="eyebrow">${course.category} · ${course.level}</span>
+          <h1 style="margin-bottom:16px;">${course.title}</h1>
+          <p style="color:var(--ink-soft); font-size:16.5px; margin-bottom:34px;">${course.description}</p>
+
+          <h3 style="margin-bottom:14px;">What you'll learn</h3>
+          <ul class="curriculum-list" style="margin-bottom:20px;">
+            ${course.curriculum.map((item, i) => `<li><span class="num">${i + 1}</span><span>${item}</span></li>`).join('')}
+          </ul>
+        </div>
+
+        <div class="sticky-card">
+          <div class="form-card">
+            <h3 style="margin-bottom:18px;">${formatMoney(course.price, course.currency)}</h3>
+            <div class="info-row"><span class="label">Instructor</span><span class="val">${course.instructor}</span></div>
+            <div class="info-row"><span class="label">Duration</span><span class="val">${course.durationWeeks} weeks</span></div>
+            <div class="info-row"><span class="label">Start Date</span><span class="val">${formatDate(course.startDate)}</span></div>
+            <div class="info-row"><span class="label">End Date</span><span class="val">${formatDate(course.endDate)}</span></div>
+            <div class="info-row"><span class="label">Sessions</span><span class="val">${course.sessionDays}</span></div>
+            <div class="info-row"><span class="label">Time</span><span class="val">${course.sessionTime}</span></div>
+            <div class="info-row"><span class="label">Seats Left</span><span class="val">${course.seatsAvailable} / ${course.seatsTotal}</span></div>
+            <a href="register.html?course=${course.id}" class="btn btn-primary btn-block" style="margin-top:22px;">
+              ${course.seatsAvailable > 0 ? 'Register for This Course' : 'Join Waitlist'}
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+</script>
+</body>
+</html>
