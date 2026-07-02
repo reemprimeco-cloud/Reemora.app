@@ -1,72 +1,82 @@
 # Reemora — Build Apps with AI
 
-A complete, static website for Reemora: dynamic homepage, course catalog, course registration with MyFatoorah payments, admin panel with course/schedule management. Built with plain HTML, CSS and JavaScript — no build step required.
+Production platform for Reemora: dynamic marketing site, AI course catalog, MyFatoorah-powered registration, and a Supabase-authenticated admin panel for managing courses, scheduling and registrations.
 
-## What's included
+**Stack:** Next.js 15 (App Router) · TypeScript · Tailwind CSS v4 · Supabase (Postgres + Auth + Storage) · MyFatoorah.
 
-| Page | Purpose |
-|---|---|
-| `index.html` | Homepage — hero slider, features, featured courses, About/CV section, certificates, testimonials |
-| `courses.html` | Full course catalog with search + filters |
-| `course-details.html?id=<courseId>` | Single course details page |
-| `register.html?course=<courseId>` | Registration form → MyFatoorah checkout |
-| `admin.html` | Password-protected admin panel: course CRUD, scheduling, registrations, settings |
+## Status
 
-Shared code lives in `css/style.css` and `js/*.js`. `js/data.js` is the single data layer every page reads/writes through.
+The app runs and builds today against **seed data** (`src/lib/data/seed-courses.ts`) because a dedicated Supabase project has not been provisioned yet. Once `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` are set, every page automatically switches to reading/writing the real `courses` and `registrations` tables — no code changes needed.
 
-## Quick start (local preview)
+Until Supabase is connected, `/admin` routes are **not auth-protected** (middleware skips the auth check when Supabase env vars are absent, purely so local preview isn't blocked). Do not deploy to production without Supabase configured.
 
-No build tools needed. From the project root:
+## Local development
 
 ```bash
-python3 -m http.server 8080
-# then open http://localhost:8080
+npm install
+npm run dev
+# open http://localhost:3000
 ```
 
-Course data, registrations and the admin password are stored in the browser's `localStorage`/`sessionStorage`, seeded automatically on first load.
+```bash
+npm run build   # production build + type check
+npm run lint
+```
 
-**Default admin password:** `Reemora@2026` — go to `admin.html`, log in, then change it under **Settings**.
+## Environment variables
 
-## Important architecture note
+Copy `.env.example` to `.env.local` and fill in:
 
-This site is deliberately **static-first** so it can be deployed anywhere instantly (Netlify, GitHub Pages, S3, any static host). Two things that a real production system needs are called out explicitly so nothing is silently insecure:
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase project connection (public, safe for the browser) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only key used by API routes to write registrations — never expose to the client |
+| `MYFATOORAH_API_KEY` / `MYFATOORAH_BASE_URL` | MyFatoorah payment gateway (test or live) |
+| `NEXT_PUBLIC_SITE_URL` | Canonical site URL, used for SEO metadata and MyFatoorah callback URLs |
 
-1. **Admin data storage.** Courses/registrations are stored in `localStorage`, which is per-browser and not shared across devices or admins. This is fine for a single-admin preview/launch. When you're ready to scale (multiple admins, real persistence, image hosting), swap the internals of `ReemoraStore` in `js/data.js` for calls to a real backend (e.g. Supabase) — every page already only talks to `ReemoraStore`'s methods, so no other file needs to change.
-2. **MyFatoorah payments.** A payment API key must never live in client-side JavaScript. `register.html` calls `/.netlify/functions/myfatoorah-payment`, a serverless function (`netlify/functions/myfatoorah-payment.js`) that holds the key server-side. Until that function is deployed with real credentials, the registration form will save the registration locally and show a friendly "we'll follow up" message instead of failing silently.
+## Database schema
 
-## Deploying with real MyFatoorah payments (Netlify)
+SQL migrations live in `supabase/migrations/`:
 
-1. Push this repo to GitHub/GitLab and connect it to a new Netlify site (or run `netlify deploy` from the CLI).
-2. In the MyFatoorah merchant portal, generate an API key (start with the **test** key).
-3. In Netlify: **Site settings → Environment variables**, add:
-   - `MYFATOORAH_API_KEY` — your MyFatoorah API key
-   - `MYFATOORAH_BASE_URL` — `https://apitest.myfatoorah.com` for testing, `https://api.myfatoorah.com` for live
-   - `SITE_URL` — your deployed site URL (e.g. `https://reemora.netlify.app`)
-4. Redeploy. `netlify.toml` already points Netlify at `netlify/functions` — no extra config needed.
-5. Test a registration end-to-end using MyFatoorah's test cards before switching to the live API key and base URL.
+- `0001_init.sql` — `courses` and `registrations` tables, RLS policies (public read on courses, authenticated-only write; registrations written only via the service-role key from API routes), and a public `course-images` storage bucket.
+- `0002_seed_courses.sql` — the same four starter courses used in the seed-data fallback, so the catalog isn't empty on first launch.
 
-If you deploy to a host other than Netlify, port `netlify/functions/myfatoorah-payment.js` to that platform's serverless function format (the MyFatoorah API call itself stays the same) and update the `fetch` URL in `js/register.js`.
+Apply them with the Supabase CLI (`supabase db push`) or via the Supabase MCP `apply_migration` tool.
 
-## Content you should replace before launch
+## Architecture
 
-- **`images/logo.png`** — already set from the provided logo.
-- **CV section (`index.html`, `#about`)** — currently placeholder bio/timeline text and a placeholder photo frame. Replace the copy with your real bio, and replace `images/cv/reemora-cv.pdf` with your actual CV PDF (same filename, or update the `href` in `index.html`).
-- **Certificates section (`index.html`, `#certificates`)** — currently placeholder cards. Add your real certificate images to `images/certificates/` and update the three `.cert-card` blocks in `index.html` with real titles, issuing bodies and `<img>` tags pointing at your files.
-- **Course images** — admin can upload images per course directly from `admin.html` (stored as embedded image data). A few branded placeholder SVGs ship in `images/courses/` for courses without an uploaded image.
-- **Contact details / social links** — footer in every page currently has placeholder email, phone and social links.
+```
+src/
+  app/
+    page.tsx                  Homepage (hero slider, features, CV, certificates, testimonials)
+    courses/page.tsx          Course catalog (search + filters)
+    courses/[slug]/page.tsx   Course detail
+    register/[slug]/page.tsx  Registration form
+    admin/login/page.tsx      Supabase Auth login (no sidebar)
+    admin/(dashboard)/        Auth-gated admin: dashboard, courses, schedule, registrations
+    api/payments/myfatoorah/  Creates the registration row + MyFatoorah payment session (server-only)
+    api/payments/callback/    Verifies payment status with MyFatoorah, updates the registration
+  components/                 Reusable UI (header, footer, sliders, cards, admin CRUD widgets)
+  lib/
+    supabase/                 Browser client, server client, service-role client
+    data/courses.ts           Data-access layer (Supabase, falling back to seed data)
+    myfatoorah.ts             MyFatoorah API wrapper
+  middleware.ts                Refreshes the Supabase session + protects /admin routes
+```
 
-## Admin panel guide
+Admin CRUD (course create/edit/delete, image upload, scheduling) talks to Supabase directly from the browser using the authenticated session; Row Level Security enforces that only signed-in users can write. Registrations are only ever written server-side via the service-role key, so the payment amount can't be tampered with from the client.
 
-Go to `admin.html` and log in with the admin password.
+## Content to replace before launch
 
-- **Dashboard** — quick KPIs and recent registrations.
-- **Courses** — add, edit, delete courses. Upload a course image, set price/currency/duration/seats, write the short + full description and curriculum (one line per topic).
-- **Scheduling** — set/adjust each course's start date, end date, session days, session time and status (upcoming / ongoing / completed) independently from editing the course content.
-- **Registrations** — every submitted registration, with payment status.
-- **Settings** — change the admin password (stored locally in the browser).
+- **CV section** (`src/app/page.tsx`, `#about`) — placeholder bio/timeline; swap `public/cv/reemora-cv.pdf` with the real CV.
+- **Certificates section** (`#certificates`) — placeholder credential cards; add real certificate images and titles.
+- **Course images** — uploaded per-course from the admin panel (stored in Supabase Storage); branded SVG placeholders in `public/images/courses/` are used until then.
+- **Footer contact details / social links.**
 
-All changes made in the admin panel are reflected immediately on `courses.html`, `course-details.html` and the homepage's featured courses, since they all read from the same `ReemoraStore`.
+## Deployment (Netlify + reemora.app)
 
-## Browser support
-
-Modern evergreen browsers (Chrome, Safari, Firefox, Edge). Uses `IntersectionObserver` for scroll animations with a graceful fallback, and CSS Grid/Flexbox throughout.
+1. Provision the Supabase project, run the migrations above, and create an admin user (Supabase Dashboard → Authentication → Add user).
+2. Create a Netlify site from this repo. `netlify.toml` is already configured with the `@netlify/plugin-nextjs` build plugin.
+3. Set the environment variables above in Netlify site settings.
+4. Point `reemora.app` at Netlify (Netlify → Domain settings → Add custom domain, then update the domain's DNS — typically an `A`/`ALIAS` record to Netlify's load balancer and a `CNAME` for `www`).
+5. Deploy.

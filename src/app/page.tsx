@@ -1,0 +1,208 @@
+import Link from "next/link";
+import { Layers, Rocket, Award, CalendarClock, Download, GraduationCap, ScrollText, Medal } from "lucide-react";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+import { HeroSlider } from "@/components/hero-slider";
+import { TestimonialSlider } from "@/components/testimonial-slider";
+import { CourseCard } from "@/components/course-card";
+import { Reveal } from "@/components/reveal";
+import { getCourses } from "@/lib/data/courses";
+
+const FEATURES = [
+  { icon: Layers, title: "AI-Powered Curriculum", desc: "Courses are continuously updated to reflect the latest AI tools, models and best practices." },
+  { icon: Rocket, title: "Hands-on Projects", desc: "Every module ends with a real deliverable — you leave with a working app, not just notes." },
+  { icon: Award, title: "Certified Trainer", desc: "Learn directly from an internationally certified trainer with real product-building experience." },
+  { icon: CalendarClock, title: "Flexible Scheduling", desc: "Evening, weekend and cohort-based options so training fits around your life." },
+];
+
+const STATS = [
+  { value: "500+", label: "Students Trained" },
+  { value: "4+", label: "AI Courses" },
+  { value: "10+", label: "Years Training Experience" },
+  { value: "98%", label: "Satisfaction Rate" },
+];
+
+const CERTIFICATES = [
+  { icon: GraduationCap, title: "International Certified Trainer (ICT)" },
+  { icon: ScrollText, title: "AI Product & Curriculum Design" },
+  { icon: Medal, title: "Professional Training & Facilitation" },
+];
+
+export default async function HomePage() {
+  const courses = (await getCourses()).slice(0, 3);
+
+  return (
+    <>
+      <SiteHeader />
+      <main>
+        <HeroSlider />
+
+        <div className="bg-navy-800">
+          <div className="mx-auto grid max-w-[1180px] grid-cols-2 gap-6 px-6 py-10 sm:grid-cols-4">
+            {STATS.map((s) => (
+              <div key={s.label} className="text-center text-white">
+                <strong className="block font-[family-name:var(--font-head)] text-[28px] text-blue-400 sm:text-4xl">{s.value}</strong>
+                <span className="text-[13.5px] text-[#b7c5e0]">{s.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <section className="py-24">
+          <div className="mx-auto max-w-[1180px] px-6">
+            <Reveal className="mx-auto mb-13 max-w-xl text-center">
+              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Why Reemora</span>
+              <h2 className="mb-3.5 text-[28px] font-bold sm:text-4xl">A modern approach to learning AI app development</h2>
+              <p className="text-[17px] text-ink-soft">Every course is built around one goal: helping you ship a real, working application — not just collect theory.</p>
+            </Reveal>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {FEATURES.map((f, i) => (
+                <Reveal key={f.title} delay={i * 100}>
+                  <div className="h-full rounded-2xl border border-border-c bg-surface p-7 transition-all hover:-translate-y-1.5 hover:shadow-lg">
+                    <div className="mb-4.5 flex h-13 w-13 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                      <f.icon size={22} />
+                    </div>
+                    <h3 className="mb-2 text-lg font-bold">{f.title}</h3>
+                    <p className="text-[14.5px] text-ink-soft">{f.desc}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-surface-alt py-24">
+          <div className="mx-auto max-w-[1180px] px-6">
+            <Reveal className="mx-auto mb-13 max-w-xl text-center">
+              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Upcoming Courses</span>
+              <h2 className="mb-3.5 text-[28px] font-bold sm:text-4xl">Pick your path into AI app building</h2>
+              <p className="text-[17px] text-ink-soft">A snapshot of what&apos;s open for registration right now. Browse the full catalog for dates, pricing and details.</p>
+            </Reveal>
+            <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
+              {courses.map((c) => (
+                <CourseCard key={c.id} course={c} />
+              ))}
+            </div>
+            <div className="mt-11 text-center">
+              <Link href="/courses" className="inline-flex items-center justify-center rounded-full border-2 border-transparent bg-navy-800 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-600">
+                View Full Course Catalog
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section id="about" className="py-24">
+          <div className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-14 px-6 lg:grid-cols-[0.85fr_1.15fr]">
+            <Reveal className="relative mx-auto max-w-[340px] lg:mx-0">
+              <div className="flex aspect-[4/5] items-center justify-center rounded-[22px] bg-gradient-to-br from-navy-800 to-blue-600 p-8 text-center text-white shadow-xl">
+                <div>
+                  <div className="mb-3.5 text-5xl">★</div>
+                  Trainer Photo
+                  <br />
+                  Placeholder
+                </div>
+              </div>
+              <div className="absolute -bottom-4.5 -right-4.5 rounded-2xl bg-surface px-5 py-4 text-center shadow-lg">
+                <strong className="block font-[family-name:var(--font-head)] text-[22px] text-blue-600">10+</strong>
+                <span className="text-xs text-ink-soft">Years Experience</span>
+              </div>
+            </Reveal>
+            <Reveal delay={100}>
+              <h3 className="mb-2 text-[15px] font-bold uppercase tracking-wide text-blue-600">About Your Trainer</h3>
+              <h2 className="mb-4.5 text-[28px] font-bold sm:text-4xl">Founder &amp; Lead Trainer at Reemora</h2>
+              <p className="mb-6.5 text-ink-soft">
+                An internationally certified trainer and AI product builder dedicated to helping founders, developers and teams turn ideas into working AI applications. Combines hands-on software development experience with a certified training methodology to make complex AI concepts practical and immediately usable.
+              </p>
+
+              <div className="mb-7 flex flex-col gap-4.5">
+                {[
+                  { date: "2024 — Present", title: "Founder & Lead Trainer, Reemora", desc: "Designing and delivering AI app-development courses for founders, developers and teams." },
+                  { date: "International Certification", title: "Certified Professional Trainer", desc: "Certified under an internationally recognized training and instructional design standard." },
+                  { date: "Prior Experience", title: "AI & Software Product Development", desc: "Years of hands-on experience building and shipping software and AI-powered products." },
+                ].map((item) => (
+                  <div key={item.title} className="flex gap-4">
+                    <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full bg-blue-500 shadow-[0_0_0_4px_var(--color-blue-100)]" />
+                    <div>
+                      <span className="text-xs font-bold text-blue-600">{item.date}</span>
+                      <h4 className="text-[15.5px] font-bold">{item.title}</h4>
+                      <p className="text-sm text-ink-soft">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mb-7 flex flex-wrap gap-2.5">
+                {["AI App Development", "Prompt Engineering", "Curriculum Design", "Public Speaking", "Product Strategy"].map((s) => (
+                  <span key={s} className="rounded-full bg-blue-100 px-3.5 py-1.5 text-[12.5px] font-bold text-blue-600">{s}</span>
+                ))}
+              </div>
+
+              <a href="/cv/reemora-cv.pdf" download className="inline-flex items-center gap-2 rounded-full border-2 border-transparent bg-blue-500 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-navy-800">
+                <Download size={16} /> Download Full CV (PDF)
+              </a>
+              <p className="mt-3.5 text-[12.5px] text-ink-soft">
+                Placeholder file — replace <code>public/cv/reemora-cv.pdf</code> with your real CV before launch.
+              </p>
+            </Reveal>
+          </div>
+        </section>
+
+        <section id="certificates" className="bg-surface-alt py-24">
+          <div className="mx-auto max-w-[1180px] px-6">
+            <Reveal className="mx-auto mb-13 max-w-xl text-center">
+              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Credentials</span>
+              <h2 className="mb-3.5 text-[28px] font-bold sm:text-4xl">International Certified Trainer</h2>
+              <p className="text-[17px] text-ink-soft">Certifications and credentials that back the training methodology behind every Reemora course.</p>
+            </Reveal>
+            <div className="grid grid-cols-1 gap-6.5 sm:grid-cols-2 lg:grid-cols-3">
+              {CERTIFICATES.map((c, i) => (
+                <Reveal key={c.title} delay={i * 100}>
+                  <div className="overflow-hidden rounded-2xl border border-border-c bg-surface transition-all hover:-translate-y-1.5 hover:shadow-lg">
+                    <div className="flex aspect-[4/3] items-center justify-center border-b border-border-c bg-gradient-to-br from-blue-100 to-surface text-blue-500">
+                      <c.icon size={40} />
+                    </div>
+                    <div className="p-5">
+                      <h4 className="mb-1 text-[15.5px] font-bold">{c.title}</h4>
+                      <span className="text-[12.5px] text-ink-soft">Placeholder — replace with certificate image</span>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+            <p className="mt-6.5 text-center text-[12.5px] text-ink-soft">
+              These are placeholder credential cards. Upload your real certificate images to <code>public/images/certificates/</code> and update this section with your exact certification titles and issuing bodies.
+            </p>
+          </div>
+        </section>
+
+        <section className="py-24">
+          <div className="mx-auto max-w-[1180px] px-6">
+            <Reveal className="mx-auto mb-13 max-w-xl text-center">
+              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Student Voices</span>
+              <h2 className="text-[28px] font-bold sm:text-4xl">What our students say</h2>
+            </Reveal>
+            <TestimonialSlider />
+          </div>
+        </section>
+
+        <section className="pb-24">
+          <Reveal className="mx-auto max-w-[1180px] px-6">
+            <div className="rounded-[22px] bg-gradient-to-br from-blue-600 to-navy-800 px-8 py-14 text-center text-white sm:px-16">
+              <h2 className="mb-3 text-[28px] font-bold text-white sm:text-4xl">Ready to build your first AI app?</h2>
+              <p className="mb-7.5 text-[#d7e2f4]">Browse upcoming cohorts and reserve your seat — registration takes less than five minutes.</p>
+              <div className="flex flex-wrap justify-center gap-3.5">
+                <Link href="/courses" className="inline-flex items-center justify-center rounded-full border-2 border-white px-7 py-3.5 text-[15px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white hover:text-navy-800">
+                  Browse Courses
+                </Link>
+                <Link href="/courses" className="inline-flex items-center justify-center rounded-full border-2 border-transparent bg-white px-7 py-3.5 text-[15px] font-semibold text-navy-800 transition hover:-translate-y-0.5">
+                  Register Now
+                </Link>
+              </div>
+            </div>
+          </Reveal>
+        </section>
+      </main>
+      <SiteFooter />
+    </>
+  );
+}

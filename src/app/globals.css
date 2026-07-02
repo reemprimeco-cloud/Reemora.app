@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #182437;
+
+  --navy-900: #0b1730;
+  --navy-800: #0f1e3c;
+  --navy-700: #142a4f;
+  --blue-600: #3f6bb0;
+  --blue-500: #4f7fbf;
+  --blue-400: #6f9bd4;
+  --blue-100: #e7effa;
+  --blue-050: #f4f8fd;
+
+  --surface: #ffffff;
+  --surface-alt: #f4f8fd;
+  --border-c: #e4e9f1;
+  --ink-soft: #55637a;
+}
+
+.dark {
+  --background: #0b1220;
+  --foreground: #e6ecf7;
+
+  --blue-100: #16233d;
+  --blue-050: #0f1830;
+
+  --surface: #101a30;
+  --surface-alt: #0e1729;
+  --border-c: #223251;
+  --ink-soft: #93a1bd;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-navy-900: var(--navy-900);
+  --color-navy-800: var(--navy-800);
+  --color-navy-700: var(--navy-700);
+  --color-blue-600: var(--blue-600);
+  --color-blue-500: var(--blue-500);
+  --color-blue-400: var(--blue-400);
+  --color-blue-100: var(--blue-100);
+  --color-blue-050: var(--blue-050);
+  --color-surface: var(--surface);
+  --color-surface-alt: var(--surface-alt);
+  --color-border-c: var(--border-c);
+  --color-ink-soft: var(--ink-soft);
+  --font-sans: var(--font-inter);
+  --font-head: var(--font-poppins);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-head), var(--font-sans), sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-30px, 30px) scale(1.08); }
+}
+.animate-float {
+  animation: float 14s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.7s ease both;
+}
