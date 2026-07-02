@@ -38,6 +38,15 @@ export async function GET(request: Request) {
       console.error(`payment callback: amount mismatch for payment ${paymentRowId} — expected ${payment.amount}, got ${mfStatus.InvoiceValue}`);
     }
 
+    // The callback can legitimately fire more than once for the same
+    // payment (browser back/refresh after redirect, a network-level retry,
+    // MyFatoorah re-sending the callback). Updating payment/registration
+    // status again is harmless (same value in, same value out), but
+    // decrement_seats is not idempotent — running it twice would deduct a
+    // seat twice for one registration. Only decrement on the transition
+    // into "paid", never on a repeat callback that finds it already paid.
+    const wasAlreadyPaid = payment.status === "paid";
+
     await supabase
       .from("payments")
       .update({
@@ -62,7 +71,7 @@ export async function GET(request: Request) {
         .update({ status: isPaid ? "confirmed" : "cancelled" })
         .eq("id", registration.id);
 
-      if (isPaid) {
+      if (isPaid && !wasAlreadyPaid) {
         await supabase.rpc("decrement_seats", {
           p_schedule_id: registration.course_schedule_id,
           p_seats: registration.seats,
