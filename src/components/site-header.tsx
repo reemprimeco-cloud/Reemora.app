@@ -38,7 +38,7 @@ export function SiteHeader() {
     >
       <div className="mx-auto flex h-[78px] max-w-[1180px] items-center justify-between px-6">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/images/logo.png" alt="Reemora logo" width={130} height={34} priority className="h-8 w-auto dark:brightness-0 dark:invert" />
+          <Image src="/images/logo.png" alt="Reemora logo" width={170} height={44} priority className="h-11 w-auto dark:brightness-0 dark:invert" />
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
