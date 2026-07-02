@@ -26,5 +26,10 @@ cp .env.example .env.local
 ## Security notes
 
 - `SUPABASE_SERVICE_ROLE_KEY` and `MYFATOORAH_API_KEY` must **never** be prefixed with `NEXT_PUBLIC_` — that prefix is Next.js's signal to inline a value into the browser bundle. Both are read only from server-side code (API routes / server components), never from a `"use client"` component.
+- **Do not mark `NEXT_PUBLIC_*` variables as "Sensitive" in Vercel.** They're already public by design (baked into the browser-visible JS bundle at build time regardless), so Sensitive mode gains nothing — but it also makes Vercel permanently hide the value from you, including your own future edits/verification. Only `SUPABASE_SERVICE_ROLE_KEY` and `MYFATOORAH_API_KEY` should be Sensitive.
 - `.env.local` is excluded from version control via `.gitignore` (`.env*` with a tracked `.env.example` exception that contains no real values).
 - No environment variable value has ever been printed to chat, logs beyond `console.error`'s generic connection-failure messages, or committed to this repository.
+
+## Troubleshooting: "Incorrect email or password" on `/admin/login` despite a confirmed, correctly-promoted account
+
+If `auth.users.email_confirmed_at` is set and `public.users.role = 'admin'` but sign-in still fails, check whether `NEXT_PUBLIC_SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_ANON_KEY` were marked **Sensitive** in Vercel. A Sensitive value can never be redisplayed for verification — if it was set incorrectly even once, there's no way to visually confirm or diagnose it afterward, and the app will keep failing to authenticate against the wrong project while returning a generic (and misleading) "Incorrect email or password" response. Fix: delete and recreate the variable with the correct value from Supabase → Settings → Data API (URL) / API Keys (anon/publishable key), without marking it Sensitive, then redeploy.
