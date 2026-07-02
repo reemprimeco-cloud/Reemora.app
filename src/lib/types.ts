@@ -1,59 +1,52 @@
-export type CourseLevel = "Beginner" | "Intermediate" | "Advanced";
-export type CourseStatus = "upcoming" | "ongoing" | "completed";
+import type { Database } from "@/lib/supabase/database.types";
 
-export interface Course {
-  id: string;
-  slug: string;
-  title: string;
-  category: string;
-  level: CourseLevel;
-  duration_weeks: number;
-  price: number;
-  currency: string;
-  image_url: string | null;
-  short_description: string;
-  description: string;
-  curriculum: string[];
-  instructor: string;
-  start_date: string | null;
-  end_date: string | null;
-  session_days: string | null;
-  session_time: string | null;
-  seats_total: number;
-  seats_available: number;
-  status: CourseStatus;
-  created_at: string;
-  updated_at: string;
-}
+type Tables = Database["public"]["Tables"];
 
-export type CourseInsert = Omit<
-  Course,
-  "id" | "created_at" | "updated_at" | "slug"
-> & { slug?: string };
+export type UserProfile = Tables["users"]["Row"];
+export type Instructor = Tables["instructors"]["Row"];
+export type Certificate = Tables["certificates"]["Row"];
+export type CourseCategory = Tables["course_categories"]["Row"];
+export type Course = Tables["courses"]["Row"];
+export type CourseSchedule = Tables["course_schedule"]["Row"];
+export type Registration = Tables["registrations"]["Row"];
+export type Payment = Tables["payments"]["Row"];
+export type PaymentTransaction = Tables["payment_transactions"]["Row"];
+export type Testimonial = Tables["testimonials"]["Row"];
+export type WebsiteSettingRow = Tables["website_settings"]["Row"];
+export type PortfolioItem = Tables["portfolio"]["Row"];
+export type ContactMessage = Tables["contact_messages"]["Row"];
 
-export type CourseUpdate = Partial<CourseInsert>;
+export type CourseLevel = Course["level"];
+export type ScheduleStatus = CourseSchedule["status"];
+export type PaymentStatus = Payment["status"];
 
-export type PaymentStatus = "pending" | "paid" | "failed" | "cancelled";
+/** Instructor with their certificates, as used on the homepage About/Certificates section. */
+export type InstructorWithCertificates = Instructor & {
+  certificates: Certificate[];
+};
 
-export interface Registration {
-  id: string;
-  course_id: string;
-  full_name: string;
-  email: string;
-  phone: string;
-  seats: number;
-  notes: string | null;
-  amount: number;
-  currency: string;
-  payment_status: PaymentStatus;
-  myfatoorah_invoice_id: string | null;
-  created_at: string;
-}
+/** Course joined with its category, instructor and schedule cohorts — the
+ *  shape used everywhere in the UI (catalog, detail page, admin). */
+export type CourseWithRelations = Course & {
+  category: CourseCategory | null;
+  instructor: Instructor | null;
+  schedules: CourseSchedule[];
+};
 
-export type RegistrationInsert = Omit<
-  Registration,
-  "id" | "created_at" | "payment_status" | "myfatoorah_invoice_id"
-> & {
-  payment_status?: PaymentStatus;
-  myfatoorah_invoice_id?: string | null;
+/** Convenience shape: a course paired with the single cohort a student is
+ *  registering for. */
+export type CourseWithSchedule = Course & {
+  category: CourseCategory | null;
+  instructor: Instructor | null;
+  schedule: CourseSchedule;
+};
+
+export type WebsiteSettings = {
+  site_name: string;
+  tagline: string;
+  contact_email: string;
+  contact_phone: string;
+  address: string;
+  social_links: { linkedin?: string; instagram?: string; twitter?: string };
+  cv_url: string;
 };

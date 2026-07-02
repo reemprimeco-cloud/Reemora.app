@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Layers, Rocket, Award, CalendarClock, Download, GraduationCap, ScrollText, Medal } from "lucide-react";
+import { Layers, Rocket, Award, CalendarClock, Download, GraduationCap } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { HeroSlider } from "@/components/hero-slider";
@@ -7,6 +7,9 @@ import { TestimonialSlider } from "@/components/testimonial-slider";
 import { CourseCard } from "@/components/course-card";
 import { Reveal } from "@/components/reveal";
 import { getCourses } from "@/lib/data/courses";
+import { getLeadInstructor } from "@/lib/data/instructors";
+import { getTestimonials } from "@/lib/data/testimonials";
+import { getWebsiteSettings } from "@/lib/data/settings";
 
 const FEATURES = [
   { icon: Layers, title: "AI-Powered Curriculum", desc: "Courses are continuously updated to reflect the latest AI tools, models and best practices." },
@@ -22,14 +25,22 @@ const STATS = [
   { value: "98%", label: "Satisfaction Rate" },
 ];
 
-const CERTIFICATES = [
-  { icon: GraduationCap, title: "International Certified Trainer (ICT)" },
-  { icon: ScrollText, title: "AI Product & Curriculum Design" },
-  { icon: Medal, title: "Professional Training & Facilitation" },
+const SKILLS = ["AI App Development", "Prompt Engineering", "Curriculum Design", "Public Speaking", "Product Strategy"];
+
+const TIMELINE = [
+  { date: "2024 — Present", title: "Founder & Lead Trainer, Reemora", desc: "Designing and delivering AI app-development courses for founders, developers and teams." },
+  { date: "International Certification", title: "Certified Professional Trainer", desc: "Certified under an internationally recognized training and instructional design standard." },
+  { date: "Prior Experience", title: "AI & Software Product Development", desc: "Years of hands-on experience building and shipping software and AI-powered products." },
 ];
 
 export default async function HomePage() {
-  const courses = (await getCourses()).slice(0, 3);
+  const [courses, instructor, testimonials, settings] = await Promise.all([
+    getCourses(),
+    getLeadInstructor(),
+    getTestimonials(),
+    getWebsiteSettings(),
+  ]);
+  const featuredCourses = courses.slice(0, 3);
 
   return (
     <>
@@ -78,11 +89,15 @@ export default async function HomePage() {
               <h2 className="mb-3.5 text-[28px] font-bold sm:text-4xl">Pick your path into AI app building</h2>
               <p className="text-[17px] text-ink-soft">A snapshot of what&apos;s open for registration right now. Browse the full catalog for dates, pricing and details.</p>
             </Reveal>
-            <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
-              {courses.map((c) => (
-                <CourseCard key={c.id} course={c} />
-              ))}
-            </div>
+            {featuredCourses.length ? (
+              <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
+                {featuredCourses.map((c) => (
+                  <CourseCard key={c.id} course={c} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-ink-soft">No courses published yet — check back soon.</p>
+            )}
             <div className="mt-11 text-center">
               <Link href="/courses" className="inline-flex items-center justify-center rounded-full border-2 border-transparent bg-navy-800 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-600">
                 View Full Course Catalog
@@ -103,23 +118,17 @@ export default async function HomePage() {
                 </div>
               </div>
               <div className="absolute -bottom-4.5 -right-4.5 rounded-2xl bg-surface px-5 py-4 text-center shadow-lg">
-                <strong className="block font-[family-name:var(--font-head)] text-[22px] text-blue-600">10+</strong>
+                <strong className="block font-[family-name:var(--font-head)] text-[22px] text-blue-600">{instructor?.years_experience ?? 10}+</strong>
                 <span className="text-xs text-ink-soft">Years Experience</span>
               </div>
             </Reveal>
             <Reveal delay={100}>
               <h3 className="mb-2 text-[15px] font-bold uppercase tracking-wide text-blue-600">About Your Trainer</h3>
-              <h2 className="mb-4.5 text-[28px] font-bold sm:text-4xl">Founder &amp; Lead Trainer at Reemora</h2>
-              <p className="mb-6.5 text-ink-soft">
-                An internationally certified trainer and AI product builder dedicated to helping founders, developers and teams turn ideas into working AI applications. Combines hands-on software development experience with a certified training methodology to make complex AI concepts practical and immediately usable.
-              </p>
+              <h2 className="mb-4.5 text-[28px] font-bold sm:text-4xl">{instructor?.title ?? "Founder & Lead Trainer"} at {settings.site_name}</h2>
+              <p className="mb-6.5 text-ink-soft">{instructor?.bio}</p>
 
               <div className="mb-7 flex flex-col gap-4.5">
-                {[
-                  { date: "2024 — Present", title: "Founder & Lead Trainer, Reemora", desc: "Designing and delivering AI app-development courses for founders, developers and teams." },
-                  { date: "International Certification", title: "Certified Professional Trainer", desc: "Certified under an internationally recognized training and instructional design standard." },
-                  { date: "Prior Experience", title: "AI & Software Product Development", desc: "Years of hands-on experience building and shipping software and AI-powered products." },
-                ].map((item) => (
+                {TIMELINE.map((item) => (
                   <div key={item.title} className="flex gap-4">
                     <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full bg-blue-500 shadow-[0_0_0_4px_var(--color-blue-100)]" />
                     <div>
@@ -132,12 +141,12 @@ export default async function HomePage() {
               </div>
 
               <div className="mb-7 flex flex-wrap gap-2.5">
-                {["AI App Development", "Prompt Engineering", "Curriculum Design", "Public Speaking", "Product Strategy"].map((s) => (
+                {SKILLS.map((s) => (
                   <span key={s} className="rounded-full bg-blue-100 px-3.5 py-1.5 text-[12.5px] font-bold text-blue-600">{s}</span>
                 ))}
               </div>
 
-              <a href="/cv/reemora-cv.pdf" download className="inline-flex items-center gap-2 rounded-full border-2 border-transparent bg-blue-500 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-navy-800">
+              <a href={settings.cv_url} download className="inline-flex items-center gap-2 rounded-full border-2 border-transparent bg-blue-500 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-navy-800">
                 <Download size={16} /> Download Full CV (PDF)
               </a>
               <p className="mt-3.5 text-[12.5px] text-ink-soft">
@@ -152,25 +161,34 @@ export default async function HomePage() {
             <Reveal className="mx-auto mb-13 max-w-xl text-center">
               <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Credentials</span>
               <h2 className="mb-3.5 text-[28px] font-bold sm:text-4xl">International Certified Trainer</h2>
-              <p className="text-[17px] text-ink-soft">Certifications and credentials that back the training methodology behind every Reemora course.</p>
+              <p className="text-[17px] text-ink-soft">Certifications and credentials that back the training methodology behind every {settings.site_name} course.</p>
             </Reveal>
-            <div className="grid grid-cols-1 gap-6.5 sm:grid-cols-2 lg:grid-cols-3">
-              {CERTIFICATES.map((c, i) => (
-                <Reveal key={c.title} delay={i * 100}>
-                  <div className="overflow-hidden rounded-2xl border border-border-c bg-surface transition-all hover:-translate-y-1.5 hover:shadow-lg">
-                    <div className="flex aspect-[4/3] items-center justify-center border-b border-border-c bg-gradient-to-br from-blue-100 to-surface text-blue-500">
-                      <c.icon size={40} />
+            {instructor && instructor.certificates.length ? (
+              <div className="grid grid-cols-1 gap-6.5 sm:grid-cols-2 lg:grid-cols-3">
+                {instructor.certificates.map((cert, i) => (
+                  <Reveal key={cert.id} delay={i * 100}>
+                    <div className="overflow-hidden rounded-2xl border border-border-c bg-surface transition-all hover:-translate-y-1.5 hover:shadow-lg">
+                      <div className="relative flex aspect-[4/3] items-center justify-center border-b border-border-c bg-gradient-to-br from-blue-100 to-surface text-blue-500">
+                        {cert.image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={cert.image_url} alt={cert.title} className="h-full w-full object-cover" />
+                        ) : (
+                          <GraduationCap size={40} />
+                        )}
+                      </div>
+                      <div className="p-5">
+                        <h4 className="mb-1 text-[15.5px] font-bold">{cert.title}</h4>
+                        <span className="text-[12.5px] text-ink-soft">{cert.issuing_body || "Placeholder — replace with certificate image"}</span>
+                      </div>
                     </div>
-                    <div className="p-5">
-                      <h4 className="mb-1 text-[15.5px] font-bold">{c.title}</h4>
-                      <span className="text-[12.5px] text-ink-soft">Placeholder — replace with certificate image</span>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
+                  </Reveal>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-ink-soft">No certificates published yet.</p>
+            )}
             <p className="mt-6.5 text-center text-[12.5px] text-ink-soft">
-              These are placeholder credential cards. Upload your real certificate images to <code>public/images/certificates/</code> and update this section with your exact certification titles and issuing bodies.
+              Manage these from the admin panel. Upload real certificate images and update titles/issuing bodies there.
             </p>
           </div>
         </section>
@@ -181,7 +199,7 @@ export default async function HomePage() {
               <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Student Voices</span>
               <h2 className="text-[28px] font-bold sm:text-4xl">What our students say</h2>
             </Reveal>
-            <TestimonialSlider />
+            <TestimonialSlider testimonials={testimonials} />
           </div>
         </section>
 
@@ -202,7 +220,7 @@ export default async function HomePage() {
           </Reveal>
         </section>
       </main>
-      <SiteFooter />
+      <SiteFooter settings={settings} />
     </>
   );
 }

@@ -4,26 +4,30 @@ import * as React from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { Course, CourseLevel } from "@/lib/types";
+import type { CourseCategory, CourseLevel, CourseWithRelations, Instructor } from "@/lib/types";
 import { slugify } from "@/lib/utils";
 
 export function CourseEditorModal({
   course,
+  categories,
+  instructors,
   onClose,
   onSaved,
 }: {
-  course: Course | null;
+  course: CourseWithRelations | null;
+  categories: CourseCategory[];
+  instructors: Instructor[];
   onClose: () => void;
   onSaved: () => void;
 }) {
   const [title, setTitle] = React.useState(course?.title ?? "");
-  const [category, setCategory] = React.useState(course?.category ?? "");
+  const [categoryId, setCategoryId] = React.useState(course?.category_id ?? categories[0]?.id ?? "");
+  const [instructorId, setInstructorId] = React.useState(course?.instructor_id ?? instructors[0]?.id ?? "");
   const [level, setLevel] = React.useState<CourseLevel>(course?.level ?? "Beginner");
   const [price, setPrice] = React.useState(course?.price ?? 0);
   const [currency, setCurrency] = React.useState(course?.currency ?? "KWD");
   const [durationWeeks, setDurationWeeks] = React.useState(course?.duration_weeks ?? 4);
-  const [seatsTotal, setSeatsTotal] = React.useState(course?.seats_total ?? 20);
-  const [instructor, setInstructor] = React.useState(course?.instructor ?? "Reemora Certified Trainer");
+  const [isPublished, setIsPublished] = React.useState(course?.is_published ?? true);
   const [shortDescription, setShortDescription] = React.useState(course?.short_description ?? "");
   const [description, setDescription] = React.useState(course?.description ?? "");
   const [curriculum, setCurriculum] = React.useState((course?.curriculum ?? []).join("\n"));
@@ -62,13 +66,13 @@ export function CourseEditorModal({
     const supabase = createClient();
     const payload = {
       title,
-      category,
+      category_id: categoryId || null,
+      instructor_id: instructorId || null,
       level,
       price,
       currency,
       duration_weeks: durationWeeks,
-      seats_total: seatsTotal,
-      instructor,
+      is_published: isPublished,
       short_description: shortDescription,
       description,
       curriculum: curriculum.split("\n").map((s) => s.trim()).filter(Boolean),
@@ -77,24 +81,27 @@ export function CourseEditorModal({
 
     try {
       if (course) {
-        const seatsBooked = course.seats_total - course.seats_available;
-        const { error } = await supabase
-          .from("courses")
-          .update({ ...payload, seats_available: Math.max(0, seatsTotal - seatsBooked) })
-          .eq("id", course.id);
+        const { error } = await supabase.from("courses").update(payload).eq("id", course.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("courses").insert({
-          ...payload,
-          slug: slugify(title),
-          seats_available: seatsTotal,
-          status: "upcoming",
-          start_date: null,
-          end_date: null,
+        const { data: newCourse, error } = await supabase
+          .from("courses")
+          .insert({ ...payload, slug: slugify(title) })
+          .select()
+          .single();
+        if (error) throw error;
+
+        // Every course needs at least one cohort to be registrable; seed a
+        // TBA placeholder the admin can fill in from the Scheduling tab.
+        const { error: scheduleError } = await supabase.from("course_schedule").insert({
+          course_id: newCourse.id,
+          seats_total: 20,
+          seats_available: 20,
           session_days: "TBA",
           session_time: "TBA",
+          status: "upcoming",
         });
-        if (error) throw error;
+        if (scheduleError) throw scheduleError;
       }
       onSaved();
     } catch (err) {
@@ -139,7 +146,12 @@ export function CourseEditorModal({
             </div>
             <div>
               <FieldLabel>Category</FieldLabel>
-              <Input value={category} onChange={setCategory} required placeholder="e.g. AI Development" />
+              <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required className={selectClass}>
+                <option value="" disabled>Select a category</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
             </div>
             <div>
               <FieldLabel>Level</FieldLabel>
@@ -162,12 +174,19 @@ export function CourseEditorModal({
               <input type="number" min={1} value={durationWeeks} onChange={(e) => setDurationWeeks(parseInt(e.target.value) || 1)} required className={selectClass} />
             </div>
             <div>
-              <FieldLabel>Total Seats</FieldLabel>
-              <input type="number" min={1} value={seatsTotal} onChange={(e) => setSeatsTotal(parseInt(e.target.value) || 1)} required className={selectClass} />
-            </div>
-            <div className="sm:col-span-2">
               <FieldLabel>Instructor</FieldLabel>
-              <Input value={instructor} onChange={setInstructor} required />
+              <select value={instructorId} onChange={(e) => setInstructorId(e.target.value)} className={selectClass}>
+                <option value="">Unassigned</option>
+                {instructors.map((ins) => (
+                  <option key={ins.id} value={ins.id}>{ins.full_name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end pb-2.5">
+              <label className="flex items-center gap-2.5 text-sm font-semibold">
+                <input type="checkbox" checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} />
+                Published (visible on the public site)
+              </label>
             </div>
             <div className="sm:col-span-2">
               <FieldLabel>Short Description (shown on cards)</FieldLabel>
@@ -182,6 +201,12 @@ export function CourseEditorModal({
               <textarea value={curriculum} onChange={(e) => setCurriculum(e.target.value)} required className={`${selectClass} min-h-[100px]`} />
             </div>
           </div>
+
+          {!course && (
+            <p className="text-[12.5px] text-ink-soft">
+              A placeholder cohort (TBA dates, 20 seats) will be created automatically — adjust it from the Scheduling tab.
+            </p>
+          )}
 
           <button type="submit" disabled={saving || uploading} className="w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-[15px] font-semibold text-white transition hover:bg-navy-800 disabled:opacity-60">
             {saving ? "Saving..." : "Save Course"}

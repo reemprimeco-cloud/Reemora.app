@@ -10,9 +10,16 @@ interface RegistrationRow {
   seats: number;
   amount: number;
   currency: string;
-  payment_status: string;
+  status: string;
   created_at: string;
-  courses: { title: string }[] | null;
+  course_schedule: { courses: { title: string } | { title: string }[] | null } | { courses: { title: string } | { title: string }[] | null }[] | null;
+}
+
+function courseTitleOf(r: RegistrationRow): string {
+  const sched = Array.isArray(r.course_schedule) ? r.course_schedule[0] : r.course_schedule;
+  const courses = sched?.courses;
+  const course = Array.isArray(courses) ? courses[0] : courses;
+  return course?.title ?? "—";
 }
 
 export default async function AdminRegistrationsPage() {
@@ -22,7 +29,7 @@ export default async function AdminRegistrationsPage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("registrations")
-      .select("id, full_name, email, phone, seats, amount, currency, payment_status, created_at, courses(title)")
+      .select("id, full_name, email, phone, seats, amount, currency, status, created_at, course_schedule(courses(title))")
       .order("created_at", { ascending: false });
     registrations = (data as unknown as RegistrationRow[]) ?? [];
   }
@@ -52,11 +59,11 @@ export default async function AdminRegistrationsPage() {
                     <td className="px-6 py-3.5">{r.full_name}</td>
                     <td className="px-6 py-3.5">{r.email}</td>
                     <td className="px-6 py-3.5">{r.phone}</td>
-                    <td className="px-6 py-3.5">{r.courses?.[0]?.title ?? "—"}</td>
+                    <td className="px-6 py-3.5">{courseTitleOf(r)}</td>
                     <td className="px-6 py-3.5">{r.seats}</td>
                     <td className="px-6 py-3.5">{formatMoney(r.amount, r.currency)}</td>
                     <td className="px-6 py-3.5">
-                      <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-600">{r.payment_status}</span>
+                      <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-600">{r.status}</span>
                     </td>
                     <td className="px-6 py-3.5">{new Date(r.created_at).toLocaleDateString()}</td>
                   </tr>

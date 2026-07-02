@@ -3,15 +3,20 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, BookOpen, CalendarClock, ClipboardList, LogOut } from "lucide-react";
+import { LayoutDashboard, BookOpen, CalendarClock, ClipboardList, LogOut, Tags, GraduationCap, Quote, Mail, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/courses", label: "Courses", icon: BookOpen },
+  { href: "/admin/categories", label: "Categories", icon: Tags },
   { href: "/admin/schedule", label: "Scheduling", icon: CalendarClock },
   { href: "/admin/registrations", label: "Registrations", icon: ClipboardList },
+  { href: "/admin/trainer", label: "Trainer & Certificates", icon: GraduationCap },
+  { href: "/admin/testimonials", label: "Testimonials", icon: Quote },
+  { href: "/admin/messages", label: "Contact Messages", icon: Mail },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export function AdminSidebar() {

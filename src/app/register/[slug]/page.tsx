@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getCourseBySlug, getCourses } from "@/lib/data/courses";
+import { primarySchedule } from "@/lib/course-utils";
+import { getWebsiteSettings } from "@/lib/data/settings";
 import { RegisterForm } from "@/components/register-form";
 
 interface Props {
@@ -24,8 +26,10 @@ export const metadata: Metadata = {
 
 export default async function RegisterPage({ params }: Props) {
   const { slug } = await params;
-  const course = await getCourseBySlug(slug);
+  const [course, settings] = await Promise.all([getCourseBySlug(slug), getWebsiteSettings()]);
   if (!course) notFound();
+  const schedule = primarySchedule(course);
+  if (!schedule) notFound();
 
   return (
     <>
@@ -41,11 +45,11 @@ export default async function RegisterPage({ params }: Props) {
             <p className="text-ink-soft">Fill in your details below. You&apos;ll be redirected to a secure MyFatoorah payment page to complete your registration.</p>
           </div>
           <Suspense fallback={null}>
-            <RegisterForm course={course} />
+            <RegisterForm course={course} schedule={schedule} />
           </Suspense>
         </div>
       </main>
-      <SiteFooter />
+      <SiteFooter settings={settings} />
     </>
   );
 }

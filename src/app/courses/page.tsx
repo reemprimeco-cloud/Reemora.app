@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getCourses } from "@/lib/data/courses";
+import { getWebsiteSettings } from "@/lib/data/settings";
 import { CourseCatalog } from "@/components/course-catalog";
 
 export const metadata: Metadata = {
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function CoursesPage() {
-  const courses = await getCourses();
+  const [courses, settings] = await Promise.all([getCourses(), getWebsiteSettings()]);
 
   return (
     <>
@@ -35,7 +36,7 @@ export default async function CoursesPage() {
           </div>
         </section>
       </main>
-      <SiteFooter />
+      <SiteFooter settings={settings} />
     </>
   );
 }

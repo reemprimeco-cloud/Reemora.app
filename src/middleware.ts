@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import type { Database } from "@/lib/supabase/database.types";
 
 const isSupabaseConfigured = Boolean(
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -9,17 +10,18 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isAdminRoute = path.startsWith("/admin") && path !== "/admin/login";
 
-  // Supabase isn't provisioned yet — skip auth gating so the rest of the
-  // site (and dev preview) still works. Admin routes fall through
+  // Supabase isn't provisioned/reachable — skip auth gating so the rest of
+  // the site (and dev preview) still works. Admin routes fall through
   // unprotected in this state; do not deploy to production without
-  // NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY configured.
+  // NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY configured
+  // and reachable.
   if (!isSupabaseConfigured) {
     return NextResponse.next({ request });
   }
 
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -40,9 +42,15 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // A network/Supabase outage must not 500 the entire site. Fail closed for
+  // admin routes (treat as logged-out) and fail open for everything else.
+  let user = null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (err) {
+    console.error("middleware: auth.getUser() failed:", err);
+  }
 
   if (isAdminRoute && !user) {
     const loginUrl = new URL("/admin/login", request.url);

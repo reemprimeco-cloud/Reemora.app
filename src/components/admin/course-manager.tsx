@@ -4,21 +4,31 @@ import * as React from "react";
 import Image from "next/image";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { Course } from "@/lib/types";
+import type { CourseCategory, CourseWithRelations, Instructor } from "@/lib/types";
 import { formatMoney } from "@/lib/utils";
 import { CourseEditorModal } from "@/components/admin/course-editor-modal";
 
-export function CourseManager({ initialCourses }: { initialCourses: Course[] }) {
+const COURSE_SELECT = "*, category:course_categories(*), instructor:instructors(*), schedules:course_schedule(*)";
+
+export function CourseManager({
+  initialCourses,
+  categories,
+  instructors,
+}: {
+  initialCourses: CourseWithRelations[];
+  categories: CourseCategory[];
+  instructors: Instructor[];
+}) {
   const [courses, setCourses] = React.useState(initialCourses);
-  const [editing, setEditing] = React.useState<Course | null | "new">(null);
+  const [editing, setEditing] = React.useState<CourseWithRelations | null | "new">(null);
 
   async function refresh() {
     const supabase = createClient();
-    const { data } = await supabase.from("courses").select("*").order("start_date", { ascending: true, nullsFirst: false });
-    if (data) setCourses(data as Course[]);
+    const { data } = await supabase.from("courses").select(COURSE_SELECT).order("created_at", { ascending: true });
+    if (data) setCourses(data as unknown as CourseWithRelations[]);
   }
 
-  async function handleDelete(course: Course) {
+  async function handleDelete(course: CourseWithRelations) {
     if (!confirm(`Delete "${course.title}"? This cannot be undone.`)) return;
     const supabase = createClient();
     const { error } = await supabase.from("courses").delete().eq("id", course.id);
@@ -50,8 +60,7 @@ export function CourseManager({ initialCourses }: { initialCourses: Course[] }) 
                 <th className="px-6 py-3.5 text-left">Category</th>
                 <th className="px-6 py-3.5 text-left">Level</th>
                 <th className="px-6 py-3.5 text-left">Price</th>
-                <th className="px-6 py-3.5 text-left">Seats</th>
-                <th className="px-6 py-3.5 text-left">Status</th>
+                <th className="px-6 py-3.5 text-left">Published</th>
                 <th className="px-6 py-3.5 text-left">Actions</th>
               </tr>
             </thead>
@@ -65,12 +74,13 @@ export function CourseManager({ initialCourses }: { initialCourses: Course[] }) 
                       </div>
                     </td>
                     <td className="px-6 py-3 font-medium">{c.title}</td>
-                    <td className="px-6 py-3">{c.category}</td>
+                    <td className="px-6 py-3">{c.category?.name ?? "—"}</td>
                     <td className="px-6 py-3">{c.level}</td>
                     <td className="px-6 py-3">{formatMoney(c.price, c.currency)}</td>
-                    <td className="px-6 py-3">{c.seats_available}/{c.seats_total}</td>
                     <td className="px-6 py-3">
-                      <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-600">{c.status}</span>
+                      <span className={`rounded-full px-3 py-1 text-xs font-bold ${c.is_published ? "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300" : "bg-blue-100 text-blue-600"}`}>
+                        {c.is_published ? "Published" : "Draft"}
+                      </span>
                     </td>
                     <td className="px-6 py-3">
                       <div className="flex gap-2">
@@ -86,7 +96,7 @@ export function CourseManager({ initialCourses }: { initialCourses: Course[] }) 
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-ink-soft">No courses yet. Click &quot;Add Course&quot; to create one.</td>
+                  <td colSpan={7} className="px-6 py-8 text-center text-ink-soft">No courses yet. Click &quot;Add Course&quot; to create one.</td>
                 </tr>
               )}
             </tbody>
@@ -97,6 +107,8 @@ export function CourseManager({ initialCourses }: { initialCourses: Course[] }) 
       {editing && (
         <CourseEditorModal
           course={editing === "new" ? null : editing}
+          categories={categories}
+          instructors={instructors}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null);

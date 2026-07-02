@@ -2,11 +2,11 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import type { Course } from "@/lib/types";
+import type { CourseWithRelations, CourseSchedule } from "@/lib/types";
 import { formatDate, formatMoney } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
-export function RegisterForm({ course }: { course: Course }) {
+export function RegisterForm({ course, schedule }: { course: CourseWithRelations; schedule: CourseSchedule }) {
   const searchParams = useSearchParams();
   const initialStatus = searchParams.get("status");
 
@@ -51,7 +51,7 @@ export function RegisterForm({ course }: { course: Course }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          courseId: course.id,
+          courseScheduleId: schedule.id,
           courseSlug: course.slug,
           courseTitle: course.title,
           fullName,
@@ -156,7 +156,7 @@ export function RegisterForm({ course }: { course: Course }) {
         <h4 className="mb-4 text-lg font-bold">Order Summary</h4>
         {[
           ["Course", course.title],
-          ["Start Date", formatDate(course.start_date)],
+          ["Start Date", formatDate(schedule.start_date)],
           ["Price per seat", formatMoney(course.price, course.currency)],
           ["Seats", String(seats)],
         ].map(([label, value]) => (

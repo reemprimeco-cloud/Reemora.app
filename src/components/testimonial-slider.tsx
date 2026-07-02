@@ -2,39 +2,21 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import type { Testimonial } from "@/lib/types";
 
-const TESTIMONIALS = [
-  {
-    quote:
-      "I went from zero technical background to launching my own AI-powered app in six weeks. The hands-on approach made all the difference.",
-    name: "Sara A.",
-    role: "Founder, Early-Stage Startup",
-  },
-  {
-    quote:
-      "The prompt engineering course completely changed how our development team ships AI features. Practical, structured, and immediately useful.",
-    name: "Faisal M.",
-    role: "Software Engineer",
-  },
-  {
-    quote:
-      "Best training investment I've made. The trainer's real-world experience shows in every session.",
-    name: "Lulwa K.",
-    role: "Product Manager",
-  },
-];
-
-export function TestimonialSlider() {
+export function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
   const [current, setCurrent] = React.useState(0);
 
   React.useEffect(() => {
+    if (testimonials.length < 2) return;
     const timer = setInterval(() => {
-      setCurrent((c) => (c + 1) % TESTIMONIALS.length);
+      setCurrent((c) => (c + 1) % testimonials.length);
     }, 8000);
     return () => clearInterval(timer);
-  }, []);
+  }, [testimonials.length]);
 
-  const t = TESTIMONIALS[current];
+  if (!testimonials.length) return null;
+  const t = testimonials[current];
 
   return (
     <div className="mx-auto max-w-[760px] text-center">
@@ -42,22 +24,24 @@ export function TestimonialSlider() {
         <p className="mb-5.5 font-[family-name:var(--font-head)] text-xl font-semibold text-foreground sm:text-[21px]">
           &ldquo;{t.quote}&rdquo;
         </p>
-        <strong className="block text-foreground">{t.name}</strong>
-        <span className="text-[13.5px] text-ink-soft">{t.role}</span>
+        <strong className="block text-foreground">{t.student_name}</strong>
+        <span className="text-[13.5px] text-ink-soft">{t.role_company}</span>
       </div>
-      <div className="mt-7 flex justify-center gap-2">
-        {TESTIMONIALS.map((_, i) => (
-          <button
-            key={i}
-            aria-label={`Go to testimonial ${i + 1}`}
-            onClick={() => setCurrent(i)}
-            className={cn(
-              "h-2 rounded-full bg-border-c transition-all",
-              i === current ? "w-5.5 bg-blue-500" : "w-2"
-            )}
-          />
-        ))}
-      </div>
+      {testimonials.length > 1 && (
+        <div className="mt-7 flex justify-center gap-2">
+          {testimonials.map((item, i) => (
+            <button
+              key={item.id}
+              aria-label={`Go to testimonial ${i + 1}`}
+              onClick={() => setCurrent(i)}
+              className={cn(
+                "h-2 rounded-full bg-border-c transition-all",
+                i === current ? "w-5.5 bg-blue-500" : "w-2"
+              )}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

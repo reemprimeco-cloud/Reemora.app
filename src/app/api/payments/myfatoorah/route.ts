@@ -7,7 +7,7 @@ export async function POST(request: Request) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
 
   let body: {
-    courseId: string;
+    courseScheduleId: string;
     courseSlug: string;
     courseTitle: string;
     fullName: string;
@@ -25,9 +25,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { courseId, courseSlug, courseTitle, fullName, email, phone, seats, notes, unitPrice, currency } = body;
+  const { courseScheduleId, courseSlug, courseTitle, fullName, email, phone, seats, notes, unitPrice, currency } = body;
 
-  if (!courseId || !fullName || !email || !phone || !seats || seats < 1) {
+  if (!courseScheduleId || !fullName || !email || !phone || !seats || seats < 1) {
     return NextResponse.json({ error: "Missing required registration fields" }, { status: 400 });
   }
 
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   const { data: registration, error: insertError } = await supabase
     .from("registrations")
     .insert({
-      course_id: courseId,
+      course_schedule_id: courseScheduleId,
       full_name: fullName,
       email,
       phone,
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       notes: notes || null,
       amount,
       currency,
-      payment_status: "pending",
+      status: "pending",
     })
     .select()
     .single();
@@ -63,6 +63,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not save your registration. Please try again." }, { status: 500 });
   }
 
+  const { data: payment, error: paymentError } = await supabase
+    .from("payments")
+    .insert({
+      registration_id: registration.id,
+      amount,
+      currency,
+      status: "pending",
+      method: "myfatoorah",
+    })
+    .select()
+    .single();
+
+  if (paymentError || !payment) {
+    console.error("payment insert error:", paymentError?.message);
+    return NextResponse.json({ error: "Could not start payment. Please try again." }, { status: 500 });
+  }
+
   try {
     const { invoiceUrl, invoiceId } = await createMyFatoorahPayment({
       customerName: fullName,
@@ -70,20 +87,30 @@ export async function POST(request: Request) {
       customerPhone: phone,
       amount,
       currency,
-      reference: registration.id,
+      reference: payment.id,
       itemName: courseTitle,
-      callbackUrl: `${siteUrl}/api/payments/callback?registrationId=${registration.id}&courseSlug=${courseSlug}`,
+      callbackUrl: `${siteUrl}/api/payments/callback?paymentRowId=${payment.id}&courseSlug=${courseSlug}`,
       errorUrl: `${siteUrl}/register/${courseSlug}?status=failed&ref=${registration.id}`,
     });
 
-    await supabase
-      .from("registrations")
-      .update({ myfatoorah_invoice_id: String(invoiceId) })
-      .eq("id", registration.id);
+    await supabase.from("payments").update({ myfatoorah_invoice_id: String(invoiceId) }).eq("id", payment.id);
+    await supabase.from("payment_transactions").insert({
+      payment_id: payment.id,
+      event_type: "created",
+      status: "invoice_created",
+      raw_response: { invoiceId, invoiceUrl },
+    });
 
     return NextResponse.json({ invoiceUrl, registrationId: registration.id });
   } catch (err) {
     console.error("MyFatoorah error:", err);
+    await supabase.from("payment_transactions").insert({
+      payment_id: payment.id,
+      event_type: "error",
+      status: "create_failed",
+      raw_response: { message: String(err) },
+    });
+
     return NextResponse.json(
       {
         error:

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Clock, CalendarDays, Users } from "lucide-react";
-import type { Course } from "@/lib/types";
+import type { CourseWithRelations } from "@/lib/types";
 import { formatDate, formatMoney } from "@/lib/utils";
+import { primarySchedule } from "@/lib/course-utils";
 
-export function CourseCard({ course }: { course: Course }) {
+export function CourseCard({ course }: { course: CourseWithRelations }) {
   const image = course.image_url || `/images/courses/${course.slug}.svg`;
+  const schedule = primarySchedule(course);
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-[22px] border border-border-c bg-surface transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl">
@@ -26,8 +28,12 @@ export function CourseCard({ course }: { course: Course }) {
       <div className="flex flex-1 flex-col gap-2.5 p-5.5">
         <div className="flex flex-wrap gap-3.5 text-[12.5px] font-semibold text-ink-soft">
           <span className="flex items-center gap-1.5"><Clock size={13} /> {course.duration_weeks} weeks</span>
-          <span className="flex items-center gap-1.5"><CalendarDays size={13} /> {formatDate(course.start_date)}</span>
-          <span className="flex items-center gap-1.5"><Users size={13} /> {course.seats_available}/{course.seats_total} left</span>
+          {schedule && (
+            <>
+              <span className="flex items-center gap-1.5"><CalendarDays size={13} /> {formatDate(schedule.start_date)}</span>
+              <span className="flex items-center gap-1.5"><Users size={13} /> {schedule.seats_available}/{schedule.seats_total} left</span>
+            </>
+          )}
         </div>
         <h3 className="text-[19px] font-bold text-foreground">{course.title}</h3>
         <p className="flex-1 text-sm text-ink-soft">{course.short_description}</p>

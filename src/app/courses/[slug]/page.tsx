@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { getCourseBySlug, getCourses } from "@/lib/data/courses";
+import { primarySchedule } from "@/lib/course-utils";
+import { getWebsiteSettings } from "@/lib/data/settings";
 import { formatDate, formatMoney } from "@/lib/utils";
 
 interface Props {
@@ -29,10 +31,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CourseDetailPage({ params }: Props) {
   const { slug } = await params;
-  const course = await getCourseBySlug(slug);
+  const [course, settings] = await Promise.all([getCourseBySlug(slug), getWebsiteSettings()]);
   if (!course) notFound();
 
   const image = course.image_url || `/images/courses/${course.slug}.svg`;
+  const schedule = primarySchedule(course);
 
   return (
     <>
@@ -48,7 +51,7 @@ export default async function CourseDetailPage({ params }: Props) {
                 <Image src={image} alt={course.title} fill className="object-cover" />
               </div>
               <span className="mb-3 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">
-                {course.category} · {course.level}
+                {course.category?.name ?? "Course"} · {course.level}
               </span>
               <h1 className="mb-4 text-[32px] font-bold sm:text-[38px]">{course.title}</h1>
               <p className="mb-8.5 text-[16.5px] text-ink-soft">{course.description}</p>
@@ -69,13 +72,13 @@ export default async function CourseDetailPage({ params }: Props) {
             <div className="sticky top-[100px] rounded-[22px] border border-border-c bg-surface p-7.5 shadow-sm">
               <h3 className="mb-4.5 text-2xl font-bold">{formatMoney(course.price, course.currency)}</h3>
               {[
-                ["Instructor", course.instructor],
+                ["Instructor", course.instructor?.full_name ?? "Reemora Certified Trainer"],
                 ["Duration", `${course.duration_weeks} weeks`],
-                ["Start Date", formatDate(course.start_date)],
-                ["End Date", formatDate(course.end_date)],
-                ["Sessions", course.session_days ?? "TBA"],
-                ["Time", course.session_time ?? "TBA"],
-                ["Seats Left", `${course.seats_available} / ${course.seats_total}`],
+                ["Start Date", formatDate(schedule?.start_date)],
+                ["End Date", formatDate(schedule?.end_date)],
+                ["Sessions", schedule?.session_days ?? "TBA"],
+                ["Time", schedule?.session_time ?? "TBA"],
+                ["Seats Left", schedule ? `${schedule.seats_available} / ${schedule.seats_total}` : "TBA"],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between border-b border-border-c py-3 text-sm last:border-none">
                   <span className="text-ink-soft">{label}</span>
@@ -86,13 +89,13 @@ export default async function CourseDetailPage({ params }: Props) {
                 href={`/register/${course.slug}`}
                 className="mt-5.5 block w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-center text-[15px] font-semibold text-white transition hover:bg-navy-800"
               >
-                {course.seats_available > 0 ? "Register for This Course" : "Join Waitlist"}
+                {schedule && schedule.seats_available > 0 ? "Register for This Course" : "Join Waitlist"}
               </Link>
             </div>
           </div>
         </div>
       </main>
-      <SiteFooter />
+      <SiteFooter settings={settings} />
     </>
   );
 }

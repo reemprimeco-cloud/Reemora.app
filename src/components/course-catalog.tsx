@@ -2,27 +2,28 @@
 
 import * as React from "react";
 import { Search } from "lucide-react";
-import type { Course } from "@/lib/types";
+import type { CourseWithRelations } from "@/lib/types";
 import { CourseCard } from "@/components/course-card";
 
-export function CourseCatalog({ courses }: { courses: Course[] }) {
+export function CourseCatalog({ courses }: { courses: CourseWithRelations[] }) {
   const [term, setTerm] = React.useState("");
   const [category, setCategory] = React.useState("");
   const [level, setLevel] = React.useState("");
 
   const categories = React.useMemo(
-    () => Array.from(new Set(courses.map((c) => c.category))).sort(),
+    () => Array.from(new Set(courses.map((c) => c.category?.name).filter((n): n is string => Boolean(n)))).sort(),
     [courses]
   );
 
   const filtered = courses.filter((c) => {
     const q = term.trim().toLowerCase();
+    const categoryName = c.category?.name ?? "";
     const matchesTerm =
       !q ||
       c.title.toLowerCase().includes(q) ||
       c.short_description.toLowerCase().includes(q) ||
-      c.category.toLowerCase().includes(q);
-    const matchesCategory = !category || c.category === category;
+      categoryName.toLowerCase().includes(q);
+    const matchesCategory = !category || categoryName === category;
     const matchesLevel = !level || c.level === level;
     return matchesTerm && matchesCategory && matchesLevel;
   });
