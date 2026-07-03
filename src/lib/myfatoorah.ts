@@ -1,4 +1,6 @@
-const BASE_URL = process.env.MYFATOORAH_BASE_URL || "https://apitest.myfatoorah.com";
+const RAW_BASE_URL = process.env.MYFATOORAH_BASE_URL || "https://apitest.myfatoorah.com";
+// Strip whitespace and any trailing slash so we can concatenate `/v2/...` reliably.
+const BASE_URL = RAW_BASE_URL.trim().replace(/\/+$/, "");
 
 interface SendPaymentParams {
   customerName: string;
@@ -12,21 +14,63 @@ interface SendPaymentParams {
   errorUrl: string;
 }
 
-export async function createMyFatoorahPayment(params: SendPaymentParams) {
-  const apiKey = process.env.MYFATOORAH_API_KEY;
-  if (!apiKey) {
+/** Reads and validates the API key from the env, returning diagnostics we can
+ *  safely log. Never logs the key itself — only its length, first/last two
+ *  characters, and shape flags, which is enough to diagnose truncation,
+ *  wrong-key-type, and whitespace bugs without leaking the secret. */
+function readApiKey() {
+  const raw = process.env.MYFATOORAH_API_KEY ?? "";
+  const trimmed = raw.trim();
+  if (!trimmed) {
     throw new Error(
       "MyFatoorah is not configured. Set MYFATOORAH_API_KEY in your deployment environment variables."
     );
   }
+  return {
+    key: trimmed,
+    diag: {
+      length: trimmed.length,
+      hadWhitespace: raw !== trimmed,
+      startsWith: trimmed.slice(0, 2),
+      endsWith: trimmed.slice(-2),
+      looksLikeJwt: /^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(trimmed),
+    },
+  };
+}
 
-  const response = await fetch(`${BASE_URL}/v2/SendPayment`, {
+async function myfatoorahRequest<T>(path: string, body: unknown): Promise<T> {
+  const { key, diag } = readApiKey();
+  const url = `${BASE_URL}${path}`;
+
+  const response = await fetch(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
+    body: JSON.stringify(body),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data.IsSuccess) {
+    // One-line, greppable diagnostic — key details are non-secret shape
+    // hints (length + 2-char prefix/suffix + jwt-shape flag + trimming flag),
+    // not the key itself. Everything here helps triage
+    // "The token is not valid or expired" without a redeploy cycle.
+    console.error(
+      `[MyFatoorah ${path}] status=${response.status} ok=${response.ok} IsSuccess=${data?.IsSuccess} Message=${JSON.stringify(data?.Message)} baseUrl=${BASE_URL} keyLen=${diag.length} keyStart=${diag.startsWith} keyEnd=${diag.endsWith} keyJwtShape=${diag.looksLikeJwt} keyHadWhitespace=${diag.hadWhitespace}`
+    );
+    throw new Error(data?.Message || `MyFatoorah ${path} failed (HTTP ${response.status})`);
+  }
+
+  return data.Data as T;
+}
+
+export async function createMyFatoorahPayment(params: SendPaymentParams) {
+  const data = await myfatoorahRequest<{ InvoiceURL: string; InvoiceId: number }>(
+    "/v2/SendPayment",
+    {
       CustomerName: params.customerName,
       CustomerEmail: params.customerEmail,
       CustomerMobile: params.customerPhone,
@@ -37,37 +81,25 @@ export async function createMyFatoorahPayment(params: SendPaymentParams) {
       InvoiceItems: [{ ItemName: params.itemName, Quantity: 1, UnitPrice: params.amount }],
       CallBackUrl: params.callbackUrl,
       ErrorUrl: params.errorUrl,
-    }),
-  });
+    }
+  );
 
-  const data = await response.json();
-
-  if (!response.ok || !data.IsSuccess) {
-    throw new Error(data?.Message || "MyFatoorah rejected the payment request");
-  }
-
-  return {
-    invoiceUrl: data.Data.InvoiceURL as string,
-    invoiceId: data.Data.InvoiceId as number,
-  };
+  return { invoiceUrl: data.InvoiceURL, invoiceId: data.InvoiceId };
 }
 
-export async function getMyFatoorahPaymentStatus(key: string, keyType: "PaymentId" | "InvoiceId" = "PaymentId") {
-  const apiKey = process.env.MYFATOORAH_API_KEY;
-  if (!apiKey) throw new Error("MyFatoorah is not configured.");
+export interface MyFatoorahPaymentStatus {
+  InvoiceId: number;
+  InvoiceStatus: string; // "Paid" | "Failed" | "Pending" | ...
+  InvoiceValue: number;
+  [key: string]: unknown;
+}
 
-  const response = await fetch(`${BASE_URL}/v2/GetPaymentStatus`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ Key: key, KeyType: keyType }),
+export async function getMyFatoorahPaymentStatus(
+  key: string,
+  keyType: "PaymentId" | "InvoiceId" = "PaymentId"
+): Promise<MyFatoorahPaymentStatus> {
+  return myfatoorahRequest<MyFatoorahPaymentStatus>("/v2/GetPaymentStatus", {
+    Key: key,
+    KeyType: keyType,
   });
-
-  const data = await response.json();
-  if (!response.ok || !data.IsSuccess) {
-    throw new Error(data?.Message || "Unable to fetch MyFatoorah payment status");
-  }
-  return data.Data;
 }

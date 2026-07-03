@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { getMyFatoorahPaymentStatus } from "@/lib/myfatoorah";
+import type { Json } from "@/lib/supabase/database.types";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -60,7 +61,7 @@ export async function GET(request: Request) {
       payment_id: paymentRowId,
       event_type: "callback",
       status: mfStatus.InvoiceStatus,
-      raw_response: mfStatus,
+      raw_response: mfStatus as unknown as Json,
     });
 
     const registration = Array.isArray(payment.registrations) ? payment.registrations[0] : payment.registrations;
