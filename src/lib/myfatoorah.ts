@@ -54,12 +54,14 @@ async function myfatoorahRequest<T>(path: string, body: unknown): Promise<T> {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok || !data.IsSuccess) {
-    // One-line, greppable diagnostic — key details are non-secret shape
-    // hints (length + 2-char prefix/suffix + jwt-shape flag + trimming flag),
-    // not the key itself. Everything here helps triage
-    // "The token is not valid or expired" without a redeploy cycle.
+    // One-line, greppable diagnostic. Key details are non-secret shape hints
+    // (length + 2-char prefix/suffix + jwt-shape flag + trimming flag), not
+    // the key itself. Full body is included so field-level ValidationErrors
+    // are visible — MyFatoorah returns "Invalid data" as a generic Message
+    // but the actual per-field reason is in data.ValidationErrors or
+    // data.Data. Without this we'd have to redeploy just to see it.
     console.error(
-      `[MyFatoorah ${path}] status=${response.status} ok=${response.ok} IsSuccess=${data?.IsSuccess} Message=${JSON.stringify(data?.Message)} baseUrl=${BASE_URL} keyLen=${diag.length} keyStart=${diag.startsWith} keyEnd=${diag.endsWith} keyJwtShape=${diag.looksLikeJwt} keyHadWhitespace=${diag.hadWhitespace}`
+      `[MyFatoorah ${path}] status=${response.status} ok=${response.ok} IsSuccess=${data?.IsSuccess} Message=${JSON.stringify(data?.Message)} body=${JSON.stringify(data)} baseUrl=${BASE_URL} keyLen=${diag.length} keyStart=${diag.startsWith} keyEnd=${diag.endsWith} keyJwtShape=${diag.looksLikeJwt} keyHadWhitespace=${diag.hadWhitespace}`
     );
     throw new Error(data?.Message || `MyFatoorah ${path} failed (HTTP ${response.status})`);
   }
