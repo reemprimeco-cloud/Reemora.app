@@ -21,7 +21,7 @@ from (values
   ('Prime Fit',
    'Fitness product delivering tailored workouts and progress tracking through a fast, focused mobile-friendly interface.',
    '/images/portfolio/primefit.svg',
-   'https://www.primefit.manus.space',
+   'https://primefit.manus.space',
    'Fitness',
    3),
   ('Prime HR',
