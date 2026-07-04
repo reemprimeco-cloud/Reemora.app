@@ -36,6 +36,11 @@ const TIMELINE = [
   { date: "Prior Experience", title: "AI & Software Product Development", desc: "Years of hands-on experience building and shipping software and AI-powered products." },
 ];
 
+// Revalidate the homepage's cached data every 60s so admin-panel edits
+// (portfolio, testimonials, courses, settings) surface within a minute
+// without a manual redeploy. Static shell + fresh data on each cache miss.
+export const revalidate = 60;
+
 export default async function HomePage() {
   const [courses, instructor, testimonials, settings, portfolio] = await Promise.all([
     getCourses(),
