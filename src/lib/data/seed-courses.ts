@@ -240,7 +240,7 @@ export const SEED_PORTFOLIO = [
   { id: "seed-p1", title: "Shlon", description: "SaaS platform launched and maintained end-to-end — built with a modern stack, cloud-first architecture and continuous delivery.", image_url: "/images/portfolio/shlon.svg", project_url: "https://www.shlon.app", category: "SaaS", is_published: true, display_order: 1, created_at: now },
   { id: "seed-p2", title: "Prime Rewards", description: "Loyalty and rewards platform designed to help brands drive engagement and repeat purchases with a clean, mobile-first experience.", image_url: "/images/portfolio/primerewds.svg", project_url: "https://www.primerewds.com", category: "Rewards", is_published: true, display_order: 2, created_at: now },
   { id: "seed-p3", title: "Prime Fit", description: "Fitness product delivering tailored workouts and progress tracking through a fast, focused mobile-friendly interface.", image_url: "/images/portfolio/primefit.svg", project_url: "https://www.primefit.manus.space", category: "Fitness", is_published: true, display_order: 3, created_at: now },
-  { id: "seed-p4", title: "Prime HR", description: "HR management tool that streamlines employee data, requests and reporting for small and mid-sized teams.", image_url: "/images/portfolio/prime-hr.svg", project_url: "https://www.prime-hr.netlify.app", category: "HR", is_published: true, display_order: 4, created_at: now },
+  { id: "seed-p4", title: "Prime HR", description: "HR management tool that streamlines employee data, requests and reporting for small and mid-sized teams.", image_url: "/images/portfolio/prime-hr.svg", project_url: "https://prime-hr.netlify.app", category: "HR", is_published: true, display_order: 4, created_at: now },
 ];
 
 export const SEED_TESTIMONIALS = [

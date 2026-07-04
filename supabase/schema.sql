@@ -593,7 +593,7 @@ from (values
   ('Prime HR',
    'HR management tool that streamlines employee data, requests and reporting for small and mid-sized teams.',
    '/images/portfolio/prime-hr.svg',
-   'https://www.prime-hr.netlify.app',
+   'https://prime-hr.netlify.app',
    'HR',
    4)
 ) as v(title, description, image_url, project_url, category, display_order)
