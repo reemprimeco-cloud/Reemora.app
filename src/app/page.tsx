@@ -11,6 +11,8 @@ import { getCourses } from "@/lib/data/courses";
 import { getLeadInstructor } from "@/lib/data/instructors";
 import { getTestimonials } from "@/lib/data/testimonials";
 import { getWebsiteSettings } from "@/lib/data/settings";
+import { getPortfolioItems } from "@/lib/data/portfolio";
+import { PortfolioCard } from "@/components/portfolio-card";
 
 const FEATURES = [
   { icon: Layers, title: "AI-Powered Curriculum", desc: "Courses are continuously updated to reflect the latest AI tools, models and best practices." },
@@ -35,11 +37,12 @@ const TIMELINE = [
 ];
 
 export default async function HomePage() {
-  const [courses, instructor, testimonials, settings] = await Promise.all([
+  const [courses, instructor, testimonials, settings, portfolio] = await Promise.all([
     getCourses(),
     getLeadInstructor(),
     getTestimonials(),
     getWebsiteSettings(),
+    getPortfolioItems(),
   ]);
   const featuredCourses = courses.slice(0, 3);
 
@@ -201,6 +204,23 @@ export default async function HomePage() {
                 <h2 className="text-[28px] font-bold sm:text-4xl">What our students say</h2>
               </Reveal>
               <TestimonialSlider testimonials={testimonials} />
+            </div>
+          </section>
+        )}
+
+        {portfolio.length > 0 && (
+          <section id="portfolio" className="bg-surface-alt py-24">
+            <div className="mx-auto max-w-[1180px] px-6">
+              <Reveal className="mx-auto mb-13 max-w-xl text-center">
+                <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Featured Projects</span>
+                <h2 className="mb-4 text-[28px] font-bold sm:text-4xl">Products we&apos;ve built</h2>
+                <p className="text-ink-soft">A selection of live products designed, built and shipped end-to-end.</p>
+              </Reveal>
+              <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
+                {portfolio.map((item) => (
+                  <PortfolioCard key={item.id} item={item} />
+                ))}
+              </div>
             </div>
           </section>
         )}

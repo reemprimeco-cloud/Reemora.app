@@ -1,10 +1,3 @@
--- ==========================================================================
--- Reemora training platform — complete database schema
--- Paste this entire file into the Supabase SQL Editor and run it once.
--- ==========================================================================
-
--- ============================== 1. EXTENSIONS & HELPERS ==============================
-
 -- Reemora training platform — extensions & shared helper functions
 -- Applied first; later migrations depend on these.
 
@@ -24,9 +17,6 @@ $$;
 -- Note: is_admin() is defined in 0003_rls.sql, not here — it's a `language
 -- sql` function, and SQL-language functions are validated against the
 -- catalog at CREATE time, so it must come after public.users exists.
-
--- ============================== 2. TABLES, INDEXES, FUNCTIONS, TRIGGERS ==============================
-
 -- Reemora training platform — core schema (13 tables)
 
 -- ---------- users (extends auth.users) ----------
@@ -287,9 +277,6 @@ create table public.contact_messages (
 );
 
 create index contact_messages_is_read_idx on public.contact_messages (is_read);
-
--- ============================== 3. ROW LEVEL SECURITY & STORAGE ==============================
-
 -- Reemora training platform — Row Level Security policies
 
 -- Used inside RLS policies to gate admin-only writes. security definer + a
@@ -470,9 +457,6 @@ create policy "Admins can manage site assets" on storage.objects
   for all to authenticated
   using (bucket_id = 'site-assets' and public.is_admin())
   with check (bucket_id = 'site-assets' and public.is_admin());
-
--- ============================== 4. SEED DATA ==============================
-
 -- Reemora training platform — starter content
 -- Safe to re-run: every insert is keyed on a unique natural key with
 -- `on conflict do nothing`.
@@ -580,3 +564,39 @@ on conflict (key) do nothing;
 -- 2. Then run, substituting the real email:
 --
 --   update public.users set role = 'admin' where email = 'admin@reemora.app';
+-- Reemora — seed the portfolio section with the first four featured projects.
+-- Safe to re-run: uses `on conflict (title) do nothing`, so existing rows
+-- with the same title aren't touched. (There's no unique constraint on
+-- portfolio.title yet, so this uses a where-not-exists guard instead.)
+
+insert into public.portfolio (title, description, image_url, project_url, category, is_published, display_order)
+select v.title, v.description, v.image_url, v.project_url, v.category, true, v.display_order
+from (values
+  ('Shlon',
+   'SaaS platform launched and maintained end-to-end — built with a modern stack, cloud-first architecture and continuous delivery.',
+   '/images/portfolio/shlon.svg',
+   'https://www.shlon.app',
+   'SaaS',
+   1),
+  ('Prime Rewards',
+   'Loyalty and rewards platform designed to help brands drive engagement and repeat purchases with a clean, mobile-first experience.',
+   '/images/portfolio/primerewds.svg',
+   'https://www.primerewds.com',
+   'Rewards',
+   2),
+  ('Prime Fit',
+   'Fitness product delivering tailored workouts and progress tracking through a fast, focused mobile-friendly interface.',
+   '/images/portfolio/primefit.svg',
+   'https://www.primefit.manus.space',
+   'Fitness',
+   3),
+  ('Prime HR',
+   'HR management tool that streamlines employee data, requests and reporting for small and mid-sized teams.',
+   '/images/portfolio/prime-hr.svg',
+   'https://www.prime-hr.netlify.app',
+   'HR',
+   4)
+) as v(title, description, image_url, project_url, category, display_order)
+where not exists (
+  select 1 from public.portfolio p where p.title = v.title
+);

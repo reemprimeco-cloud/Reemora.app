@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, BookOpen, CalendarClock, ClipboardList, LogOut, Tags, GraduationCap, Quote, Mail, Settings } from "lucide-react";
+import { LayoutDashboard, BookOpen, CalendarClock, ClipboardList, LogOut, Tags, GraduationCap, Quote, Mail, Settings, Briefcase } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +15,7 @@ const LINKS = [
   { href: "/admin/registrations", label: "Registrations", icon: ClipboardList },
   { href: "/admin/trainer", label: "Trainer & Certificates", icon: GraduationCap },
   { href: "/admin/testimonials", label: "Testimonials", icon: Quote },
+  { href: "/admin/portfolio", label: "Portfolio", icon: Briefcase },
   { href: "/admin/messages", label: "Contact Messages", icon: Mail },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];

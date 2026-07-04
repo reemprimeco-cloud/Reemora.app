@@ -65,6 +65,12 @@ h1, h2, h3, h4 {
 
 html {
   scroll-behavior: smooth;
+  /* Offset in-page anchor scrolling so the fixed 78px header doesn't
+     cover the section heading. Applies to every [id]-targeted section. */
+  scroll-padding-top: 96px;
+}
+:target {
+  scroll-margin-top: 96px;
 }
 
 @keyframes float {
