@@ -44,6 +44,8 @@ export interface Database {
           years_experience: number | null;
           is_lead: boolean;
           social_links: Json;
+          timeline: Json;
+          skills: string[];
           display_order: number;
           created_at: string;
           updated_at: string;
@@ -58,6 +60,8 @@ export interface Database {
           years_experience?: number | null;
           is_lead?: boolean;
           social_links?: Json;
+          timeline?: Json;
+          skills?: string[];
           display_order?: number;
           created_at?: string;
           updated_at?: string;
@@ -69,6 +73,47 @@ export interface Database {
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+      course_inquiries: {
+        Row: {
+          id: string;
+          course_id: string | null;
+          course_schedule_id: string | null;
+          full_name: string;
+          email: string;
+          phone: string;
+          message: string | null;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          course_id?: string | null;
+          course_schedule_id?: string | null;
+          full_name: string;
+          email: string;
+          phone: string;
+          message?: string | null;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["course_inquiries"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "course_inquiries_course_id_fkey";
+            columns: ["course_id"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "course_inquiries_course_schedule_id_fkey";
+            columns: ["course_schedule_id"];
+            isOneToOne: false;
+            referencedRelation: "course_schedule";
             referencedColumns: ["id"];
           }
         ];

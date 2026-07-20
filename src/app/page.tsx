@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Layers, Rocket, Award, CalendarClock, Download, GraduationCap } from "lucide-react";
+import { Layers, Rocket, Award, CalendarClock, GraduationCap } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { HeroSlider } from "@/components/hero-slider";
@@ -13,6 +13,7 @@ import { getTestimonials } from "@/lib/data/testimonials";
 import { getWebsiteSettings } from "@/lib/data/settings";
 import { getPortfolioItems } from "@/lib/data/portfolio";
 import { PortfolioCard } from "@/components/portfolio-card";
+import type { TimelineEntry } from "@/lib/types";
 
 const FEATURES = [
   { icon: Layers, title: "AI-Powered Curriculum", desc: "Courses are continuously updated to reflect the latest AI tools, models and best practices." },
@@ -28,13 +29,12 @@ const STATS = [
   { value: "98%", label: "Satisfaction Rate" },
 ];
 
-const SKILLS = ["AI App Development", "Prompt Engineering", "Curriculum Design", "Public Speaking", "Product Strategy"];
-
-const TIMELINE = [
+const DEFAULT_TIMELINE: TimelineEntry[] = [
   { date: "2024 — Present", title: "Founder & Lead Trainer, Reemora", desc: "Designing and delivering AI app-development courses for founders, developers and teams." },
   { date: "International Certification", title: "Certified Professional Trainer", desc: "Certified under an internationally recognized training and instructional design standard." },
   { date: "Prior Experience", title: "AI & Software Product Development", desc: "Years of hands-on experience building and shipping software and AI-powered products." },
 ];
+const DEFAULT_SKILLS = ["AI App Development", "Prompt Engineering", "Curriculum Design", "Public Speaking", "Product Strategy"];
 
 // Revalidate the homepage's cached data every 60s so admin-panel edits
 // (portfolio, testimonials, courses, settings) surface within a minute
@@ -50,6 +50,18 @@ export default async function HomePage() {
     getPortfolioItems(),
   ]);
   const featuredCourses = courses.slice(0, 3);
+  // The instructor's timeline/skills are editable via /admin/trainer once
+  // they exist in the DB. Fall back to the defaults above when the
+  // instructor row hasn't set them yet (fresh install, or admin hasn't
+  // customized them).
+  const rawTimeline = (instructor as { timeline?: unknown } | null)?.timeline;
+  const timeline: TimelineEntry[] = Array.isArray(rawTimeline) && rawTimeline.length > 0
+    ? (rawTimeline as TimelineEntry[])
+    : DEFAULT_TIMELINE;
+  const rawSkills = (instructor as { skills?: unknown } | null)?.skills;
+  const skills: string[] = Array.isArray(rawSkills) && rawSkills.length > 0
+    ? (rawSkills as string[])
+    : DEFAULT_SKILLS;
 
   return (
     <>
@@ -118,13 +130,24 @@ export default async function HomePage() {
         <section id="about" className="py-24">
           <div className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-14 px-6 lg:grid-cols-[0.85fr_1.15fr]">
             <Reveal className="relative mx-auto max-w-[340px] lg:mx-0">
-              <div className="flex aspect-[4/5] items-center justify-center rounded-[22px] bg-gradient-to-br from-navy-800 to-blue-600 p-8 text-center text-white shadow-xl">
-                <div>
-                  <div className="mb-3.5 text-5xl">★</div>
-                  Trainer Photo
-                  <br />
-                  Placeholder
-                </div>
+              <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-gradient-to-br from-navy-800 to-blue-600 shadow-xl">
+                {instructor?.photo_url ? (
+                  <Image
+                    src={instructor.photo_url}
+                    alt={instructor.full_name}
+                    fill
+                    sizes="(max-width: 1024px) 340px, 420px"
+                    priority
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center p-8 text-center text-white">
+                    <div>
+                      <div className="mb-3.5 text-5xl">★</div>
+                      {instructor?.full_name ?? "Trainer photo"}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="absolute -bottom-4.5 -right-4.5 rounded-2xl bg-surface px-5 py-4 text-center shadow-lg">
                 <strong className="block font-[family-name:var(--font-head)] text-[22px] text-blue-600">{instructor?.years_experience ?? 10}+</strong>
@@ -137,8 +160,8 @@ export default async function HomePage() {
               <p className="mb-6.5 text-ink-soft">{instructor?.bio}</p>
 
               <div className="mb-7 flex flex-col gap-4.5">
-                {TIMELINE.map((item) => (
-                  <div key={item.title} className="flex gap-4">
+                {timeline.map((item, idx) => (
+                  <div key={`${item.title}-${idx}`} className="flex gap-4">
                     <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full bg-blue-500 shadow-[0_0_0_4px_var(--color-blue-100)]" />
                     <div>
                       <span className="text-xs font-bold text-blue-600">{item.date}</span>
@@ -149,18 +172,11 @@ export default async function HomePage() {
                 ))}
               </div>
 
-              <div className="mb-7 flex flex-wrap gap-2.5">
-                {SKILLS.map((s) => (
+              <div className="flex flex-wrap gap-2.5">
+                {skills.map((s) => (
                   <span key={s} className="rounded-full bg-blue-100 px-3.5 py-1.5 text-[12.5px] font-bold text-blue-600">{s}</span>
                 ))}
               </div>
-
-              <a href={settings.cv_url} download className="inline-flex items-center gap-2 rounded-full border-2 border-transparent bg-blue-500 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-navy-800">
-                <Download size={16} /> Download Full CV (PDF)
-              </a>
-              <p className="mt-3.5 text-[12.5px] text-ink-soft">
-                Placeholder file — replace <code>public/cv/reemora-cv.pdf</code> with your real CV before launch.
-              </p>
             </Reveal>
           </div>
         </section>

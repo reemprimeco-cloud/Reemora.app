@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -50,9 +50,18 @@ export const metadata: Metadata = {
       "Hands-on, instructor-led courses that take you from prompt to production.",
     images: ["/images/logo.png"],
   },
-  icons: {
-    icon: "/images/logo.png",
+  // Explicit icons removed — Next.js file conventions (app/icon.svg,
+  // app/apple-icon.png, app/manifest.ts) pick this up automatically now.
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    title: "Reemora",
+    statusBarStyle: "black-translucent",
+    capable: true,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0b1730",
 };
 
 const organizationJsonLd = {

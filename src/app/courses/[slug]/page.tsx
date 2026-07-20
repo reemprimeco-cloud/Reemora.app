@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { InquiryModal } from "@/components/inquiry-modal";
 import { getCourseBySlug, getCourses } from "@/lib/data/courses";
 import { courseImageSrc, primarySchedule } from "@/lib/course-utils";
 import { getWebsiteSettings } from "@/lib/data/settings";
@@ -128,6 +129,9 @@ export default async function CourseDetailPage({ params }: Props) {
               >
                 {schedule && schedule.seats_available > 0 ? "Register for This Course" : "Join Waitlist"}
               </Link>
+              <div className="mt-3">
+                <InquiryModal courseId={course.id} courseScheduleId={schedule?.id ?? null} courseTitle={course.title} />
+              </div>
             </div>
           </div>
         </div>

@@ -15,10 +15,19 @@ export type Testimonial = Tables["testimonials"]["Row"];
 export type WebsiteSettingRow = Tables["website_settings"]["Row"];
 export type PortfolioItem = Tables["portfolio"]["Row"];
 export type ContactMessage = Tables["contact_messages"]["Row"];
+export type CourseInquiry = Tables["course_inquiries"]["Row"];
 
 export type CourseLevel = Course["level"];
 export type ScheduleStatus = CourseSchedule["status"];
 export type PaymentStatus = Payment["status"];
+
+/** One row in the About Your Trainer timeline. Stored as JSONB on
+ *  instructors.timeline so admins can edit these without a schema change. */
+export interface TimelineEntry {
+  date: string;
+  title: string;
+  desc: string;
+}
 
 /** Instructor with their certificates, as used on the homepage About/Certificates section. */
 export type InstructorWithCertificates = Instructor & {

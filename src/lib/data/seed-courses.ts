@@ -19,6 +19,12 @@ const INSTRUCTOR = {
   years_experience: 10,
   is_lead: true,
   social_links: {},
+  timeline: [
+    { date: "2024 — Present", title: "Founder & Lead Trainer, Reemora", desc: "Designing and delivering AI app-development courses for founders, developers and teams." },
+    { date: "International Certification", title: "Certified Professional Trainer", desc: "Certified under an internationally recognized training and instructional design standard." },
+    { date: "Prior Experience", title: "AI & Software Product Development", desc: "Years of hands-on experience building and shipping software and AI-powered products." },
+  ],
+  skills: ["AI App Development", "Prompt Engineering", "Curriculum Design", "Public Speaking", "Product Strategy"],
   display_order: 1,
   created_at: now,
   updated_at: now,
