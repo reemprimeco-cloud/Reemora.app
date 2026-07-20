@@ -149,14 +149,35 @@ function ScheduleModal({
       status,
     };
 
-    const query = schedule
-      ? supabase
-          .from("course_schedule")
-          .update({ ...payload, seats_available: Math.max(0, seatsTotal - (schedule.seats_total - schedule.seats_available)) })
-          .eq("id", schedule.id)
-          .select()
-          .single()
-      : supabase.from("course_schedule").insert({ ...payload, seats_available: seatsTotal }).select().single();
+    let query;
+    if (schedule) {
+      // Recompute "already booked" from the live registrations table rather
+      // than trusting the schedule row's own seats_total/seats_available —
+      // those drift stale whenever registrations are deleted directly
+      // (e.g. clearing demo data) without reversing decrement_seats.
+      // Cancelled/refunded/no-show registrations don't hold a seat.
+      const { data: booked, error: bookedError } = await supabase
+        .from("registrations")
+        .select("seats")
+        .eq("course_schedule_id", schedule.id)
+        .not("status", "in", "(cancelled,refunded,no_show)");
+
+      if (bookedError) {
+        setSaving(false);
+        setError(bookedError.message);
+        return;
+      }
+
+      const bookedSeats = (booked ?? []).reduce((sum, r) => sum + r.seats, 0);
+      query = supabase
+        .from("course_schedule")
+        .update({ ...payload, seats_available: Math.max(0, seatsTotal - bookedSeats) })
+        .eq("id", schedule.id)
+        .select()
+        .single();
+    } else {
+      query = supabase.from("course_schedule").insert({ ...payload, seats_available: seatsTotal }).select().single();
+    }
 
     const { data, error } = await query;
     setSaving(false);
