@@ -9,6 +9,7 @@ import { useToast } from "@/components/toast-provider";
 import { useConfirm } from "@/components/confirm-dialog";
 
 export interface ReservationCourse {
+  id: string;
   title: string;
   slug: string;
   short_description: string;
@@ -23,9 +24,6 @@ function courseOf(row: ReservationRow): ReservationCourse | null {
   return c ?? null;
 }
 
-/** wa.me and tel: expect digits only (a leading + is allowed in tel: but
- *  wa.me strips it anyway). Strip everything that isn't a digit or leading
- *  plus so pasted numbers like "+965 XXXX XXXX" still work. */
 function digitsOnly(phone: string): string {
   return phone.replace(/\D+/g, "");
 }
@@ -38,9 +36,9 @@ function firstName(fullName: string): string {
 
 function buildEmailReply(
   r: ReservationRow,
-  siteUrl: string
+  siteUrl: string,
+  course: ReservationCourse | null
 ): { subject: string; body: string } {
-  const course = courseOf(r);
   const name = firstName(r.full_name);
 
   if (course) {
@@ -83,21 +81,37 @@ function buildEmailReply(
 
 function mailtoHref(email: string, subject: string, body: string): string {
   const params = new URLSearchParams({ subject, body });
-  // mailto: URIs prefer '%20' over '+' for spaces — mail clients that
-  // treat '+' literally will otherwise show 'Hi+Reem' in the body.
   return `mailto:${email}?${params.toString().replace(/\+/g, "%20")}`;
 }
 
 export function ReservationInbox({
   initialReservations,
+  allCourses,
   siteUrl,
 }: {
   initialReservations: ReservationRow[];
+  allCourses: ReservationCourse[];
   siteUrl: string;
 }) {
   const [reservations, setReservations] = React.useState(initialReservations);
+  // Admin's per-row course override (keyed by reservation id).
+  // Empty string = generic "no course" template.
+  const [replyCourseId, setReplyCourseId] = React.useState<Record<string, string>>(() => {
+    const seed: Record<string, string> = {};
+    for (const r of initialReservations) {
+      const c = courseOf(r);
+      if (c) seed[r.id] = c.id;
+    }
+    return seed;
+  });
   const { showToast } = useToast();
   const confirm = useConfirm();
+
+  const courseById = React.useMemo(() => {
+    const map = new Map<string, ReservationCourse>();
+    for (const c of allCourses) map.set(c.id, c);
+    return map;
+  }, [allCourses]);
 
   async function toggleRead(m: ReservationRow) {
     const supabase = createClient();
@@ -128,9 +142,11 @@ export function ReservationInbox({
     <div className="space-y-3">
       {reservations.length ? (
         reservations.map((m) => {
-          const course = courseOf(m);
+          const requested = courseOf(m);
+          const selectedId = replyCourseId[m.id] ?? "";
+          const selectedCourse = selectedId ? courseById.get(selectedId) ?? null : null;
           const waDigits = digitsOnly(m.phone);
-          const { subject, body } = buildEmailReply(m, siteUrl);
+          const { subject, body } = buildEmailReply(m, siteUrl, selectedCourse);
           const mailto = mailtoHref(m.email, subject, body);
           return (
             <div
@@ -146,13 +162,11 @@ export function ReservationInbox({
                     {m.full_name} <span className="font-normal text-ink-soft">— {m.email}</span>
                   </p>
                   <p className="text-xs text-ink-soft">{m.phone}</p>
-                  {course && (
-                    <p className="mt-1 text-sm font-semibold text-blue-600">Interested in: {course.title}</p>
+                  {requested && (
+                    <p className="mt-1 text-sm font-semibold text-blue-600">Interested in: {requested.title}</p>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-xs text-ink-soft">{new Date(m.created_at).toLocaleString()}</span>
-                </div>
+                <span className="text-xs text-ink-soft">{new Date(m.created_at).toLocaleString()}</span>
               </div>
 
               <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -170,6 +184,23 @@ export function ReservationInbox({
                     {m.skills?.trim() || <span className="text-ink-soft">—</span>}
                   </p>
                 </div>
+              </div>
+
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <label htmlFor={`reply-course-${m.id}`} className="text-[11px] font-bold uppercase tracking-wider text-ink-soft">
+                  Recommend course
+                </label>
+                <select
+                  id={`reply-course-${m.id}`}
+                  value={selectedId}
+                  onChange={(e) => setReplyCourseId((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                  className="min-h-[36px] flex-1 rounded-lg border border-border-c bg-surface px-3 py-1.5 text-xs font-semibold text-foreground outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 sm:flex-none sm:min-w-[240px]"
+                >
+                  <option value="">(No course — generic reply)</option>
+                  {allCourses.map((c) => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -201,7 +232,7 @@ export function ReservationInbox({
                 <a
                   href={mailto}
                   className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-blue-500 bg-blue-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-800"
-                  title="Open a pre-filled reply in your mail app"
+                  title={selectedCourse ? `Reply about ${selectedCourse.title}` : "Reply with generic template"}
                 >
                   <Reply size={13} aria-hidden="true" /> Reply by Email
                 </a>
