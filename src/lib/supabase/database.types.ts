@@ -215,6 +215,8 @@ export interface Database {
           instructor_id: string | null;
           level: "Beginner" | "Intermediate" | "Advanced";
           duration_weeks: number;
+          duration_days: number;
+          duration_hours: number;
           price: number;
           currency: string;
           image_url: string | null;
@@ -233,6 +235,8 @@ export interface Database {
           instructor_id?: string | null;
           level: "Beginner" | "Intermediate" | "Advanced";
           duration_weeks: number;
+          duration_days?: number;
+          duration_hours?: number;
           price: number;
           currency?: string;
           image_url?: string | null;
@@ -310,6 +314,8 @@ export interface Database {
           seats: number;
           notes: string | null;
           amount: number;
+          discount_amount: number;
+          attendees: Json;
           currency: string;
           status: "pending" | "confirmed" | "cancelled" | "refunded" | "no_show" | "waitlist";
           created_at: string;
@@ -324,6 +330,8 @@ export interface Database {
           seats?: number;
           notes?: string | null;
           amount: number;
+          discount_amount?: number;
+          attendees?: Json;
           currency?: string;
           status?: "pending" | "confirmed" | "cancelled" | "refunded" | "no_show" | "waitlist";
           created_at?: string;

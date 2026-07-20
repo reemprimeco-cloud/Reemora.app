@@ -7,7 +7,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { InquiryModal } from "@/components/inquiry-modal";
 import { getCourseBySlug, getCourses } from "@/lib/data/courses";
-import { courseImageSrc, primarySchedule } from "@/lib/course-utils";
+import { courseImageSrc, formatDuration, primarySchedule } from "@/lib/course-utils";
 import { getWebsiteSettings } from "@/lib/data/settings";
 import { formatDate, formatMoney } from "@/lib/utils";
 import { getLang, getDict } from "@/lib/i18n/get-lang";
@@ -87,9 +87,16 @@ export default async function CourseDetailPage({ params }: Props) {
     },
   };
 
+  const durationText = formatDuration(course.duration_days ?? 0, course.duration_hours ?? 0, {
+    day: dict.courseCard.day,
+    days: dict.courseCard.days,
+    hour: dict.courseCard.hour,
+    hours: dict.courseCard.hours,
+    tba: dict.courseCard.tba,
+  });
   const sidebarRows: [string, string][] = [
     [dict.courseDetail.instructor, course.instructor?.full_name ?? dict.courseDetail.defaultInstructor],
-    [dict.courseDetail.duration, interpolate(dict.courseDetail.weeksValue, { n: course.duration_weeks })],
+    [dict.courseDetail.duration, durationText],
     [dict.courseDetail.startDate, formatDate(schedule?.start_date, lang)],
     [dict.courseDetail.endDate, formatDate(schedule?.end_date, lang)],
     [dict.courseDetail.sessions, schedule?.session_days ?? dict.courseDetail.tba],

@@ -27,7 +27,8 @@ export function CourseEditorModal({
   const [level, setLevel] = React.useState<CourseLevel>(course?.level ?? "Beginner");
   const [price, setPrice] = React.useState(course?.price ?? 0);
   const [currency, setCurrency] = React.useState(course?.currency ?? "KWD");
-  const [durationWeeks, setDurationWeeks] = React.useState(course?.duration_weeks ?? 4);
+  const [durationDays, setDurationDays] = React.useState(course?.duration_days ?? 0);
+  const [durationHours, setDurationHours] = React.useState(course?.duration_hours ?? 0);
   const [isPublished, setIsPublished] = React.useState(course?.is_published ?? true);
   const [shortDescription, setShortDescription] = React.useState(course?.short_description ?? "");
   const [description, setDescription] = React.useState(course?.description ?? "");
@@ -91,7 +92,11 @@ export function CourseEditorModal({
       level,
       price,
       currency,
-      duration_weeks: durationWeeks,
+      duration_days: durationDays,
+      duration_hours: durationHours,
+      // duration_weeks is a legacy column kept for backward compatibility;
+      // preserve the existing value on edits, default to 0 on new rows.
+      duration_weeks: course?.duration_weeks ?? 0,
       is_published: isPublished,
       short_description: shortDescription.trim(),
       description: description.trim(),
@@ -192,8 +197,12 @@ export function CourseEditorModal({
               <Input id="f-currency" value={currency} onChange={setCurrency} required />
             </div>
             <div>
-              <FieldLabel htmlFor="f-duration">Duration (weeks)</FieldLabel>
-              <input id="f-duration" type="number" min={1} value={durationWeeks} onChange={(e) => setDurationWeeks(parseInt(e.target.value) || 1)} required className={selectClass} />
+              <FieldLabel htmlFor="f-duration-days">Duration — Days</FieldLabel>
+              <input id="f-duration-days" type="number" min={0} value={durationDays} onChange={(e) => setDurationDays(Math.max(0, parseInt(e.target.value) || 0))} className={selectClass} />
+            </div>
+            <div>
+              <FieldLabel htmlFor="f-duration-hours">Duration — Hours</FieldLabel>
+              <input id="f-duration-hours" type="number" min={0} value={durationHours} onChange={(e) => setDurationHours(Math.max(0, parseInt(e.target.value) || 0))} className={selectClass} />
             </div>
             <div>
               <FieldLabel htmlFor="f-instructor">Instructor</FieldLabel>

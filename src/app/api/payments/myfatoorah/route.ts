@@ -2,10 +2,24 @@ import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createMyFatoorahPayment } from "@/lib/myfatoorah";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
+import { computeOrderTotal, type Attendee } from "@/lib/course-utils";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
 const MAX_SEATS = 10;
+
+/** Parse an attendee entry from the request body. Trims strings, drops
+ *  everything else. Missing fields become empty string so validation can
+ *  produce a per-field error message. */
+function parseAttendee(raw: unknown): Attendee {
+  if (!raw || typeof raw !== "object") return { full_name: "", email: "", phone: "" };
+  const obj = raw as Record<string, unknown>;
+  return {
+    full_name: typeof obj.full_name === "string" ? obj.full_name.trim() : "",
+    email: typeof obj.email === "string" ? obj.email.trim() : "",
+    phone: typeof obj.phone === "string" ? obj.phone.trim() : "",
+  };
+}
 
 export async function POST(request: Request) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
@@ -22,8 +36,8 @@ export async function POST(request: Request) {
     fullName?: unknown;
     email?: unknown;
     phone?: unknown;
-    seats?: unknown;
     notes?: unknown;
+    attendees?: unknown;
   };
 
   try {
@@ -37,16 +51,26 @@ export async function POST(request: Request) {
   const email = typeof body.email === "string" ? body.email.trim() : "";
   const phone = typeof body.phone === "string" ? body.phone.trim() : "";
   const notes = typeof body.notes === "string" ? body.notes.trim() : "";
-  const seats = typeof body.seats === "number" ? Math.trunc(body.seats) : NaN;
+  const extraAttendeesRaw = Array.isArray(body.attendees) ? body.attendees.slice(0, MAX_SEATS - 1) : [];
+  const extraAttendees = extraAttendeesRaw.map(parseAttendee);
+  // Seats = booker (1) + extra attendee entries. Never trust a client-sent
+  // seat count — derive it from the attendees list.
+  const seats = 1 + extraAttendees.length;
 
   const fieldErrors: Record<string, string> = {};
   if (!courseScheduleId) fieldErrors.courseScheduleId = "Missing course selection.";
   if (fullName.length < 2) fieldErrors.fullName = "Please enter your full name.";
   if (!EMAIL_RE.test(email)) fieldErrors.email = "Please enter a valid email address.";
   if (!PHONE_RE.test(phone)) fieldErrors.phone = "Please enter a valid phone number.";
-  if (!Number.isFinite(seats) || seats < 1 || seats > MAX_SEATS) {
+  if (seats < 1 || seats > MAX_SEATS) {
     fieldErrors.seats = `Seats must be between 1 and ${MAX_SEATS}.`;
   }
+  extraAttendees.forEach((a, i) => {
+    const label = `attendee_${i + 2}`;
+    if (a.full_name.length < 2) fieldErrors[`${label}_name`] = "Attendee name is required.";
+    if (!EMAIL_RE.test(a.email)) fieldErrors[`${label}_email`] = "Attendee email is invalid.";
+    if (!PHONE_RE.test(a.phone)) fieldErrors[`${label}_phone`] = "Attendee phone is invalid.";
+  });
 
   if (Object.keys(fieldErrors).length > 0) {
     return NextResponse.json({ error: "Please fix the highlighted fields.", fieldErrors }, { status: 400 });
@@ -54,9 +78,6 @@ export async function POST(request: Request) {
 
   const supabase = await createServiceRoleClient();
 
-  // Price, currency and course identity are always derived server-side —
-  // never trust amounts sent by the client, or a tampered request could
-  // register someone at an arbitrary price.
   const { data: schedule, error: scheduleError } = await supabase
     .from("course_schedule")
     .select("id, seats_available, status, courses(id, slug, title, price, currency, is_published)")
@@ -83,7 +104,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const amount = Number((course.price * seats).toFixed(2));
+  const { subtotal, discount, total } = computeOrderTotal(course.price, seats);
+
+  // Full attendee list stored on the registration = booker (seat 1) + extras.
+  const attendeesForDb: Attendee[] = [
+    { full_name: fullName, email, phone },
+    ...extraAttendees,
+  ];
 
   const { data: registration, error: insertError } = await supabase
     .from("registrations")
@@ -94,7 +121,11 @@ export async function POST(request: Request) {
       phone,
       seats,
       notes: notes || null,
-      amount,
+      amount: total,
+      discount_amount: discount,
+      // The DB column is jsonb; Attendee's shape (string fields only) is
+      // trivially JSON-serialisable, cast to satisfy Supabase's Json union.
+      attendees: attendeesForDb as unknown as import("@/lib/supabase/database.types").Json,
       currency: course.currency,
       status: "pending",
     })
@@ -110,7 +141,7 @@ export async function POST(request: Request) {
     .from("payments")
     .insert({
       registration_id: registration.id,
-      amount,
+      amount: total,
       currency: course.currency,
       status: "pending",
       method: "myfatoorah",
@@ -128,10 +159,10 @@ export async function POST(request: Request) {
       customerName: fullName,
       customerEmail: email,
       customerPhone: phone,
-      amount,
+      amount: total,
       currency: course.currency,
       reference: payment.id,
-      itemName: course.title,
+      itemName: seats > 1 ? `${course.title} × ${seats} seats` : course.title,
       callbackUrl: `${siteUrl}/api/payments/callback?paymentRowId=${payment.id}&courseSlug=${course.slug}`,
       errorUrl: `${siteUrl}/register/${course.slug}?status=failed&ref=${registration.id}`,
     });
@@ -141,7 +172,7 @@ export async function POST(request: Request) {
       payment_id: payment.id,
       event_type: "created",
       status: "invoice_created",
-      raw_response: { invoiceId, invoiceUrl },
+      raw_response: { invoiceId, invoiceUrl, subtotal, discount, total },
     });
 
     return NextResponse.json({ invoiceUrl, registrationId: registration.id });

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Clock, CalendarDays, Users } from "lucide-react";
 import type { CourseWithRelations } from "@/lib/types";
 import { formatDate, formatMoney } from "@/lib/utils";
-import { courseImageSrc, primarySchedule } from "@/lib/course-utils";
+import { courseImageSrc, formatDuration, primarySchedule } from "@/lib/course-utils";
 import { useLanguage } from "@/lib/i18n/context";
 import { interpolate } from "@/lib/i18n/dictionaries";
 
@@ -42,7 +42,13 @@ export function CourseCard({ course }: { course: CourseWithRelations }) {
       <div className="flex flex-1 flex-col gap-2.5 p-5.5">
         <div className="flex flex-wrap gap-3.5 text-[12.5px] font-semibold text-ink-soft">
           <span className="flex items-center gap-1.5">
-            <Clock size={13} /> {interpolate(dict.courseCard.weeksTemplate, { n: course.duration_weeks })}
+            <Clock size={13} /> {formatDuration(course.duration_days ?? 0, course.duration_hours ?? 0, {
+              day: dict.courseCard.day,
+              days: dict.courseCard.days,
+              hour: dict.courseCard.hour,
+              hours: dict.courseCard.hours,
+              tba: dict.courseCard.tba,
+            })}
           </span>
           {schedule && (
             <>

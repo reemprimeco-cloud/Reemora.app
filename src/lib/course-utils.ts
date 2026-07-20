@@ -1,5 +1,47 @@
 import type { CourseSchedule, CourseWithRelations } from "@/lib/types";
 
+/** 5% off the entire order when buying 2 or more seats. Returns
+ *  { subtotal, discount, total } rounded to 2dp. Shared between the
+ *  register form (live preview) and the payment API (authoritative). */
+export const MULTI_SEAT_DISCOUNT_RATE = 0.05;
+export const MULTI_SEAT_DISCOUNT_THRESHOLD = 2;
+
+export function computeOrderTotal(pricePerSeat: number, seats: number) {
+  const clamped = Math.max(1, Math.floor(seats));
+  const subtotal = round2(pricePerSeat * clamped);
+  const discount = clamped >= MULTI_SEAT_DISCOUNT_THRESHOLD ? round2(subtotal * MULTI_SEAT_DISCOUNT_RATE) : 0;
+  const total = round2(subtotal - discount);
+  return { subtotal, discount, total };
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+/** One attendee taking a seat in a cohort. Stored as JSONB on
+ *  registrations.attendees. First entry is always the booker; entries
+ *  2..N are extra attendees added at checkout. */
+export interface Attendee {
+  full_name: string;
+  email: string;
+  phone: string;
+}
+
+/** Human-readable duration ("2 days · 4 hours" / "3 hours" / "1 day").
+ *  Falls back to "TBA" when neither field is set. */
+export function formatDuration(
+  days: number,
+  hours: number,
+  labels: { day: string; days: string; hour: string; hours: string; tba: string }
+): string {
+  const d = Math.max(0, Math.floor(days || 0));
+  const h = Math.max(0, Math.floor(hours || 0));
+  const parts: string[] = [];
+  if (d > 0) parts.push(`${d} ${d === 1 ? labels.day : labels.days}`);
+  if (h > 0) parts.push(`${h} ${h === 1 ? labels.hour : labels.hours}`);
+  return parts.length ? parts.join(" · ") : labels.tba;
+}
+
 /** The cohort to show/register for by default: nearest upcoming, else the first schedule.
  *  Pure and dependency-free so it's safe to import from client components. */
 export function primarySchedule(course: CourseWithRelations): CourseSchedule | null {
