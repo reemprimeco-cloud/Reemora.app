@@ -4,6 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { getCourses } from "@/lib/data/courses";
 import { getWebsiteSettings } from "@/lib/data/settings";
 import { CourseCatalog } from "@/components/course-catalog";
+import { getLang, getDict } from "@/lib/i18n/get-lang";
 
 export const metadata: Metadata = {
   title: "Course Catalog",
@@ -15,7 +16,8 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function CoursesPage() {
-  const [courses, settings] = await Promise.all([getCourses(), getWebsiteSettings()]);
+  const [lang, courses, settings] = await Promise.all([getLang(), getCourses(), getWebsiteSettings()]);
+  const dict = getDict(lang);
 
   return (
     <>
@@ -23,11 +25,11 @@ export default async function CoursesPage() {
       <main>
         <section className="bg-gradient-to-br from-navy-900 via-navy-800 to-blue-600 px-6 pb-[70px] pt-[150px] text-center text-white">
           <span className="mb-4.5 inline-flex rounded-full bg-white/10 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-[#cfe0f8]">
-            Course Catalog
+            {dict.coursesPage.eyebrow}
           </span>
-          <h1 className="mb-3 text-[30px] font-bold text-white sm:text-[46px]">Find your next AI course</h1>
+          <h1 className="mb-3 text-[30px] font-bold text-white sm:text-[46px]">{dict.coursesPage.title}</h1>
           <p className="mx-auto max-w-[560px] text-[#c6d3ea]">
-            Instructor-led, project-based courses in AI app development — filter by category, level or search by keyword.
+            {dict.coursesPage.subtitle}
           </p>
         </section>
 

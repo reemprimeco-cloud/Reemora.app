@@ -4,6 +4,7 @@ import * as React from "react";
 import { X, HelpCircle } from "lucide-react";
 import { useCloseOnEscape } from "@/lib/use-close-on-escape";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n/context";
 
 interface Props {
   courseId: string;
@@ -19,6 +20,8 @@ const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
  *  registration + MyFatoorah flow — same person can still register + pay
  *  afterwards via the main Register CTA. */
 export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props) {
+  const { dict } = useLanguage();
+  const t = dict.inquiry;
   const [open, setOpen] = React.useState(false);
   const [fullName, setFullName] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -43,7 +46,7 @@ export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props)
     e.preventDefault();
     setBanner(null);
     if (!validate()) {
-      setBanner({ type: "error", text: "Please fix the highlighted fields before continuing." });
+      setBanner({ type: "error", text: t.validationError });
       return;
     }
     setSubmitting(true);
@@ -65,16 +68,16 @@ export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props)
         if (data.fieldErrors) {
           setErrors((prev) => ({ ...prev, ...Object.fromEntries(Object.keys(data.fieldErrors).map((k) => [k, true])) }));
         }
-        setBanner({ type: "error", text: data.error || "Something went wrong. Please try again." });
+        setBanner({ type: "error", text: data.error || t.genericError });
         return;
       }
-      setBanner({ type: "success", text: "Thanks! We'll be in touch shortly with more details." });
+      setBanner({ type: "success", text: t.successMessage });
       setFullName("");
       setEmail("");
       setPhone("");
       setMessage("");
     } catch {
-      setBanner({ type: "error", text: "Network error. Please try again." });
+      setBanner({ type: "error", text: t.networkError });
     } finally {
       setSubmitting(false);
     }
@@ -89,7 +92,7 @@ export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props)
         }}
         className="inline-flex w-full items-center justify-center gap-2 rounded-full border-2 border-border-c bg-transparent px-6 py-3 text-sm font-semibold text-foreground transition hover:border-blue-400 hover:text-blue-600"
       >
-        <HelpCircle size={15} /> Ask a Question / Reserve Interest
+        <HelpCircle size={15} /> {t.ctaLabel}
       </button>
 
       {open && (
@@ -105,14 +108,14 @@ export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props)
           >
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
-                <h3 id="inquiry-modal-title" className="text-lg font-bold">Learn more about this course</h3>
+                <h3 id="inquiry-modal-title" className="text-lg font-bold">{t.title}</h3>
                 <p className="mt-1 text-sm text-ink-soft">
-                  Leave your details for <strong>{courseTitle}</strong> — we&apos;ll follow up with more information. No payment required. You can register and pay whenever you&apos;re ready.
+                  {t.descriptionBefore} <strong>{courseTitle}</strong> {t.descriptionAfter}
                 </p>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                aria-label="Close dialog"
+                aria-label={t.close}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-c"
               >
                 <X size={16} />
@@ -135,7 +138,7 @@ export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props)
 
             <form onSubmit={handleSubmit} noValidate className="space-y-4">
               <div>
-                <label htmlFor="inq-name" className="mb-1.5 block text-[13.5px] font-semibold">Full Name</label>
+                <label htmlFor="inq-name" className="mb-1.5 block text-[13.5px] font-semibold">{t.fullName}</label>
                 <input
                   id="inq-name"
                   value={fullName}
@@ -143,11 +146,11 @@ export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props)
                   autoComplete="name"
                   aria-invalid={errors.fullName || undefined}
                   className={inputClass(errors.fullName)}
-                  placeholder="Your full name"
+                  placeholder={t.fullNamePlaceholder}
                 />
               </div>
               <div>
-                <label htmlFor="inq-email" className="mb-1.5 block text-[13.5px] font-semibold">Email</label>
+                <label htmlFor="inq-email" className="mb-1.5 block text-[13.5px] font-semibold">{t.email}</label>
                 <input
                   id="inq-email"
                   type="email"
@@ -156,11 +159,11 @@ export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props)
                   autoComplete="email"
                   aria-invalid={errors.email || undefined}
                   className={inputClass(errors.email)}
-                  placeholder="you@example.com"
+                  placeholder={t.emailPlaceholder}
                 />
               </div>
               <div>
-                <label htmlFor="inq-phone" className="mb-1.5 block text-[13.5px] font-semibold">Phone</label>
+                <label htmlFor="inq-phone" className="mb-1.5 block text-[13.5px] font-semibold">{t.phone}</label>
                 <input
                   id="inq-phone"
                   value={phone}
@@ -168,19 +171,19 @@ export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props)
                   autoComplete="tel"
                   aria-invalid={errors.phone || undefined}
                   className={inputClass(errors.phone)}
-                  placeholder="+965 XXXX XXXX"
+                  placeholder={t.phonePlaceholder}
                 />
               </div>
               <div>
                 <label htmlFor="inq-msg" className="mb-1.5 block text-[13.5px] font-semibold">
-                  Message <span className="font-normal text-ink-soft">(optional)</span>
+                  {t.message} <span className="font-normal text-ink-soft">{t.optional}</span>
                 </label>
                 <textarea
                   id="inq-msg"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   className={`${inputClass(false)} min-h-[90px]`}
-                  placeholder="Any questions about the course, dates, or format?"
+                  placeholder={t.messagePlaceholder}
                 />
               </div>
               <button
@@ -188,10 +191,10 @@ export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props)
                 disabled={submitting}
                 className="min-h-[52px] w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.98] hover:bg-navy-800 disabled:opacity-60"
               >
-                {submitting ? "Sending..." : "Send Inquiry"}
+                {submitting ? t.submitting : t.submit}
               </button>
               <p className="text-center text-[12px] text-ink-soft">
-                No payment collected. We&apos;ll follow up by email or phone.
+                {t.disclaimer}
               </p>
             </form>
           </div>

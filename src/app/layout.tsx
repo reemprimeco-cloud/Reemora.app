@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Poppins, Inter } from "next/font/google";
+import { Poppins, Inter, Tajawal } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { LanguageProvider } from "@/lib/i18n/context";
+import { getLang } from "@/lib/i18n/get-lang";
+import { DIR } from "@/lib/i18n/dictionaries";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -14,6 +17,15 @@ const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+// Arabic-friendly display + body font. Loaded alongside the Latin fonts so
+// switching languages on the client is instant (no font swap flash).
+const tajawal = Tajawal({
+  variable: "--font-tajawal",
+  subsets: ["arabic"],
+  weight: ["400", "500", "700", "800"],
   display: "swap",
 });
 
@@ -74,14 +86,19 @@ const organizationJsonLd = {
     "Reemora trains founders, developers and teams to design, build and launch AI-powered applications through hands-on, expert-led courses.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const lang = await getLang();
+  const dir = DIR[lang];
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${poppins.variable} ${inter.variable} antialiased`}>
+    <html lang={lang} dir={dir} suppressHydrationWarning>
+      <body
+        className={`${poppins.variable} ${inter.variable} ${tajawal.variable} antialiased`}
+        data-lang={lang}
+      >
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
@@ -92,7 +109,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <LanguageProvider initialLang={lang}>{children}</LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

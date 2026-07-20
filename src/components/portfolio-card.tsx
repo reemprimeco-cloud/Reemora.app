@@ -1,10 +1,15 @@
+"use client";
+
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import type { PortfolioItem } from "@/lib/types";
+import { useLanguage } from "@/lib/i18n/context";
+import { interpolate } from "@/lib/i18n/dictionaries";
 
 export function PortfolioCard({ item }: { item: PortfolioItem }) {
   const image = item.image_url || "/images/courses/placeholder.svg";
   const hasLink = Boolean(item.project_url);
+  const { dict } = useLanguage();
 
   const CardBody = (
     <div className="group relative flex h-full flex-col overflow-hidden rounded-[22px] border border-border-c bg-surface transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl">
@@ -32,7 +37,7 @@ export function PortfolioCard({ item }: { item: PortfolioItem }) {
         {item.description && <p className="flex-1 text-sm text-ink-soft">{item.description}</p>}
         {hasLink && (
           <span className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600">
-            Visit Site <ArrowUpRight size={14} aria-hidden="true" />
+            {dict.portfolio.visitSite} <ArrowUpRight size={14} aria-hidden="true" />
           </span>
         )}
       </div>
@@ -46,7 +51,7 @@ export function PortfolioCard({ item }: { item: PortfolioItem }) {
       href={item.project_url!}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={`Open ${item.title} in a new tab`}
+      aria-label={interpolate(dict.portfolio.openInNewTab, { title: item.title })}
       className="block h-full"
     >
       {CardBody}

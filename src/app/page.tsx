@@ -14,54 +14,54 @@ import { getWebsiteSettings } from "@/lib/data/settings";
 import { getPortfolioItems } from "@/lib/data/portfolio";
 import { PortfolioCard } from "@/components/portfolio-card";
 import type { TimelineEntry } from "@/lib/types";
-
-const FEATURES = [
-  { icon: Layers, title: "AI-Powered Curriculum", desc: "Courses are continuously updated to reflect the latest AI tools, models and best practices." },
-  { icon: Rocket, title: "Hands-on Projects", desc: "Every module ends with a real deliverable — you leave with a working app, not just notes." },
-  { icon: Award, title: "Certified Trainer", desc: "Learn directly from an internationally certified trainer with real product-building experience." },
-  { icon: CalendarClock, title: "Flexible Scheduling", desc: "Evening, weekend and cohort-based options so training fits around your life." },
-];
-
-const STATS = [
-  { value: "500+", label: "Students Trained" },
-  { value: "4+", label: "AI Courses" },
-  { value: "10+", label: "Years Training Experience" },
-  { value: "98%", label: "Satisfaction Rate" },
-];
-
-const DEFAULT_TIMELINE: TimelineEntry[] = [
-  { date: "2024 — Present", title: "Founder & Lead Trainer, Reemora", desc: "Designing and delivering AI app-development courses for founders, developers and teams." },
-  { date: "International Certification", title: "Certified Professional Trainer", desc: "Certified under an internationally recognized training and instructional design standard." },
-  { date: "Prior Experience", title: "AI & Software Product Development", desc: "Years of hands-on experience building and shipping software and AI-powered products." },
-];
-const DEFAULT_SKILLS = ["AI App Development", "Prompt Engineering", "Curriculum Design", "Public Speaking", "Product Strategy"];
+import { getLang, getDict } from "@/lib/i18n/get-lang";
+import { interpolate } from "@/lib/i18n/dictionaries";
 
 // Revalidate the homepage's cached data every 60s so admin-panel edits
 // (portfolio, testimonials, courses, settings) surface within a minute
 // without a manual redeploy. Static shell + fresh data on each cache miss.
+// Note: calling cookies() in getLang() forces per-request rendering, so the
+// language toggle takes effect immediately — the 60s ISR window still
+// applies to the data fetches below via Next's fetch cache.
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [courses, instructor, testimonials, settings, portfolio] = await Promise.all([
+  const [lang, courses, instructor, testimonials, settings, portfolio] = await Promise.all([
+    getLang(),
     getCourses(),
     getLeadInstructor(),
     getTestimonials(),
     getWebsiteSettings(),
     getPortfolioItems(),
   ]);
+  const dict = getDict(lang);
   const featuredCourses = courses.slice(0, 3);
+
+  const FEATURES = [
+    { icon: Layers, title: dict.features.curriculum.title, desc: dict.features.curriculum.desc },
+    { icon: Rocket, title: dict.features.projects.title, desc: dict.features.projects.desc },
+    { icon: Award, title: dict.features.trainer.title, desc: dict.features.trainer.desc },
+    { icon: CalendarClock, title: dict.features.scheduling.title, desc: dict.features.scheduling.desc },
+  ];
+
+  const STATS = [
+    { value: "500+", label: dict.stats.students },
+    { value: "4+", label: dict.stats.aiCourses },
+    { value: "10+", label: dict.stats.yearsExperience },
+    { value: "98%", label: dict.stats.satisfaction },
+  ];
+
   // The instructor's timeline/skills are editable via /admin/trainer once
-  // they exist in the DB. Fall back to the defaults above when the
-  // instructor row hasn't set them yet (fresh install, or admin hasn't
-  // customized them).
+  // they exist in the DB. Fall back to the localized defaults when the
+  // instructor row hasn't set them yet.
   const rawTimeline = (instructor as { timeline?: unknown } | null)?.timeline;
   const timeline: TimelineEntry[] = Array.isArray(rawTimeline) && rawTimeline.length > 0
     ? (rawTimeline as TimelineEntry[])
-    : DEFAULT_TIMELINE;
+    : (dict.about.defaultTimeline as unknown as TimelineEntry[]);
   const rawSkills = (instructor as { skills?: unknown } | null)?.skills;
   const skills: string[] = Array.isArray(rawSkills) && rawSkills.length > 0
     ? (rawSkills as string[])
-    : DEFAULT_SKILLS;
+    : (dict.about.defaultSkills as unknown as string[]);
 
   return (
     <>
@@ -83,9 +83,9 @@ export default async function HomePage() {
         <section className="py-16 sm:py-24">
           <div className="mx-auto max-w-[1180px] px-6">
             <Reveal className="mx-auto mb-13 max-w-xl text-center">
-              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Why Reemora</span>
-              <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">A modern approach to learning AI app development</h2>
-              <p className="text-[15px] text-ink-soft sm:text-[17px]">Every course is built around one goal: helping you ship a real, working application — not just collect theory.</p>
+              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.features.eyebrow}</span>
+              <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.features.title}</h2>
+              <p className="text-[15px] text-ink-soft sm:text-[17px]">{dict.features.subtitle}</p>
             </Reveal>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {FEATURES.map((f, i) => (
@@ -106,9 +106,9 @@ export default async function HomePage() {
         <section className="bg-surface-alt py-16 sm:py-24">
           <div className="mx-auto max-w-[1180px] px-6">
             <Reveal className="mx-auto mb-13 max-w-xl text-center">
-              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Upcoming Courses</span>
-              <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">Pick your path into AI app building</h2>
-              <p className="text-[17px] text-ink-soft">A snapshot of what&apos;s open for registration right now. Browse the full catalog for dates, pricing and details.</p>
+              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.upcoming.eyebrow}</span>
+              <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.upcoming.title}</h2>
+              <p className="text-[17px] text-ink-soft">{dict.upcoming.subtitle}</p>
             </Reveal>
             {featuredCourses.length ? (
               <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
@@ -117,11 +117,11 @@ export default async function HomePage() {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-ink-soft">No courses published yet — check back soon.</p>
+              <p className="text-center text-ink-soft">{dict.upcoming.empty}</p>
             )}
             <div className="mt-11 text-center">
               <Link href="/courses" className="inline-flex items-center justify-center rounded-full border-2 border-transparent bg-navy-800 px-7 py-3.5 text-[15px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-blue-600">
-                View Full Course Catalog
+                {dict.upcoming.viewCatalog}
               </Link>
             </div>
           </div>
@@ -144,19 +144,24 @@ export default async function HomePage() {
                   <div className="flex h-full w-full items-center justify-center p-8 text-center text-white">
                     <div>
                       <div className="mb-3.5 text-5xl">★</div>
-                      {instructor?.full_name ?? "Trainer photo"}
+                      {instructor?.full_name ?? dict.about.trainerPhoto}
                     </div>
                   </div>
                 )}
               </div>
               <div className="absolute -bottom-4 -right-4 rounded-2xl bg-surface px-4 py-3 text-center shadow-lg sm:-bottom-4.5 sm:-right-4.5 sm:px-5 sm:py-4">
                 <strong className="block font-[family-name:var(--font-head)] text-[20px] text-blue-600 sm:text-[22px]">{instructor?.years_experience ?? 10}+</strong>
-                <span className="text-[11px] text-ink-soft sm:text-xs">Years Experience</span>
+                <span className="text-[11px] text-ink-soft sm:text-xs">{dict.about.yearsExperience}</span>
               </div>
             </Reveal>
             <Reveal delay={100}>
-              <span className="mb-2 block text-[13px] font-bold uppercase tracking-wide text-blue-600 sm:text-[15px]">About Your Trainer</span>
-              <h2 className="mb-4 text-[22px] font-bold leading-tight sm:mb-4.5 sm:text-3xl md:text-4xl">{instructor?.title ?? "Founder & Lead Trainer"} at {settings.site_name}</h2>
+              <span className="mb-2 block text-[13px] font-bold uppercase tracking-wide text-blue-600 sm:text-[15px]">{dict.about.eyebrow}</span>
+              <h2 className="mb-4 text-[22px] font-bold leading-tight sm:mb-4.5 sm:text-3xl md:text-4xl">
+                {interpolate(dict.about.titleTemplate, {
+                  title: instructor?.title ?? dict.about.defaultTitle,
+                  siteName: settings.site_name,
+                })}
+              </h2>
               <p className="mb-6 text-[15px] leading-relaxed text-ink-soft sm:mb-6.5 sm:text-base">{instructor?.bio}</p>
 
               <div className="mb-7 flex flex-col gap-4.5">
@@ -184,9 +189,9 @@ export default async function HomePage() {
         <section id="certificates" className="bg-surface-alt py-16 sm:py-24">
           <div className="mx-auto max-w-[1180px] px-6">
             <Reveal className="mx-auto mb-13 max-w-xl text-center">
-              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Credentials</span>
-              <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">International Certified Trainer</h2>
-              <p className="text-[17px] text-ink-soft">Certifications and credentials that back the training methodology behind every {settings.site_name} course.</p>
+              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.certificates.eyebrow}</span>
+              <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.certificates.title}</h2>
+              <p className="text-[17px] text-ink-soft">{interpolate(dict.certificates.subtitleTemplate, { siteName: settings.site_name })}</p>
             </Reveal>
             {instructor && instructor.certificates.length ? (
               <div className="grid grid-cols-1 gap-6.5 sm:grid-cols-2 lg:grid-cols-3">
@@ -202,17 +207,17 @@ export default async function HomePage() {
                       </div>
                       <div className="p-5">
                         <h3 className="mb-1 text-[15.5px] font-bold">{cert.title}</h3>
-                        <span className="text-[12.5px] text-ink-soft">{cert.issuing_body || "Placeholder — replace with certificate image"}</span>
+                        <span className="text-[12.5px] text-ink-soft">{cert.issuing_body || dict.certificates.placeholder}</span>
                       </div>
                     </div>
                   </Reveal>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-ink-soft">No certificates published yet.</p>
+              <p className="text-center text-ink-soft">{dict.certificates.empty}</p>
             )}
             <p className="mt-6.5 text-center text-[12.5px] text-ink-soft">
-              Manage these from the admin panel. Upload real certificate images and update titles/issuing bodies there.
+              {dict.certificates.adminHelp}
             </p>
           </div>
         </section>
@@ -221,8 +226,8 @@ export default async function HomePage() {
           <section className="py-16 sm:py-24">
             <div className="mx-auto max-w-[1180px] px-6">
               <Reveal className="mx-auto mb-13 max-w-xl text-center">
-                <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Student Voices</span>
-                <h2 className="text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">What our students say</h2>
+                <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.testimonials.eyebrow}</span>
+                <h2 className="text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.testimonials.title}</h2>
               </Reveal>
               <TestimonialSlider testimonials={testimonials} />
             </div>
@@ -233,9 +238,9 @@ export default async function HomePage() {
           <section id="portfolio" className="bg-surface-alt py-16 sm:py-24">
             <div className="mx-auto max-w-[1180px] px-6">
               <Reveal className="mx-auto mb-13 max-w-xl text-center">
-                <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Featured Projects</span>
-                <h2 className="mb-4 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">Products we&apos;ve built</h2>
-                <p className="text-ink-soft">A selection of live products designed, built and shipped end-to-end.</p>
+                <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.portfolio.eyebrow}</span>
+                <h2 className="mb-4 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.portfolio.title}</h2>
+                <p className="text-ink-soft">{dict.portfolio.subtitle}</p>
               </Reveal>
               <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
                 {portfolio.map((item) => (
@@ -249,14 +254,14 @@ export default async function HomePage() {
         <section className="pb-16 sm:pb-24">
           <Reveal className="mx-auto max-w-[1180px] px-5 sm:px-6">
             <div className="rounded-[22px] bg-gradient-to-br from-blue-600 to-navy-800 px-6 py-10 text-center text-white sm:px-16 sm:py-14">
-              <h2 className="mb-3 text-[24px] font-bold leading-tight text-white sm:text-3xl md:text-4xl">Ready to build your first AI app?</h2>
-              <p className="mb-6 text-[15px] text-[#d7e2f4] sm:mb-7.5 sm:text-base">Browse upcoming cohorts and reserve your seat — registration takes less than five minutes.</p>
+              <h2 className="mb-3 text-[24px] font-bold leading-tight text-white sm:text-3xl md:text-4xl">{dict.cta.title}</h2>
+              <p className="mb-6 text-[15px] text-[#d7e2f4] sm:mb-7.5 sm:text-base">{dict.cta.subtitle}</p>
               <div className="flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap sm:gap-3.5">
                 <Link href="/courses" className="inline-flex min-h-[52px] items-center justify-center rounded-full border-2 border-white px-7 py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.98] hover:-translate-y-0.5 hover:bg-white hover:text-navy-800">
-                  Browse Courses
+                  {dict.cta.browse}
                 </Link>
                 <Link href="/courses" className="inline-flex min-h-[52px] items-center justify-center rounded-full border-2 border-transparent bg-white px-7 py-3.5 text-[15px] font-semibold text-navy-800 transition active:scale-[0.98] hover:-translate-y-0.5">
-                  Register Now
+                  {dict.cta.register}
                 </Link>
               </div>
             </div>

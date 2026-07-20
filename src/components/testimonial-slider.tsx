@@ -3,9 +3,11 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import type { Testimonial } from "@/lib/types";
+import { useLanguage } from "@/lib/i18n/context";
 
 export function TestimonialSlider({ testimonials }: { testimonials: Testimonial[] }) {
   const [current, setCurrent] = React.useState(0);
+  const { dict } = useLanguage();
 
   React.useEffect(() => {
     if (testimonials.length < 2) return;
@@ -32,7 +34,7 @@ export function TestimonialSlider({ testimonials }: { testimonials: Testimonial[
           {testimonials.map((item, i) => (
             <button
               key={item.id}
-              aria-label={`Go to testimonial ${i + 1}`}
+              aria-label={`${dict.testimonials.goToTestimonial} ${i + 1}`}
               onClick={() => setCurrent(i)}
               className={cn(
                 "h-2 rounded-full bg-border-c transition-all",

@@ -6,20 +6,26 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageToggle } from "@/components/language-toggle";
+import { useLanguage } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
-
-const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/courses", label: "Courses" },
-  { href: "/#about", label: "About & CV" },
-  { href: "/#portfolio", label: "Projects" },
-  { href: "/#certificates", label: "Certificates" },
-];
 
 export function SiteHeader() {
   const [scrolled, setScrolled] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
+  const { dict } = useLanguage();
+
+  const links = React.useMemo(
+    () => [
+      { href: "/", label: dict.nav.home },
+      { href: "/courses", label: dict.nav.courses },
+      { href: "/#about", label: dict.nav.about },
+      { href: "/#portfolio", label: dict.nav.projects },
+      { href: "/#certificates", label: dict.nav.certificates },
+    ],
+    [dict]
+  );
 
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -43,7 +49,7 @@ export function SiteHeader() {
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
-          {NAV_LINKS.map((link) => (
+          {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -60,16 +66,17 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <LanguageToggle />
           <ThemeToggle />
           <Link
             href="/courses"
             className="hidden rounded-full border-2 border-transparent bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600 sm:inline-flex"
           >
-            Browse Courses
+            {dict.nav.browseCourses}
           </Link>
           <button
-            aria-label="Toggle menu"
+            aria-label={dict.nav.toggleMenu}
             aria-expanded={open}
             aria-controls="mobile-nav"
             className="flex h-11 w-11 items-center justify-center rounded-full border border-border-c active:scale-95 transition-transform md:hidden"
@@ -82,7 +89,7 @@ export function SiteHeader() {
 
       {open && (
         <nav id="mobile-nav" aria-label="Mobile" className="border-t border-border-c bg-surface px-6 pb-6 pt-3 md:hidden">
-          {NAV_LINKS.map((link) => (
+          {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}

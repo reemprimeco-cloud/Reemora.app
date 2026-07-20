@@ -1,19 +1,32 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Clock, CalendarDays, Users } from "lucide-react";
 import type { CourseWithRelations } from "@/lib/types";
 import { formatDate, formatMoney } from "@/lib/utils";
 import { courseImageSrc, primarySchedule } from "@/lib/course-utils";
+import { useLanguage } from "@/lib/i18n/context";
+import { interpolate } from "@/lib/i18n/dictionaries";
+
+const LEVEL_KEY: Record<string, "beginner" | "intermediate" | "advanced"> = {
+  Beginner: "beginner",
+  Intermediate: "intermediate",
+  Advanced: "advanced",
+};
 
 export function CourseCard({ course }: { course: CourseWithRelations }) {
   const image = courseImageSrc(course);
   const schedule = primarySchedule(course);
+  const { dict, lang } = useLanguage();
+  const levelKey = LEVEL_KEY[course.level];
+  const levelLabel = levelKey ? dict.coursesPage[levelKey] : course.level;
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-[22px] border border-border-c bg-surface transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl">
       <div className="relative aspect-[16/10] overflow-hidden bg-blue-100">
         <span className="absolute left-3.5 top-3.5 z-10 rounded-full bg-white px-3 py-1 text-xs font-bold text-blue-600 shadow-sm">
-          {course.level}
+          {levelLabel}
         </span>
         <span className="absolute right-3.5 top-3.5 z-10 rounded-full bg-navy-800 px-3.5 py-1.5 text-[13px] font-bold text-white">
           {formatMoney(course.price, course.currency)}
@@ -28,11 +41,17 @@ export function CourseCard({ course }: { course: CourseWithRelations }) {
       </div>
       <div className="flex flex-1 flex-col gap-2.5 p-5.5">
         <div className="flex flex-wrap gap-3.5 text-[12.5px] font-semibold text-ink-soft">
-          <span className="flex items-center gap-1.5"><Clock size={13} /> {course.duration_weeks} weeks</span>
+          <span className="flex items-center gap-1.5">
+            <Clock size={13} /> {interpolate(dict.courseCard.weeksTemplate, { n: course.duration_weeks })}
+          </span>
           {schedule && (
             <>
-              <span className="flex items-center gap-1.5"><CalendarDays size={13} /> {formatDate(schedule.start_date)}</span>
-              <span className="flex items-center gap-1.5"><Users size={13} /> {schedule.seats_available}/{schedule.seats_total} left</span>
+              <span className="flex items-center gap-1.5">
+                <CalendarDays size={13} /> {formatDate(schedule.start_date, lang)}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Users size={13} /> {interpolate(dict.courseCard.seatsTemplate, { available: schedule.seats_available, total: schedule.seats_total })}
+              </span>
             </>
           )}
         </div>
@@ -43,13 +62,13 @@ export function CourseCard({ course }: { course: CourseWithRelations }) {
             href={`/courses/${course.slug}`}
             className="flex min-h-[44px] flex-1 items-center justify-center rounded-full border-2 border-border-c px-4 py-2.5 text-center text-sm font-semibold text-foreground transition active:scale-[0.98] hover:border-blue-400 hover:text-blue-600"
           >
-            Details
+            {dict.courseCard.details}
           </Link>
           <Link
             href={`/register/${course.slug}`}
             className="flex min-h-[44px] flex-1 items-center justify-center rounded-full border-2 border-transparent bg-blue-500 px-4 py-2.5 text-center text-sm font-semibold text-white transition active:scale-[0.98] hover:bg-navy-800"
           >
-            Register
+            {dict.courseCard.register}
           </Link>
         </div>
       </div>

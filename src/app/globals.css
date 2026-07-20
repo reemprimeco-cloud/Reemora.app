@@ -66,6 +66,20 @@ h1, h2, h3, h4 {
   font-family: var(--font-head), var(--font-sans), sans-serif;
 }
 
+/* Arabic layout — use Tajawal for everything (Latin sub-strings still
+   render fine in Tajawal) and give body copy a touch more line-height so
+   the Arabic script breathes. */
+body[data-lang="ar"] {
+  font-family: var(--font-tajawal), var(--font-sans), sans-serif;
+  line-height: 1.7;
+}
+body[data-lang="ar"] h1,
+body[data-lang="ar"] h2,
+body[data-lang="ar"] h3,
+body[data-lang="ar"] h4 {
+  font-family: var(--font-tajawal), var(--font-head), sans-serif;
+}
+
 /* Text inputs & textareas at 16px on small screens — iOS Safari zooms
    the viewport in whenever a focused input's computed font-size is
    below 16px, so keep the on-screen typography a bit smaller than the
