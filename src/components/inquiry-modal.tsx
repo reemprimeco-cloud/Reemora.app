@@ -94,14 +94,14 @@ export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props)
 
       {open && (
         <div
-          className="fixed inset-0 z-[1500] flex items-center justify-center bg-navy-900/55 p-5"
+          className="fixed inset-0 z-[1500] flex items-end justify-center bg-navy-900/55 sm:items-center sm:p-5"
           onClick={(e) => e.target === e.currentTarget && setOpen(false)}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="inquiry-modal-title"
-            className="max-h-[92vh] w-full max-w-[520px] overflow-y-auto rounded-[22px] bg-surface p-7 shadow-2xl"
+            className="max-h-[92vh] w-full max-w-[520px] overflow-y-auto rounded-t-[22px] bg-surface p-5 shadow-2xl sm:rounded-[22px] sm:p-7"
           >
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
@@ -186,7 +186,7 @@ export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props)
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-[15px] font-semibold text-white transition hover:bg-navy-800 disabled:opacity-60"
+                className="min-h-[52px] w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.98] hover:bg-navy-800 disabled:opacity-60"
               >
                 {submitting ? "Sending..." : "Send Inquiry"}
               </button>
@@ -203,7 +203,7 @@ export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props)
 
 function inputClass(error?: boolean) {
   return cn(
-    "w-full rounded-lg border bg-surface-alt px-4 py-3 text-sm outline-none transition focus:bg-surface",
+    "block w-full rounded-xl border bg-surface-alt px-4 py-3.5 text-[15px] outline-none transition focus:bg-surface focus:ring-4 focus:ring-blue-400/15",
     error ? "border-red-400" : "border-border-c focus:border-blue-400"
   );
 }

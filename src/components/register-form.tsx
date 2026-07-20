@@ -88,8 +88,8 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
   const total = course.price * seats;
 
   return (
-    <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
-      <div className="rounded-[22px] border border-border-c bg-surface p-7 sm:p-10">
+    <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[1.4fr_1fr] lg:gap-10">
+      <div className="rounded-[22px] border border-border-c bg-surface p-5 sm:p-10">
         {alert && (
           <div
             role="alert"
@@ -111,7 +111,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
               id="reg-course"
               disabled
               value={`${course.title} — ${formatMoney(course.price, course.currency)}`}
-              className="w-full rounded-lg border border-border-c bg-surface-alt px-4 py-3 text-sm"
+              className="w-full rounded-xl border border-border-c bg-surface-alt px-4 py-3.5 text-[15px]"
             />
           </div>
 
@@ -134,7 +134,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
             <label htmlFor="reg-notes" className="mb-1.5 block text-[13.5px] font-semibold">
               Notes <span className="font-normal text-ink-soft">(optional)</span>
             </label>
-            <textarea id="reg-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything we should know before the course starts?" className="min-h-[100px] w-full rounded-lg border border-border-c bg-surface-alt px-4 py-3 text-sm outline-none focus:border-blue-400 focus:bg-surface" />
+            <textarea id="reg-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Anything we should know before the course starts?" className="min-h-[100px] w-full rounded-xl border border-border-c bg-surface-alt px-4 py-3.5 text-[15px] outline-none transition focus:border-blue-400 focus:bg-surface focus:ring-4 focus:ring-blue-400/15" />
           </div>
 
           <div className="mb-6">
@@ -148,7 +148,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-[15px] font-semibold text-white transition hover:bg-navy-800 disabled:opacity-60"
+            className="min-h-[52px] w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.98] hover:bg-navy-800 disabled:opacity-60"
           >
             {submitting ? "Connecting to secure payment..." : "Proceed to Secure Payment"}
           </button>
@@ -184,7 +184,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
 
 function inputClass(error?: boolean) {
   return cn(
-    "w-full rounded-lg border bg-surface-alt px-4 py-3 text-[14.5px] outline-none transition focus:bg-surface",
+    "block w-full rounded-xl border bg-surface-alt px-4 py-3.5 text-[15px] outline-none transition focus:bg-surface focus:ring-4 focus:ring-blue-400/15",
     error ? "border-red-400" : "border-border-c focus:border-blue-400"
   );
 }

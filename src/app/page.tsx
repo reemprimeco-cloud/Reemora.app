@@ -80,12 +80,12 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <section className="py-24">
+        <section className="py-16 sm:py-24">
           <div className="mx-auto max-w-[1180px] px-6">
             <Reveal className="mx-auto mb-13 max-w-xl text-center">
               <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Why Reemora</span>
-              <h2 className="mb-3.5 text-[28px] font-bold sm:text-4xl">A modern approach to learning AI app development</h2>
-              <p className="text-[17px] text-ink-soft">Every course is built around one goal: helping you ship a real, working application — not just collect theory.</p>
+              <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">A modern approach to learning AI app development</h2>
+              <p className="text-[15px] text-ink-soft sm:text-[17px]">Every course is built around one goal: helping you ship a real, working application — not just collect theory.</p>
             </Reveal>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {FEATURES.map((f, i) => (
@@ -103,11 +103,11 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="bg-surface-alt py-24">
+        <section className="bg-surface-alt py-16 sm:py-24">
           <div className="mx-auto max-w-[1180px] px-6">
             <Reveal className="mx-auto mb-13 max-w-xl text-center">
               <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Upcoming Courses</span>
-              <h2 className="mb-3.5 text-[28px] font-bold sm:text-4xl">Pick your path into AI app building</h2>
+              <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">Pick your path into AI app building</h2>
               <p className="text-[17px] text-ink-soft">A snapshot of what&apos;s open for registration right now. Browse the full catalog for dates, pricing and details.</p>
             </Reveal>
             {featuredCourses.length ? (
@@ -127,16 +127,16 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section id="about" className="py-24">
-          <div className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-14 px-6 lg:grid-cols-[0.85fr_1.15fr]">
-            <Reveal className="relative mx-auto max-w-[340px] lg:mx-0">
+        <section id="about" className="py-16 sm:py-24">
+          <div className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-12 px-5 sm:gap-14 sm:px-6 lg:grid-cols-[0.85fr_1.15fr]">
+            <Reveal className="relative mx-auto w-full max-w-[260px] sm:max-w-[340px] lg:mx-0">
               <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-gradient-to-br from-navy-800 to-blue-600 shadow-xl">
                 {instructor?.photo_url ? (
                   <Image
                     src={instructor.photo_url}
                     alt={instructor.full_name}
                     fill
-                    sizes="(max-width: 1024px) 340px, 420px"
+                    sizes="(max-width: 640px) 260px, (max-width: 1024px) 340px, 420px"
                     priority
                     className="object-cover"
                   />
@@ -149,15 +149,15 @@ export default async function HomePage() {
                   </div>
                 )}
               </div>
-              <div className="absolute -bottom-4.5 -right-4.5 rounded-2xl bg-surface px-5 py-4 text-center shadow-lg">
-                <strong className="block font-[family-name:var(--font-head)] text-[22px] text-blue-600">{instructor?.years_experience ?? 10}+</strong>
-                <span className="text-xs text-ink-soft">Years Experience</span>
+              <div className="absolute -bottom-4 -right-4 rounded-2xl bg-surface px-4 py-3 text-center shadow-lg sm:-bottom-4.5 sm:-right-4.5 sm:px-5 sm:py-4">
+                <strong className="block font-[family-name:var(--font-head)] text-[20px] text-blue-600 sm:text-[22px]">{instructor?.years_experience ?? 10}+</strong>
+                <span className="text-[11px] text-ink-soft sm:text-xs">Years Experience</span>
               </div>
             </Reveal>
             <Reveal delay={100}>
-              <span className="mb-2 block text-[15px] font-bold uppercase tracking-wide text-blue-600">About Your Trainer</span>
-              <h2 className="mb-4.5 text-[28px] font-bold sm:text-4xl">{instructor?.title ?? "Founder & Lead Trainer"} at {settings.site_name}</h2>
-              <p className="mb-6.5 text-ink-soft">{instructor?.bio}</p>
+              <span className="mb-2 block text-[13px] font-bold uppercase tracking-wide text-blue-600 sm:text-[15px]">About Your Trainer</span>
+              <h2 className="mb-4 text-[22px] font-bold leading-tight sm:mb-4.5 sm:text-3xl md:text-4xl">{instructor?.title ?? "Founder & Lead Trainer"} at {settings.site_name}</h2>
+              <p className="mb-6 text-[15px] leading-relaxed text-ink-soft sm:mb-6.5 sm:text-base">{instructor?.bio}</p>
 
               <div className="mb-7 flex flex-col gap-4.5">
                 {timeline.map((item, idx) => (
@@ -181,11 +181,11 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section id="certificates" className="bg-surface-alt py-24">
+        <section id="certificates" className="bg-surface-alt py-16 sm:py-24">
           <div className="mx-auto max-w-[1180px] px-6">
             <Reveal className="mx-auto mb-13 max-w-xl text-center">
               <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Credentials</span>
-              <h2 className="mb-3.5 text-[28px] font-bold sm:text-4xl">International Certified Trainer</h2>
+              <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">International Certified Trainer</h2>
               <p className="text-[17px] text-ink-soft">Certifications and credentials that back the training methodology behind every {settings.site_name} course.</p>
             </Reveal>
             {instructor && instructor.certificates.length ? (
@@ -218,11 +218,11 @@ export default async function HomePage() {
         </section>
 
         {testimonials.length > 0 && (
-          <section className="py-24">
+          <section className="py-16 sm:py-24">
             <div className="mx-auto max-w-[1180px] px-6">
               <Reveal className="mx-auto mb-13 max-w-xl text-center">
                 <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Student Voices</span>
-                <h2 className="text-[28px] font-bold sm:text-4xl">What our students say</h2>
+                <h2 className="text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">What our students say</h2>
               </Reveal>
               <TestimonialSlider testimonials={testimonials} />
             </div>
@@ -230,11 +230,11 @@ export default async function HomePage() {
         )}
 
         {portfolio.length > 0 && (
-          <section id="portfolio" className="bg-surface-alt py-24">
+          <section id="portfolio" className="bg-surface-alt py-16 sm:py-24">
             <div className="mx-auto max-w-[1180px] px-6">
               <Reveal className="mx-auto mb-13 max-w-xl text-center">
                 <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">Featured Projects</span>
-                <h2 className="mb-4 text-[28px] font-bold sm:text-4xl">Products we&apos;ve built</h2>
+                <h2 className="mb-4 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">Products we&apos;ve built</h2>
                 <p className="text-ink-soft">A selection of live products designed, built and shipped end-to-end.</p>
               </Reveal>
               <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
@@ -246,16 +246,16 @@ export default async function HomePage() {
           </section>
         )}
 
-        <section className="pb-24">
-          <Reveal className="mx-auto max-w-[1180px] px-6">
-            <div className="rounded-[22px] bg-gradient-to-br from-blue-600 to-navy-800 px-8 py-14 text-center text-white sm:px-16">
-              <h2 className="mb-3 text-[28px] font-bold text-white sm:text-4xl">Ready to build your first AI app?</h2>
-              <p className="mb-7.5 text-[#d7e2f4]">Browse upcoming cohorts and reserve your seat — registration takes less than five minutes.</p>
-              <div className="flex flex-wrap justify-center gap-3.5">
-                <Link href="/courses" className="inline-flex items-center justify-center rounded-full border-2 border-white px-7 py-3.5 text-[15px] font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white hover:text-navy-800">
+        <section className="pb-16 sm:pb-24">
+          <Reveal className="mx-auto max-w-[1180px] px-5 sm:px-6">
+            <div className="rounded-[22px] bg-gradient-to-br from-blue-600 to-navy-800 px-6 py-10 text-center text-white sm:px-16 sm:py-14">
+              <h2 className="mb-3 text-[24px] font-bold leading-tight text-white sm:text-3xl md:text-4xl">Ready to build your first AI app?</h2>
+              <p className="mb-6 text-[15px] text-[#d7e2f4] sm:mb-7.5 sm:text-base">Browse upcoming cohorts and reserve your seat — registration takes less than five minutes.</p>
+              <div className="flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap sm:gap-3.5">
+                <Link href="/courses" className="inline-flex min-h-[52px] items-center justify-center rounded-full border-2 border-white px-7 py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.98] hover:-translate-y-0.5 hover:bg-white hover:text-navy-800">
                   Browse Courses
                 </Link>
-                <Link href="/courses" className="inline-flex items-center justify-center rounded-full border-2 border-transparent bg-white px-7 py-3.5 text-[15px] font-semibold text-navy-800 transition hover:-translate-y-0.5">
+                <Link href="/courses" className="inline-flex min-h-[52px] items-center justify-center rounded-full border-2 border-transparent bg-white px-7 py-3.5 text-[15px] font-semibold text-navy-800 transition active:scale-[0.98] hover:-translate-y-0.5">
                   Register Now
                 </Link>
               </div>

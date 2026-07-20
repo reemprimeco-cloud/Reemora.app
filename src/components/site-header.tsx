@@ -37,9 +37,9 @@ export function SiteHeader() {
           : "bg-surface/70"
       )}
     >
-      <div className="mx-auto flex h-[78px] max-w-[1180px] items-center justify-between px-6">
-        <Link href="/" className="flex items-center gap-2">
-          <Image src="/images/logo.png" alt="Reemora logo" width={170} height={44} priority className="h-11 w-auto dark:brightness-0 dark:invert" />
+      <div className="mx-auto flex h-[68px] max-w-[1180px] items-center justify-between px-5 sm:h-[78px] sm:px-6">
+        <Link href="/" className="flex items-center gap-2" aria-label="Reemora — Home">
+          <Image src="/images/logo.png" alt="Reemora logo" width={170} height={44} priority className="h-9 w-auto sm:h-11 dark:brightness-0 dark:invert" />
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
@@ -72,10 +72,10 @@ export function SiteHeader() {
             aria-label="Toggle menu"
             aria-expanded={open}
             aria-controls="mobile-nav"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-border-c md:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-border-c active:scale-95 transition-transform md:hidden"
             onClick={() => setOpen((v) => !v)}
           >
-            {open ? <X size={18} /> : <Menu size={18} />}
+            {open ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>

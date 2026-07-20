@@ -63,7 +63,7 @@ export function ContactForm() {
   }
 
   return (
-    <div className="rounded-[22px] border border-border-c bg-surface p-7 sm:p-10">
+    <div className="rounded-[22px] border border-border-c bg-surface p-5 sm:p-10">
       {alert && (
         <div
           role="alert"
@@ -105,7 +105,7 @@ export function ContactForm() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-[15px] font-semibold text-white transition hover:bg-navy-800 disabled:opacity-60 sm:w-auto sm:px-10"
+            className="min-h-[52px] w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.98] hover:bg-navy-800 disabled:opacity-60 sm:w-auto sm:px-10"
           >
             {submitting ? "Sending..." : "Send Message"}
           </button>
@@ -117,7 +117,7 @@ export function ContactForm() {
 
 function inputClass(error?: boolean) {
   return cn(
-    "w-full rounded-lg border bg-surface-alt px-4 py-3 text-[14.5px] outline-none transition focus:bg-surface",
+    "block w-full rounded-xl border bg-surface-alt px-4 py-3.5 text-[15px] outline-none transition focus:bg-surface focus:ring-4 focus:ring-blue-400/15",
     error ? "border-red-400" : "border-border-c focus:border-blue-400"
   );
 }

@@ -41,13 +41,13 @@ export function CourseCard({ course }: { course: CourseWithRelations }) {
         <div className="mt-2 flex gap-2.5">
           <Link
             href={`/courses/${course.slug}`}
-            className="flex-1 rounded-full border-2 border-border-c px-4 py-2.5 text-center text-sm font-semibold text-foreground transition hover:border-blue-400 hover:text-blue-600"
+            className="flex min-h-[44px] flex-1 items-center justify-center rounded-full border-2 border-border-c px-4 py-2.5 text-center text-sm font-semibold text-foreground transition active:scale-[0.98] hover:border-blue-400 hover:text-blue-600"
           >
             Details
           </Link>
           <Link
             href={`/register/${course.slug}`}
-            className="flex-1 rounded-full border-2 border-transparent bg-blue-500 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-navy-800"
+            className="flex min-h-[44px] flex-1 items-center justify-center rounded-full border-2 border-transparent bg-blue-500 px-4 py-2.5 text-center text-sm font-semibold text-white transition active:scale-[0.98] hover:bg-navy-800"
           >
             Register
           </Link>

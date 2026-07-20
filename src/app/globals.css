@@ -57,20 +57,42 @@ body {
   background: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4 {
   font-family: var(--font-head), var(--font-sans), sans-serif;
 }
 
+/* Text inputs & textareas at 16px on small screens — iOS Safari zooms
+   the viewport in whenever a focused input's computed font-size is
+   below 16px, so keep the on-screen typography a bit smaller than the
+   underlying font-size only above the mobile breakpoint. */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 html {
   scroll-behavior: smooth;
-  /* Offset in-page anchor scrolling so the fixed 78px header doesn't
-     cover the section heading. Applies to every [id]-targeted section. */
-  scroll-padding-top: 96px;
+  /* Offset in-page anchor scrolling so the fixed header (68px mobile,
+     78px sm+) doesn't cover the section heading. Applies to every
+     [id]-targeted section. */
+  scroll-padding-top: 84px;
+}
+@media (min-width: 640px) {
+  html { scroll-padding-top: 96px; }
 }
 :target {
-  scroll-margin-top: 96px;
+  scroll-margin-top: 84px;
+}
+@media (min-width: 640px) {
+  :target { scroll-margin-top: 96px; }
 }
 
 @keyframes float {

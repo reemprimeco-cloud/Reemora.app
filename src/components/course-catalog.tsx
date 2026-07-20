@@ -40,14 +40,14 @@ export function CourseCatalog({ courses }: { courses: CourseWithRelations[] }) {
               aria-label="Search courses"
               value={term}
               onChange={(e) => setTerm(e.target.value)}
-              className="w-full rounded-full border border-border-c bg-surface-alt py-2.5 pl-10 pr-4 text-sm text-foreground outline-none focus:border-blue-400"
+              className="w-full rounded-full border border-border-c bg-surface-alt py-3 pl-10 pr-4 text-[15px] text-foreground outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-400/15"
             />
           </div>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             aria-label="Filter by category"
-            className="min-w-[150px] rounded-full border border-border-c bg-surface-alt px-4 py-2.5 text-sm text-foreground outline-none focus:border-blue-400"
+            className="min-h-[44px] min-w-[150px] rounded-full border border-border-c bg-surface-alt px-4 py-2.5 text-[15px] text-foreground outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-400/15"
           >
             <option value="">All Categories</option>
             {categories.map((c) => (
@@ -58,7 +58,7 @@ export function CourseCatalog({ courses }: { courses: CourseWithRelations[] }) {
             value={level}
             onChange={(e) => setLevel(e.target.value)}
             aria-label="Filter by level"
-            className="min-w-[150px] rounded-full border border-border-c bg-surface-alt px-4 py-2.5 text-sm text-foreground outline-none focus:border-blue-400"
+            className="min-h-[44px] min-w-[150px] rounded-full border border-border-c bg-surface-alt px-4 py-2.5 text-[15px] text-foreground outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-400/15"
           >
             <option value="">All Levels</option>
             <option value="Beginner">Beginner</option>
