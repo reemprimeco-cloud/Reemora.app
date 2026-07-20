@@ -30,10 +30,15 @@ export async function getLeadInstructor(): Promise<InstructorWithCertificates | 
   if (!isSupabaseConfigured) return SEED_INSTRUCTORS[0] ?? null;
 
   const supabase = createPublicClient();
+  // Filter by is_lead to guard against duplicate instructor rows (e.g. a
+  // seed placeholder still living alongside the admin-created real row).
+  // Then take the most recently-updated one so re-saves win — the older
+  // seed placeholder falls out automatically.
   const { data, error } = await supabase
     .from("instructors")
     .select("*, certificates(*)")
-    .order("display_order", { ascending: true })
+    .eq("is_lead", true)
+    .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -60,7 +65,8 @@ export async function getLeadInstructorForAdmin(): Promise<InstructorWithCertifi
   const { data, error } = await supabase
     .from("instructors")
     .select("*, certificates(*)")
-    .order("display_order", { ascending: true })
+    .eq("is_lead", true)
+    .order("updated_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
