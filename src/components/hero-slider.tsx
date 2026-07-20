@@ -73,7 +73,7 @@ export function HeroSlider() {
       <div className="relative z-10 mx-auto max-w-[1180px] px-6">
         <div
           key={current}
-          className="animate-fade-up grid grid-cols-1 items-center gap-10 py-10 pb-24 md:grid-cols-[1.1fr_0.9fr] md:text-start text-center"
+          className="animate-fade-in grid grid-cols-1 items-center gap-10 py-10 pb-24 md:grid-cols-[1.1fr_0.9fr] md:text-start text-center"
         >
           <div>
             <span className="mb-4.5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-[#cfe0f8]">

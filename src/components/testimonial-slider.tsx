@@ -22,7 +22,7 @@ export function TestimonialSlider({ testimonials }: { testimonials: Testimonial[
 
   return (
     <div className="mx-auto max-w-[760px] text-center">
-      <div key={current} className="animate-fade-up min-h-[140px]">
+      <div key={current} className="animate-fade-in min-h-[220px] sm:min-h-[200px]">
         <p className="mb-5.5 font-[family-name:var(--font-head)] text-xl font-semibold text-foreground sm:text-[21px]">
           &ldquo;{t.quote}&rdquo;
         </p>
