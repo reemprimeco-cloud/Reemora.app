@@ -123,7 +123,7 @@ export default async function CourseDetailPage({ params }: Props) {
           </Link>
           <div className="grid grid-cols-1 items-start gap-11 lg:grid-cols-[1.5fr_1fr]">
             <div>
-              <div className="relative mb-7.5 aspect-video overflow-hidden rounded-[22px] shadow-lg">
+              <div className="relative mb-7.5 aspect-square overflow-hidden rounded-[22px] shadow-lg">
                 <Image src={image} alt={course.title} fill priority sizes="(max-width: 1024px) 100vw, 60vw" className="object-cover" />
               </div>
               <span className="mb-3 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">
