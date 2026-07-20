@@ -32,7 +32,7 @@ export function HeroSlider() {
       },
       {
         ...slide2,
-        primaryHref: "/courses",
+        primaryHref: "/reserve",
         secondaryHref: "/#certificates",
         image: IMAGES[1].image,
         meta: [

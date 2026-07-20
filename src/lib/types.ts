@@ -16,6 +16,7 @@ export type WebsiteSettingRow = Tables["website_settings"]["Row"];
 export type PortfolioItem = Tables["portfolio"]["Row"];
 export type ContactMessage = Tables["contact_messages"]["Row"];
 export type CourseInquiry = Tables["course_inquiries"]["Row"];
+export type SeatReservation = Tables["seat_reservations"]["Row"];
 
 export type CourseLevel = Course["level"];
 export type ScheduleStatus = CourseSchedule["status"];

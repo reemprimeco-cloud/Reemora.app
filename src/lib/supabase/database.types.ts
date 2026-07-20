@@ -77,6 +77,40 @@ export interface Database {
           }
         ];
       };
+      seat_reservations: {
+        Row: {
+          id: string;
+          course_id: string | null;
+          full_name: string;
+          email: string;
+          phone: string;
+          interest: string | null;
+          skills: string | null;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          course_id?: string | null;
+          full_name: string;
+          email: string;
+          phone: string;
+          interest?: string | null;
+          skills?: string | null;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["seat_reservations"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "seat_reservations_course_id_fkey";
+            columns: ["course_id"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       course_inquiries: {
         Row: {
           id: string;
