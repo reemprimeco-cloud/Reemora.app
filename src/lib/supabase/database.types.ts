@@ -311,7 +311,7 @@ export interface Database {
           notes: string | null;
           amount: number;
           currency: string;
-          status: "pending" | "confirmed" | "cancelled";
+          status: "pending" | "confirmed" | "cancelled" | "refunded" | "no_show" | "waitlist";
           created_at: string;
         };
         Insert: {
@@ -325,7 +325,7 @@ export interface Database {
           notes?: string | null;
           amount: number;
           currency?: string;
-          status?: "pending" | "confirmed" | "cancelled";
+          status?: "pending" | "confirmed" | "cancelled" | "refunded" | "no_show" | "waitlist";
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["registrations"]["Insert"]>;

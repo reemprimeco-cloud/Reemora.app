@@ -21,6 +21,7 @@ export type SeatReservation = Tables["seat_reservations"]["Row"];
 export type CourseLevel = Course["level"];
 export type ScheduleStatus = CourseSchedule["status"];
 export type PaymentStatus = Payment["status"];
+export type RegistrationStatus = Registration["status"];
 
 /** One row in the About Your Trainer timeline. Stored as JSONB on
  *  instructors.timeline so admins can edit these without a schema change. */
