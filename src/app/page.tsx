@@ -156,12 +156,15 @@ export default async function HomePage() {
             </Reveal>
             <Reveal delay={100}>
               <span className="mb-2 block text-[13px] font-bold uppercase tracking-wide text-blue-600 sm:text-[15px]">{dict.about.eyebrow}</span>
-              <h2 className="mb-4 text-[22px] font-bold leading-tight sm:mb-4.5 sm:text-3xl md:text-4xl">
+              <h2 className="mb-2 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">
+                {instructor?.full_name ?? dict.about.trainerPhoto}
+              </h2>
+              <p className="mb-5 text-[15px] font-semibold text-blue-600 sm:text-[17px]">
                 {interpolate(dict.about.titleTemplate, {
                   title: instructor?.title ?? dict.about.defaultTitle,
                   siteName: settings.site_name,
                 })}
-              </h2>
+              </p>
               <p className="mb-6 text-[15px] leading-relaxed text-ink-soft sm:mb-6.5 sm:text-base">{instructor?.bio}</p>
 
               <div className="mb-7 flex flex-col gap-4.5">
