@@ -51,17 +51,13 @@ export default async function HomePage() {
     { value: "98%", label: dict.stats.satisfaction },
   ];
 
-  // The instructor's timeline/skills are editable via /admin/trainer once
-  // they exist in the DB. Fall back to the localized defaults when the
-  // instructor row hasn't set them yet.
+  // The instructor's timeline/skills are editable via /admin/trainer.
+  // Empty arrays hide the corresponding section entirely so the homepage
+  // only ever shows content the trainer has actually entered.
   const rawTimeline = (instructor as { timeline?: unknown } | null)?.timeline;
-  const timeline: TimelineEntry[] = Array.isArray(rawTimeline) && rawTimeline.length > 0
-    ? (rawTimeline as TimelineEntry[])
-    : (dict.about.defaultTimeline as unknown as TimelineEntry[]);
+  const timeline: TimelineEntry[] = Array.isArray(rawTimeline) ? (rawTimeline as TimelineEntry[]) : [];
   const rawSkills = (instructor as { skills?: unknown } | null)?.skills;
-  const skills: string[] = Array.isArray(rawSkills) && rawSkills.length > 0
-    ? (rawSkills as string[])
-    : (dict.about.defaultSkills as unknown as string[]);
+  const skills: string[] = Array.isArray(rawSkills) ? (rawSkills as string[]) : [];
 
   return (
     <>
@@ -167,24 +163,28 @@ export default async function HomePage() {
               </p>
               <p className="mb-6 text-[15px] leading-relaxed text-ink-soft sm:mb-6.5 sm:text-base">{instructor?.bio}</p>
 
-              <div className="mb-7 flex flex-col gap-4.5">
-                {timeline.map((item, idx) => (
-                  <div key={`${item.title}-${idx}`} className="flex gap-4">
-                    <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full bg-blue-500 shadow-[0_0_0_4px_var(--color-blue-100)]" />
-                    <div>
-                      <span className="text-xs font-bold text-blue-600">{item.date}</span>
-                      <h3 className="text-[15.5px] font-bold">{item.title}</h3>
-                      <p className="text-sm text-ink-soft">{item.desc}</p>
+              {timeline.length > 0 && (
+                <div className="mb-7 flex flex-col gap-4.5">
+                  {timeline.map((item, idx) => (
+                    <div key={`${item.title}-${idx}`} className="flex gap-4">
+                      <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full bg-blue-500 shadow-[0_0_0_4px_var(--color-blue-100)]" />
+                      <div>
+                        <span className="text-xs font-bold text-blue-600">{item.date}</span>
+                        <h3 className="text-[15.5px] font-bold">{item.title}</h3>
+                        <p className="text-sm text-ink-soft">{item.desc}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
-              <div className="flex flex-wrap gap-2.5">
-                {skills.map((s) => (
-                  <span key={s} className="rounded-full bg-blue-100 px-3.5 py-1.5 text-[12.5px] font-bold text-blue-600">{s}</span>
-                ))}
-              </div>
+              {skills.length > 0 && (
+                <div className="flex flex-wrap gap-2.5">
+                  {skills.map((s) => (
+                    <span key={s} className="rounded-full bg-blue-100 px-3.5 py-1.5 text-[12.5px] font-bold text-blue-600">{s}</span>
+                  ))}
+                </div>
+              )}
             </Reveal>
           </div>
         </section>
