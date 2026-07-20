@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Trash2, Plus, ArrowUp, ArrowDown } from "lucide-react";
+import { Trash2, Plus, ArrowUp, ArrowDown, GraduationCap, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Certificate, InstructorWithCertificates, TimelineEntry } from "@/lib/types";
 import { useToast } from "@/components/toast-provider";
@@ -314,36 +314,51 @@ export function TrainerManager({ instructor: initialInstructor }: { instructor: 
                 <Plus size={15} /> Add Certificate
               </button>
             </form>
-            <ul className="space-y-2.5">
-              {instructor.certificates.length ? (
-                instructor.certificates.map((cert) => (
-                  <li key={cert.id} className="flex items-start justify-between gap-3 rounded-lg border border-border-c px-4 py-3">
-                    <div className="flex flex-1 items-center gap-3">
-                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-blue-100">
-                        {cert.image_url ? (
-                          <Image src={cert.image_url} alt={cert.title} fill sizes="48px" className="object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-xs text-blue-600">no img</div>
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold">{cert.title}</p>
-                        {cert.issuing_body && <p className="text-xs text-ink-soft">{cert.issuing_body}</p>}
-                        <label className="mt-1 inline-block cursor-pointer text-[11px] font-semibold text-blue-600 hover:underline">
+            {instructor.certificates.length ? (
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                {instructor.certificates.map((cert) => (
+                  <div key={cert.id} className="overflow-hidden rounded-2xl border border-border-c bg-surface transition-all hover:shadow-lg">
+                    <div className="relative flex aspect-[4/3] items-center justify-center border-b border-border-c bg-gradient-to-br from-blue-100 to-surface text-blue-500">
+                      {cert.image_url ? (
+                        <Image src={cert.image_url} alt={cert.title} fill sizes="(max-width: 640px) 100vw, 320px" className="object-cover" />
+                      ) : (
+                        <GraduationCap size={40} aria-hidden="true" />
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <h3 className="mb-1 text-[15.5px] font-bold">{cert.title}</h3>
+                      <span className="text-[12.5px] text-ink-soft">
+                        {cert.issuing_body || "Placeholder — replace with certificate image"}
+                      </span>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <label className="inline-flex min-h-[36px] cursor-pointer items-center gap-1.5 rounded-full border border-border-c bg-surface px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:border-blue-400 hover:text-blue-600">
+                          <Upload size={13} aria-hidden="true" />
                           {certUploading === cert.id ? "Uploading..." : cert.image_url ? "Replace image" : "Upload image"}
-                          <input type="file" accept="image/*" onChange={(e) => handleCertImageUpload(cert, e)} disabled={certUploading === cert.id} className="hidden" aria-label={`Upload image for ${cert.title}`} />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleCertImageUpload(cert, e)}
+                            disabled={certUploading === cert.id}
+                            className="hidden"
+                            aria-label={`Upload image for ${cert.title}`}
+                          />
                         </label>
+                        <button
+                          onClick={() => handleDeleteCertificate(cert)}
+                          aria-label={`Delete certificate: ${cert.title}`}
+                          title="Delete"
+                          className="ms-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border-c hover:border-red-300 hover:text-red-500"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
-                    <button onClick={() => handleDeleteCertificate(cert)} aria-label={`Delete certificate: ${cert.title}`} title="Delete" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border-c hover:border-red-300 hover:text-red-500">
-                      <Trash2 size={14} />
-                    </button>
-                  </li>
-                ))
-              ) : (
-                <p className="text-sm text-ink-soft">No certificates yet.</p>
-              )}
-            </ul>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-ink-soft">No certificates yet.</p>
+            )}
           </>
         )}
       </div>
