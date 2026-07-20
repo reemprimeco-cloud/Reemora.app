@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { InquiryModal } from "@/components/inquiry-modal";
+import { WaitlistModal } from "@/components/waitlist-modal";
 import { getCourseBySlug, getCourses } from "@/lib/data/courses";
 import { courseImageSrc, formatDuration, primarySchedule } from "@/lib/course-utils";
 import { getWebsiteSettings } from "@/lib/data/settings";
@@ -153,12 +154,16 @@ export default async function CourseDetailPage({ params }: Props) {
                   <span className="font-bold text-foreground">{value}</span>
                 </div>
               ))}
-              <Link
-                href={`/register/${course.slug}`}
-                className="mt-5.5 block w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-center text-[15px] font-semibold text-white transition hover:bg-navy-800"
-              >
-                {schedule && schedule.seats_available > 0 ? dict.courseDetail.register : dict.courseDetail.waitlist}
-              </Link>
+              {schedule && schedule.seats_available > 0 ? (
+                <Link
+                  href={`/register/${course.slug}`}
+                  className="mt-5.5 block w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-center text-[15px] font-semibold text-white transition hover:bg-navy-800"
+                >
+                  {dict.courseDetail.register}
+                </Link>
+              ) : (
+                <WaitlistModal courseId={course.id} courseScheduleId={schedule?.id ?? null} courseTitle={course.title} />
+              )}
               <div className="mt-3">
                 <InquiryModal courseId={course.id} courseScheduleId={schedule?.id ?? null} courseTitle={course.title} />
               </div>

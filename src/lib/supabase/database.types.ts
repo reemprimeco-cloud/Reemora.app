@@ -111,6 +111,43 @@ export interface Database {
           }
         ];
       };
+      course_waitlist: {
+        Row: {
+          id: string;
+          course_id: string | null;
+          course_schedule_id: string | null;
+          full_name: string;
+          phone: string;
+          notified: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          course_id?: string | null;
+          course_schedule_id?: string | null;
+          full_name: string;
+          phone: string;
+          notified?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["course_waitlist"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "course_waitlist_course_id_fkey";
+            columns: ["course_id"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "course_waitlist_course_schedule_id_fkey";
+            columns: ["course_schedule_id"];
+            isOneToOne: false;
+            referencedRelation: "course_schedule";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       course_inquiries: {
         Row: {
           id: string;
