@@ -55,6 +55,7 @@ export function ScheduleManager({ courses }: { courses: CourseWithRelations[] })
                 <th className="px-6 py-3.5 text-left">End Date</th>
                 <th className="px-6 py-3.5 text-left">Days</th>
                 <th className="px-6 py-3.5 text-left">Time</th>
+                <th className="px-6 py-3.5 text-left">Location</th>
                 <th className="px-6 py-3.5 text-left">Seats</th>
                 <th className="px-6 py-3.5 text-left">Status</th>
                 <th className="px-6 py-3.5 text-left">Actions</th>
@@ -69,6 +70,7 @@ export function ScheduleManager({ courses }: { courses: CourseWithRelations[] })
                     <td className="px-6 py-3.5">{formatDate(r.end_date)}</td>
                     <td className="px-6 py-3.5">{r.session_days}</td>
                     <td className="px-6 py-3.5">{r.session_time}</td>
+                    <td className="px-6 py-3.5">{r.location || "—"}</td>
                     <td className="px-6 py-3.5">{r.seats_available}/{r.seats_total}</td>
                     <td className="px-6 py-3.5">
                       <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-600">{r.status}</span>
@@ -87,7 +89,7 @@ export function ScheduleManager({ courses }: { courses: CourseWithRelations[] })
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="px-6 py-8 text-center text-ink-soft">No cohorts scheduled yet.</td>
+                  <td colSpan={9} className="px-6 py-8 text-center text-ink-soft">No cohorts scheduled yet.</td>
                 </tr>
               )}
             </tbody>
@@ -128,6 +130,7 @@ function ScheduleModal({
   const [endDate, setEndDate] = React.useState(schedule?.end_date ?? "");
   const [days, setDays] = React.useState(schedule?.session_days ?? "");
   const [time, setTime] = React.useState(schedule?.session_time ?? "");
+  const [location, setLocation] = React.useState(schedule?.location ?? "");
   const [seatsTotal, setSeatsTotal] = React.useState(schedule?.seats_total ?? 20);
   const [status, setStatus] = React.useState<ScheduleStatus>(schedule?.status ?? "upcoming");
   const [saving, setSaving] = React.useState(false);
@@ -145,6 +148,7 @@ function ScheduleModal({
       end_date: endDate || null,
       session_days: days,
       session_time: time,
+      location: location.trim() || null,
       seats_total: seatsTotal,
       status,
     };
@@ -211,6 +215,12 @@ function ScheduleModal({
           <div>
             <label htmlFor="s-time" className="mb-1.5 block text-[13.5px] font-semibold">Session Time</label>
             <input id="s-time" required value={time} onChange={(e) => setTime(e.target.value)} placeholder="e.g. 6:00 PM - 9:00 PM" className={inputClass} />
+          </div>
+          <div>
+            <label htmlFor="s-location" className="mb-1.5 block text-[13.5px] font-semibold">
+              Location <span className="font-normal text-ink-soft">(optional)</span>
+            </label>
+            <input id="s-location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Online — Zoom, or Reemora HQ, Kuwait City" className={inputClass} />
           </div>
           <div>
             <label htmlFor="s-seats" className="mb-1.5 block text-[13.5px] font-semibold">Total Seats</label>

@@ -102,6 +102,7 @@ export default async function CourseDetailPage({ params }: Props) {
     [dict.courseDetail.endDate, formatDate(schedule?.end_date, lang)],
     [dict.courseDetail.sessions, schedule?.session_days ?? dict.courseDetail.tba],
     [dict.courseDetail.time, schedule?.session_time ?? dict.courseDetail.tba],
+    ...(schedule?.location ? ([[dict.courseDetail.location, schedule.location]] as [string, string][]) : []),
     [
       dict.courseDetail.seatsLeft,
       schedule

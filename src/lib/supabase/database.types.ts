@@ -312,6 +312,7 @@ export interface Database {
           end_date: string | null;
           session_days: string | null;
           session_time: string | null;
+          location: string | null;
           seats_total: number;
           seats_available: number;
           status: "upcoming" | "ongoing" | "completed" | "cancelled";
@@ -325,6 +326,7 @@ export interface Database {
           end_date?: string | null;
           session_days?: string | null;
           session_time?: string | null;
+          location?: string | null;
           seats_total?: number;
           seats_available?: number;
           status?: "upcoming" | "ongoing" | "completed" | "cancelled";
