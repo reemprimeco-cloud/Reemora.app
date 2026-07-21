@@ -39,17 +39,29 @@ export default async function RegisterPage({ params }: Props) {
       <SiteHeader />
       <main className="pb-20 pt-[130px]">
         <div className="mx-auto max-w-[1180px] px-6">
-          <Link href="/courses" className="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600">
-            <ArrowLeft size={15} /> {dict.registerPage.back}
+          <Link
+            href={course.registration_open ? "/courses" : `/courses/${course.slug}`}
+            className="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600"
+          >
+            <ArrowLeft size={15} /> {course.registration_open ? dict.registerPage.back : dict.registerPage.lockedBack}
           </Link>
-          <div className="mb-10 max-w-xl">
-            <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.registerPage.eyebrow}</span>
-            <h1 className="mb-3 text-[28px] font-bold sm:text-4xl">{dict.registerPage.title}</h1>
-            <p className="text-ink-soft">{dict.registerPage.subtitle}</p>
-          </div>
-          <Suspense fallback={null}>
-            <RegisterForm course={course} schedule={schedule} />
-          </Suspense>
+          {!course.registration_open ? (
+            <div className="mx-auto max-w-xl rounded-[22px] border border-border-c bg-surface p-7.5 text-center">
+              <h1 className="mb-3 text-[24px] font-bold sm:text-3xl">{dict.registerPage.lockedTitle}</h1>
+              <p className="text-ink-soft">{dict.registerPage.lockedBody}</p>
+            </div>
+          ) : (
+            <>
+              <div className="mb-10 max-w-xl">
+                <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.registerPage.eyebrow}</span>
+                <h1 className="mb-3 text-[28px] font-bold sm:text-4xl">{dict.registerPage.title}</h1>
+                <p className="text-ink-soft">{dict.registerPage.subtitle}</p>
+              </div>
+              <Suspense fallback={null}>
+                <RegisterForm course={course} schedule={schedule} />
+              </Suspense>
+            </>
+          )}
         </div>
       </main>
       <SiteFooter settings={settings} />

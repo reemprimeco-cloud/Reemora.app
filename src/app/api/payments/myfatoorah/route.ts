@@ -80,7 +80,7 @@ export async function POST(request: Request) {
 
   const { data: schedule, error: scheduleError } = await supabase
     .from("course_schedule")
-    .select("id, seats_available, status, courses(id, slug, title, price, currency, is_published)")
+    .select("id, seats_available, status, courses(id, slug, title, price, currency, is_published, registration_open)")
     .eq("id", courseScheduleId)
     .maybeSingle();
 
@@ -91,6 +91,13 @@ export async function POST(request: Request) {
   const course = Array.isArray(schedule.courses) ? schedule.courses[0] : schedule.courses;
   if (!course || !course.is_published) {
     return NextResponse.json({ error: "This course is not currently available for registration." }, { status: 404 });
+  }
+
+  if (!course.registration_open) {
+    return NextResponse.json(
+      { error: "Registration for this course isn't open yet. Check back soon or ask a question below." },
+      { status: 403 }
+    );
   }
 
   if (schedule.status === "cancelled" || schedule.status === "completed") {

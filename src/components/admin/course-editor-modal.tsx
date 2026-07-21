@@ -30,6 +30,7 @@ export function CourseEditorModal({
   const [durationDays, setDurationDays] = React.useState(course?.duration_days ?? 0);
   const [durationHours, setDurationHours] = React.useState(course?.duration_hours ?? 0);
   const [isPublished, setIsPublished] = React.useState(course?.is_published ?? true);
+  const [registrationOpen, setRegistrationOpen] = React.useState(course?.registration_open ?? true);
   const [shortDescription, setShortDescription] = React.useState(course?.short_description ?? "");
   const [description, setDescription] = React.useState(course?.description ?? "");
   const [curriculum, setCurriculum] = React.useState((course?.curriculum ?? []).join("\n"));
@@ -98,6 +99,7 @@ export function CourseEditorModal({
       // preserve the existing value on edits, default to 0 on new rows.
       duration_weeks: course?.duration_weeks ?? 0,
       is_published: isPublished,
+      registration_open: registrationOpen,
       short_description: shortDescription.trim(),
       description: description.trim(),
       curriculum: curriculum.split("\n").map((s) => s.trim()).filter(Boolean),
@@ -218,6 +220,15 @@ export function CourseEditorModal({
                 <input type="checkbox" checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} />
                 Published (visible on the public site)
               </label>
+            </div>
+            <div className="sm:col-span-2 rounded-xl border border-border-c bg-surface-alt p-4">
+              <label className="flex items-center gap-2.5 text-sm font-semibold">
+                <input type="checkbox" checked={registrationOpen} onChange={(e) => setRegistrationOpen(e.target.checked)} />
+                Registration Open (students can register &amp; pay)
+              </label>
+              <p className="mt-1.5 pl-6 text-xs text-ink-soft">
+                Uncheck to lock this course — it stays visible and browsable, but the Register button is disabled everywhere and payment is blocked server-side until you re-open it.
+              </p>
             </div>
             <div className="sm:col-span-2">
               <FieldLabel htmlFor="f-short-desc">Short Description (shown on cards)</FieldLabel>

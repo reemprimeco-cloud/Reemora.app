@@ -154,7 +154,15 @@ export default async function CourseDetailPage({ params }: Props) {
                   <span className="font-bold text-foreground">{value}</span>
                 </div>
               ))}
-              {schedule && schedule.seats_available > 0 ? (
+              {!course.registration_open ? (
+                <div
+                  role="note"
+                  className="mt-5.5 rounded-xl border border-border-c bg-surface-alt px-4 py-3.5 text-center text-sm font-semibold text-ink-soft"
+                >
+                  {dict.courseDetail.registrationLocked}
+                  <p className="mt-1 text-xs font-normal text-ink-soft">{dict.courseDetail.registrationLockedHint}</p>
+                </div>
+              ) : schedule && schedule.seats_available > 0 ? (
                 <Link
                   href={`/register/${course.slug}`}
                   className="mt-5.5 block w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-center text-[15px] font-semibold text-white transition hover:bg-navy-800"

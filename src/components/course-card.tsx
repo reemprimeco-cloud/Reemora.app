@@ -70,12 +70,21 @@ export function CourseCard({ course }: { course: CourseWithRelations }) {
           >
             {dict.courseCard.details}
           </Link>
-          <Link
-            href={`/register/${course.slug}`}
-            className="flex min-h-[44px] flex-1 items-center justify-center rounded-full border-2 border-transparent bg-blue-500 px-4 py-2.5 text-center text-sm font-semibold text-white transition active:scale-[0.98] hover:bg-navy-800"
-          >
-            {dict.courseCard.register}
-          </Link>
+          {course.registration_open ? (
+            <Link
+              href={`/register/${course.slug}`}
+              className="flex min-h-[44px] flex-1 items-center justify-center rounded-full border-2 border-transparent bg-blue-500 px-4 py-2.5 text-center text-sm font-semibold text-white transition active:scale-[0.98] hover:bg-navy-800"
+            >
+              {dict.courseCard.register}
+            </Link>
+          ) : (
+            <span
+              aria-disabled="true"
+              className="flex min-h-[44px] flex-1 cursor-not-allowed items-center justify-center rounded-full border-2 border-border-c bg-surface-alt px-4 py-2.5 text-center text-sm font-semibold text-ink-soft"
+            >
+              {dict.courseCard.registrationLocked}
+            </span>
+          )}
         </div>
       </div>
     </div>
