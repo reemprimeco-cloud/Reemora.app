@@ -275,6 +275,9 @@ export const SEED_SETTINGS = {
   address: "Kuwait",
   social_links: { linkedin: "", instagram: "", twitter: "" },
   cv_url: "/cv/reemora-cv.pdf",
+  stat_courses_count: "4+",
+  stat_students_count: "500+",
+  stat_satisfaction_rate: "98%",
 };
 
 export const isSupabaseConfigured = Boolean(

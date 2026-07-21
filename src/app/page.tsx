@@ -44,11 +44,12 @@ export default async function HomePage() {
     { icon: CalendarClock, title: dict.features.scheduling.title, desc: dict.features.scheduling.desc },
   ];
 
+  const yearsExperience = `${instructor?.years_experience ?? 10}+`;
   const STATS = [
-    { value: "500+", label: dict.stats.students },
-    { value: "4+", label: dict.stats.aiCourses },
-    { value: "10+", label: dict.stats.yearsExperience },
-    { value: "98%", label: dict.stats.satisfaction },
+    { value: settings.stat_students_count, label: dict.stats.students },
+    { value: settings.stat_courses_count, label: dict.stats.aiCourses },
+    { value: yearsExperience, label: dict.stats.yearsExperience },
+    { value: settings.stat_satisfaction_rate, label: dict.stats.satisfaction },
   ];
 
   // The instructor's timeline/skills are editable via /admin/trainer.
@@ -63,7 +64,7 @@ export default async function HomePage() {
     <>
       <SiteHeader />
       <main>
-        <HeroSlider />
+        <HeroSlider coursesCount={settings.stat_courses_count} studentsCount={settings.stat_students_count} />
 
         <div className="bg-navy-800">
           <div className="mx-auto grid max-w-[1180px] grid-cols-2 gap-6 px-6 py-10 sm:grid-cols-4">

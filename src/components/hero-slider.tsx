@@ -12,7 +12,13 @@ const IMAGES = [
   { image: "/images/courses/prompt-engineering.svg" },
 ];
 
-export function HeroSlider() {
+export function HeroSlider({
+  coursesCount = "4+",
+  studentsCount = "500+",
+}: {
+  coursesCount?: string;
+  studentsCount?: string;
+}) {
   const [current, setCurrent] = React.useState(0);
   const { dict } = useLanguage();
 
@@ -25,8 +31,8 @@ export function HeroSlider() {
         secondaryHref: "/#about",
         image: IMAGES[0].image,
         meta: [
-          { value: "4+", label: slide1.metaA },
-          { value: "500+", label: slide1.metaB },
+          { value: coursesCount, label: slide1.metaA },
+          { value: studentsCount, label: slide1.metaB },
           { value: slide1.metaCValue, label: slide1.metaC },
         ],
       },
@@ -53,7 +59,7 @@ export function HeroSlider() {
         ],
       },
     ];
-  }, [dict]);
+  }, [dict, coursesCount, studentsCount]);
 
   React.useEffect(() => {
     const timer = setInterval(() => {

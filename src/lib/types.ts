@@ -61,4 +61,9 @@ export type WebsiteSettings = {
   address: string;
   social_links: { linkedin?: string; instagram?: string; twitter?: string };
   cv_url: string;
+  /** Homepage stat strip + hero slider numbers (e.g. "4+", "500+", "98%").
+   *  Free-text so the admin can use "+", "%", or any other suffix. */
+  stat_courses_count: string;
+  stat_students_count: string;
+  stat_satisfaction_rate: string;
 };

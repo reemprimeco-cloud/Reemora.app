@@ -61,6 +61,18 @@ export function SettingsManager({ initialSettings }: { initialSettings: WebsiteS
           <Field label="Contact Phone" value={settings.contact_phone} onChange={(v) => update("contact_phone", v)} />
           <Field label="Address" value={settings.address} onChange={(v) => update("address", v)} />
           <Field label="CV URL" value={settings.cv_url} onChange={(v) => update("cv_url", v)} />
+
+          <div className="rounded-xl border border-border-c bg-surface-alt p-4">
+            <p className="mb-3 text-[13px] font-bold uppercase tracking-wide text-blue-600">Homepage Stats</p>
+            <div className="space-y-4">
+              <Field label="Courses Live (e.g. 4+)" value={settings.stat_courses_count} onChange={(v) => update("stat_courses_count", v)} />
+              <Field label="Students Trained (e.g. 500+)" value={settings.stat_students_count} onChange={(v) => update("stat_students_count", v)} />
+              <Field label="Satisfaction Rate (e.g. 98%)" value={settings.stat_satisfaction_rate} onChange={(v) => update("stat_satisfaction_rate", v)} />
+            </div>
+            <p className="mt-2 text-xs text-ink-soft">
+              Shown in the hero banner and the stats strip on the homepage. Years of experience comes from the trainer profile instead — edit it on the Trainer &amp; Certificates page.
+            </p>
+          </div>
           <Field label="LinkedIn URL" value={settings.social_links.linkedin ?? ""} onChange={(v) => update("social_links", { ...settings.social_links, linkedin: v })} />
           <Field label="Instagram URL" value={settings.social_links.instagram ?? ""} onChange={(v) => update("social_links", { ...settings.social_links, instagram: v })} />
           <Field label="X / Twitter URL" value={settings.social_links.twitter ?? ""} onChange={(v) => update("social_links", { ...settings.social_links, twitter: v })} />
