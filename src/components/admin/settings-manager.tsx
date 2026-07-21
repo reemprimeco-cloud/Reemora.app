@@ -62,6 +62,45 @@ export function SettingsManager({ initialSettings }: { initialSettings: WebsiteS
           <Field label="Address" value={settings.address} onChange={(v) => update("address", v)} />
           <Field label="CV URL" value={settings.cv_url} onChange={(v) => update("cv_url", v)} />
 
+          <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
+            <p className="mb-3 text-[13px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400">Payment Method</p>
+            <div className="space-y-2.5">
+              <label className="flex items-start gap-2.5 text-sm">
+                <input
+                  type="radio"
+                  name="payment_mode"
+                  className="mt-0.5"
+                  checked={settings.payment_mode === "myfatoorah"}
+                  onChange={() => update("payment_mode", "myfatoorah")}
+                />
+                <span>
+                  <strong>MyFatoorah checkout</strong> — students pay online by card immediately after registering.
+                </span>
+              </label>
+              <label className="flex items-start gap-2.5 text-sm">
+                <input
+                  type="radio"
+                  name="payment_mode"
+                  className="mt-0.5"
+                  checked={settings.payment_mode === "whatsapp_manual"}
+                  onChange={() => update("payment_mode", "whatsapp_manual")}
+                />
+                <span>
+                  <strong>WhatsApp (manual)</strong> — after registering, students are redirected to WhatsApp with their order total pre-filled. You send the payment link yourself.
+                </span>
+              </label>
+            </div>
+            {settings.payment_mode === "whatsapp_manual" && (
+              <div className="mt-3">
+                <Field
+                  label="Payment WhatsApp Number (optional — defaults to Contact Phone)"
+                  value={settings.payment_whatsapp_number}
+                  onChange={(v) => update("payment_whatsapp_number", v)}
+                />
+              </div>
+            )}
+          </div>
+
           <div className="rounded-xl border border-border-c bg-surface-alt p-4">
             <p className="mb-3 text-[13px] font-bold uppercase tracking-wide text-blue-600">Homepage Stats</p>
             <div className="space-y-4">

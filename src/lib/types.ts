@@ -66,4 +66,12 @@ export type WebsiteSettings = {
   stat_courses_count: string;
   stat_students_count: string;
   stat_satisfaction_rate: string;
+  /** "myfatoorah" (default) runs the normal card-payment checkout.
+   *  "whatsapp_manual" skips MyFatoorah entirely — the student is
+   *  redirected to a pre-filled WhatsApp chat instead, and staff send the
+   *  payment link/instructions by hand. Meant as a temporary fallback. */
+  payment_mode: "myfatoorah" | "whatsapp_manual";
+  /** WhatsApp number (any format) used for manual-payment redirects.
+   *  Falls back to contact_phone when left blank. */
+  payment_whatsapp_number: string;
 };

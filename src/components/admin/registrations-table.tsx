@@ -1,11 +1,16 @@
 "use client";
 
 import * as React from "react";
+import { MessageCircle, Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMoney } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/toast-provider";
 import type { RegistrationStatus } from "@/lib/types";
+
+function digitsOnly(phone: string): string {
+  return phone.replace(/\D+/g, "");
+}
 
 export interface RegistrationRow {
   id: string;
@@ -86,6 +91,7 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
               <th className="px-6 py-3.5 text-left">Course</th>
               <th className="px-6 py-3.5 text-left">Seats</th>
               <th className="px-6 py-3.5 text-left">Amount</th>
+              <th className="px-6 py-3.5 text-left">Contact</th>
               <th className="px-6 py-3.5 text-left">Status</th>
               <th className="px-6 py-3.5 text-left">Date</th>
             </tr>
@@ -99,7 +105,43 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
                   <td className="px-6 py-3.5">{r.phone}</td>
                   <td className="px-6 py-3.5">{r.course_title}</td>
                   <td className="px-6 py-3.5">{r.seats}</td>
-                  <td className="px-6 py-3.5">{formatMoney(r.amount, r.currency)}</td>
+                  <td className="px-6 py-3.5 font-bold text-foreground">{formatMoney(r.amount, r.currency)}</td>
+                  <td className="px-6 py-3.5">
+                    <div className="flex items-center gap-1.5">
+                      {(() => {
+                        const waDigits = digitsOnly(r.phone);
+                        return (
+                          <a
+                            href={waDigits ? `https://wa.me/${waDigits}` : undefined}
+                            target={waDigits ? "_blank" : undefined}
+                            rel={waDigits ? "noopener noreferrer" : undefined}
+                            aria-disabled={!waDigits}
+                            aria-label={`WhatsApp ${r.full_name}`}
+                            onClick={(e) => {
+                              if (!waDigits) e.preventDefault();
+                            }}
+                            className={cn(
+                              "flex h-7 w-7 items-center justify-center rounded-lg border transition",
+                              waDigits
+                                ? "border-green-600/30 bg-green-50 text-green-700 hover:border-green-600 dark:border-green-900 dark:bg-green-950 dark:text-green-300"
+                                : "cursor-not-allowed border-border-c bg-surface-alt text-ink-soft"
+                            )}
+                            title={waDigits ? "Open WhatsApp chat" : "Phone missing"}
+                          >
+                            <MessageCircle size={13} aria-hidden="true" />
+                          </a>
+                        );
+                      })()}
+                      <a
+                        href={`tel:${r.phone.replace(/\s+/g, "")}`}
+                        aria-label={`Call ${r.full_name}`}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-c bg-surface hover:border-blue-400 hover:text-blue-600"
+                        title="Call this number"
+                      >
+                        <Phone size={13} aria-hidden="true" />
+                      </a>
+                    </div>
+                  </td>
                   <td className="px-6 py-3.5">
                     <div className="flex flex-col items-start gap-2">
                       <span
@@ -128,7 +170,7 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
               ))
             ) : (
               <tr>
-                <td colSpan={8} className="px-6 py-8 text-center text-ink-soft">No registrations yet.</td>
+                <td colSpan={9} className="px-6 py-8 text-center text-ink-soft">No registrations yet.</td>
               </tr>
             )}
           </tbody>

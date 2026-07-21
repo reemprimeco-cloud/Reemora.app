@@ -3,6 +3,12 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createMyFatoorahPayment } from "@/lib/myfatoorah";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { computeOrderTotal, type Attendee } from "@/lib/course-utils";
+import { formatMoney } from "@/lib/utils";
+import type { Json } from "@/lib/supabase/database.types";
+
+function digitsOnly(phone: string): string {
+  return phone.replace(/\D+/g, "");
+}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
@@ -132,7 +138,7 @@ export async function POST(request: Request) {
       discount_amount: discount,
       // The DB column is jsonb; Attendee's shape (string fields only) is
       // trivially JSON-serialisable, cast to satisfy Supabase's Json union.
-      attendees: attendeesForDb as unknown as import("@/lib/supabase/database.types").Json,
+      attendees: attendeesForDb as unknown as Json,
       currency: course.currency,
       status: "pending",
     })
@@ -144,6 +150,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not save your registration. Please try again." }, { status: 500 });
   }
 
+  // Read the site-wide payment mode. Defaults to MyFatoorah when the
+  // settings row is missing so a fresh install never silently switches to
+  // manual mode.
+  const { data: settingsRows } = await supabase
+    .from("website_settings")
+    .select("key, value")
+    .in("key", ["payment_mode", "payment_whatsapp_number", "contact_phone"]);
+  const settingsMap = Object.fromEntries((settingsRows ?? []).map((r) => [r.key, r.value])) as Record<string, unknown>;
+  const paymentMode = settingsMap.payment_mode === "whatsapp_manual" ? "whatsapp_manual" : "myfatoorah";
+
   const { data: payment, error: paymentError } = await supabase
     .from("payments")
     .insert({
@@ -151,7 +167,7 @@ export async function POST(request: Request) {
       amount: total,
       currency: course.currency,
       status: "pending",
-      method: "myfatoorah",
+      method: paymentMode === "whatsapp_manual" ? "whatsapp_manual" : "myfatoorah",
     })
     .select()
     .single();
@@ -159,6 +175,54 @@ export async function POST(request: Request) {
   if (paymentError || !payment) {
     console.error("payment insert error:", paymentError?.message);
     return NextResponse.json({ error: "Could not start payment. Please try again." }, { status: 500 });
+  }
+
+  if (paymentMode === "whatsapp_manual") {
+    // Temporary fallback while MyFatoorah is switched off: skip the
+    // gateway entirely and hand the student a pre-filled WhatsApp chat so
+    // staff can send the payment link/instructions by hand.
+    const rawNumber =
+      (typeof settingsMap.payment_whatsapp_number === "string" && settingsMap.payment_whatsapp_number) ||
+      (typeof settingsMap.contact_phone === "string" && settingsMap.contact_phone) ||
+      "";
+    const waDigits = digitsOnly(rawNumber);
+
+    if (!waDigits) {
+      await supabase.from("payment_transactions").insert({
+        payment_id: payment.id,
+        event_type: "error",
+        status: "whatsapp_number_missing",
+        raw_response: { message: "No WhatsApp/contact phone configured in Settings." },
+      });
+      return NextResponse.json(
+        {
+          error:
+            "Your registration was saved, but payment isn't configured yet. Our team will follow up to complete payment.",
+          registrationId: registration.id,
+          savedOnly: true,
+        },
+        { status: 502 }
+      );
+    }
+
+    const itemName = seats > 1 ? `${course.title} × ${seats} seats` : course.title;
+    const message = [
+      `Hi, I just registered for "${itemName}" on Reemora.`,
+      `Name: ${fullName}`,
+      `Total: ${formatMoney(total, course.currency)}`,
+      `Registration ref: ${registration.id.slice(0, 8)}`,
+      "Please send me the payment link.",
+    ].join("\n");
+    const whatsappUrl = `https://wa.me/${waDigits}?text=${encodeURIComponent(message)}`;
+
+    await supabase.from("payment_transactions").insert({
+      payment_id: payment.id,
+      event_type: "created",
+      status: "whatsapp_redirect",
+      raw_response: { whatsappUrl, subtotal, discount, total },
+    });
+
+    return NextResponse.json({ invoiceUrl: whatsappUrl, registrationId: registration.id });
   }
 
   try {
