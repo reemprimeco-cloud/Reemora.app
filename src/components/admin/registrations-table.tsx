@@ -23,6 +23,9 @@ export interface RegistrationRow {
   status: RegistrationStatus;
   created_at: string;
   course_title: string;
+  course_schedule_id: string;
+  /** Null for older rows saved before payments.method existed. */
+  payment_method: string | null;
 }
 
 /** Status vocabulary the admin can pick from. Order = order in the
@@ -65,18 +68,47 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
 
     const supabase = createClient();
     const { error } = await supabase.from("registrations").update({ status: next }).eq("id", id);
+
+    if (error) {
+      setSaving((s) => {
+        const { [id]: _omit, ...rest } = s;
+        void _omit;
+        return rest;
+      });
+      setRows((current) => current.map((r) => (r.id === id ? { ...r, status: prev.status } : r)));
+      showToast("error", error.message);
+      return;
+    }
+
+    // WhatsApp-manual registrations never hit a MyFatoorah webhook, so
+    // there's nothing else to decrement/release a seat when payment is
+    // confirmed by hand. Only adjust for that payment method — MyFatoorah
+    // registrations already get this from the payment callback, and
+    // adjusting here too would double-count.
+    let seatMessage = "";
+    if (prev.payment_method === "whatsapp_manual") {
+      const enteringConfirmed = prev.status !== "confirmed" && next === "confirmed";
+      const leavingConfirmed = prev.status === "confirmed" && next !== "confirmed";
+      if (enteringConfirmed || leavingConfirmed) {
+        const delta = enteringConfirmed ? -prev.seats : prev.seats;
+        const { error: seatError } = await supabase.rpc("adjust_seats_available", {
+          p_schedule_id: prev.course_schedule_id,
+          p_delta: delta,
+        });
+        if (seatError) {
+          showToast("error", `Status updated, but seat count couldn't be adjusted: ${seatError.message}`);
+        } else {
+          seatMessage = enteringConfirmed ? " Seat reserved." : " Seat released back.";
+        }
+      }
+    }
+
     setSaving((s) => {
       const { [id]: _omit, ...rest } = s;
       void _omit;
       return rest;
     });
-
-    if (error) {
-      setRows((current) => current.map((r) => (r.id === id ? { ...r, status: prev.status } : r)));
-      showToast("error", error.message);
-      return;
-    }
-    showToast("success", `Status updated to ${statusLabel(next)}.`);
+    showToast("success", `Status updated to ${statusLabel(next)}.${seatMessage}`);
   }
 
   return (

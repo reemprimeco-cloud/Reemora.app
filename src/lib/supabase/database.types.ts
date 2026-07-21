@@ -564,6 +564,10 @@ export interface Database {
         Args: { p_schedule_id: string; p_seats: number };
         Returns: undefined;
       };
+      adjust_seats_available: {
+        Args: { p_schedule_id: string; p_delta: number };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;

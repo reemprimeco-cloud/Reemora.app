@@ -16,10 +16,12 @@ interface DbRow {
   currency: string;
   status: RegistrationStatus;
   created_at: string;
+  course_schedule_id: string;
   course_schedule:
     | { courses: { title: string } | { title: string }[] | null }
     | { courses: { title: string } | { title: string }[] | null }[]
     | null;
+  payments: { method: string } | { method: string }[] | null;
 }
 
 function courseTitleOf(r: DbRow): string {
@@ -29,6 +31,11 @@ function courseTitleOf(r: DbRow): string {
   return course?.title ?? "—";
 }
 
+function paymentMethodOf(r: DbRow): string | null {
+  const p = Array.isArray(r.payments) ? r.payments[0] : r.payments;
+  return p?.method ?? null;
+}
+
 export default async function AdminRegistrationsPage() {
   let rows: RegistrationRow[] = [];
 
@@ -36,7 +43,9 @@ export default async function AdminRegistrationsPage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("registrations")
-      .select("id, full_name, email, phone, seats, amount, currency, status, created_at, course_schedule(courses(title))")
+      .select(
+        "id, full_name, email, phone, seats, amount, currency, status, created_at, course_schedule_id, course_schedule(courses(title)), payments(method)"
+      )
       .order("created_at", { ascending: false });
     const raw = (data as unknown as DbRow[]) ?? [];
     rows = raw.map((r) => ({
@@ -50,6 +59,8 @@ export default async function AdminRegistrationsPage() {
       status: r.status,
       created_at: r.created_at,
       course_title: courseTitleOf(r),
+      course_schedule_id: r.course_schedule_id,
+      payment_method: paymentMethodOf(r),
     }));
   }
 
@@ -57,7 +68,7 @@ export default async function AdminRegistrationsPage() {
     <div>
       <h1 className="mb-3 text-2xl font-bold">Registrations</h1>
       <p className="mb-6 max-w-2xl text-sm text-ink-soft">
-        Use the status dropdown on each row to move a registration through Pending → Accepted → Cancelled / Refunded / No-show / Waitlist. Status is a label only — it does not free seats or issue refunds. Free a seat by editing the schedule; process refunds inside MyFatoorah.
+        Use the status dropdown on each row to move a registration through Pending → Accepted → Cancelled / Refunded / No-show / Waitlist. For MyFatoorah registrations, status is a label only — seats are freed/reserved automatically by the payment webhook. For WhatsApp (manual) registrations, moving to Accepted reserves a seat and moving away from it releases the seat back, since there&apos;s no webhook to do that for you.
       </p>
       <RegistrationsTable initialRows={rows} />
     </div>
