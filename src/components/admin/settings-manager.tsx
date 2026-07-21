@@ -86,19 +86,10 @@ export function SettingsManager({ initialSettings }: { initialSettings: WebsiteS
                   onChange={() => update("payment_mode", "whatsapp_manual")}
                 />
                 <span>
-                  <strong>WhatsApp (manual)</strong> — after registering, students are redirected to WhatsApp with their order total pre-filled. You send the payment link yourself.
+                  <strong>WhatsApp (manual)</strong> — after registering, students see a thank-you page saying their payment link is coming via WhatsApp. Message them yourself from the Registrations page (each row has a WhatsApp button using the student&apos;s own number).
                 </span>
               </label>
             </div>
-            {settings.payment_mode === "whatsapp_manual" && (
-              <div className="mt-3">
-                <Field
-                  label="Payment WhatsApp Number (optional — defaults to Contact Phone)"
-                  value={settings.payment_whatsapp_number}
-                  onChange={(v) => update("payment_whatsapp_number", v)}
-                />
-              </div>
-            )}
           </div>
 
           <div className="rounded-xl border border-border-c bg-surface-alt p-4">

@@ -71,7 +71,4 @@ export type WebsiteSettings = {
    *  redirected to a pre-filled WhatsApp chat instead, and staff send the
    *  payment link/instructions by hand. Meant as a temporary fallback. */
   payment_mode: "myfatoorah" | "whatsapp_manual";
-  /** WhatsApp number (any format) used for manual-payment redirects.
-   *  Falls back to contact_phone when left blank. */
-  payment_whatsapp_number: string;
 };

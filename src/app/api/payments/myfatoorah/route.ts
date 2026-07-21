@@ -3,12 +3,7 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createMyFatoorahPayment } from "@/lib/myfatoorah";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { computeOrderTotal, type Attendee } from "@/lib/course-utils";
-import { formatMoney } from "@/lib/utils";
 import type { Json } from "@/lib/supabase/database.types";
-
-function digitsOnly(phone: string): string {
-  return phone.replace(/\D+/g, "");
-}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
@@ -156,9 +151,8 @@ export async function POST(request: Request) {
   const { data: settingsRows } = await supabase
     .from("website_settings")
     .select("key, value")
-    .in("key", ["payment_mode", "payment_whatsapp_number", "contact_phone"]);
-  const settingsMap = Object.fromEntries((settingsRows ?? []).map((r) => [r.key, r.value])) as Record<string, unknown>;
-  const paymentMode = settingsMap.payment_mode === "whatsapp_manual" ? "whatsapp_manual" : "myfatoorah";
+    .eq("key", "payment_mode");
+  const paymentMode = settingsRows?.[0]?.value === "whatsapp_manual" ? "whatsapp_manual" : "myfatoorah";
 
   const { data: payment, error: paymentError } = await supabase
     .from("payments")
@@ -179,50 +173,21 @@ export async function POST(request: Request) {
 
   if (paymentMode === "whatsapp_manual") {
     // Temporary fallback while MyFatoorah is switched off: skip the
-    // gateway entirely and hand the student a pre-filled WhatsApp chat so
-    // staff can send the payment link/instructions by hand.
-    const rawNumber =
-      (typeof settingsMap.payment_whatsapp_number === "string" && settingsMap.payment_whatsapp_number) ||
-      (typeof settingsMap.contact_phone === "string" && settingsMap.contact_phone) ||
-      "";
-    const waDigits = digitsOnly(rawNumber);
-
-    if (!waDigits) {
-      await supabase.from("payment_transactions").insert({
-        payment_id: payment.id,
-        event_type: "error",
-        status: "whatsapp_number_missing",
-        raw_response: { message: "No WhatsApp/contact phone configured in Settings." },
-      });
-      return NextResponse.json(
-        {
-          error:
-            "Your registration was saved, but payment isn't configured yet. Our team will follow up to complete payment.",
-          registrationId: registration.id,
-          savedOnly: true,
-        },
-        { status: 502 }
-      );
-    }
-
-    const itemName = seats > 1 ? `${course.title} × ${seats} seats` : course.title;
-    const message = [
-      `Hi, I just registered for "${itemName}" on Reemora.`,
-      `Name: ${fullName}`,
-      `Total: ${formatMoney(total, course.currency)}`,
-      `Registration ref: ${registration.id.slice(0, 8)}`,
-      "Please send me the payment link.",
-    ].join("\n");
-    const whatsappUrl = `https://wa.me/${waDigits}?text=${encodeURIComponent(message)}`;
-
+    // gateway entirely. Staff message the student directly using the
+    // phone number they just submitted (the Registrations admin table has
+    // a WhatsApp button per row for exactly this). The student sees an
+    // on-site thank-you page telling them a payment link is coming.
     await supabase.from("payment_transactions").insert({
       payment_id: payment.id,
       event_type: "created",
-      status: "whatsapp_redirect",
-      raw_response: { whatsappUrl, subtotal, discount, total },
+      status: "awaiting_manual_whatsapp",
+      raw_response: { subtotal, discount, total },
     });
 
-    return NextResponse.json({ invoiceUrl: whatsappUrl, registrationId: registration.id });
+    return NextResponse.json({
+      whatsappManual: true,
+      registrationId: registration.id,
+    });
   }
 
   try {

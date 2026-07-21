@@ -290,6 +290,15 @@ const en = {
     lockedBody: "We're not accepting registrations or payments for this course yet. Check back soon, or ask us a question and we'll let you know when it opens.",
     lockedBack: "Back to Course Details",
   },
+  thankYouPage: {
+    title: "Thank you for registering!",
+    whatsappBody: "You will receive the payment link through your WhatsApp shortly. Our team will reach out to complete your registration.",
+    referenceLabel: "Reference",
+    course: "Course",
+    total: "Total Due",
+    browseCourses: "Browse Courses",
+    backHome: "Back to Home",
+  },
   inquiry: {
     ctaLabel: "Ask a Question / Reserve Interest",
     title: "Learn more about this course",
@@ -652,6 +661,15 @@ const ar: EnDict = {
     lockedTitle: "التسجيل غير متاح بعد",
     lockedBody: "لا نستقبل تسجيلات أو دفعات لهذه الدورة بعد. تحقق قريباً، أو اطرح سؤالاً وسنعلمك عند فتح التسجيل.",
     lockedBack: "العودة إلى تفاصيل الدورة",
+  },
+  thankYouPage: {
+    title: "شكراً لتسجيلك!",
+    whatsappBody: "ستستلم رابط الدفع عبر واتساب قريباً. سيتواصل معك فريقنا لإكمال تسجيلك.",
+    referenceLabel: "الرقم المرجعي",
+    course: "الدورة",
+    total: "الإجمالي المستحق",
+    browseCourses: "تصفّح الدورات",
+    backHome: "العودة إلى الرئيسية",
   },
   inquiry: {
     ctaLabel: "اسأل عن الدورة / سجّل اهتمامك",

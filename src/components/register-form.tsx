@@ -103,6 +103,17 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
         return;
       }
 
+      if (res.ok && data.whatsappManual) {
+        const shortRef = typeof data.registrationId === "string" ? data.registrationId.slice(0, 8) : "";
+        const params = new URLSearchParams({
+          course: course.title,
+          total: formatMoney(total, course.currency),
+          ...(shortRef ? { ref: shortRef } : {}),
+        });
+        window.location.href = `/register/thank-you?${params.toString()}`;
+        return;
+      }
+
       if (data.fieldErrors) {
         setErrors((prev) => ({ ...prev, ...Object.fromEntries(Object.keys(data.fieldErrors).map((k) => [k, true])) }));
       }
