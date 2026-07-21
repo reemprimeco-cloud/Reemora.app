@@ -139,132 +139,140 @@ export function ReservationInbox({
   }
 
   return (
-    <div className="space-y-3">
-      {reservations.length ? (
-        reservations.map((m) => {
-          const requested = courseOf(m);
-          const selectedId = replyCourseId[m.id] ?? "";
-          const selectedCourse = selectedId ? courseById.get(selectedId) ?? null : null;
-          const waDigits = digitsOnly(m.phone);
-          const { subject, body } = buildEmailReply(m, siteUrl, selectedCourse);
-          const mailto = mailtoHref(m.email, subject, body);
-          return (
-            <div
-              key={m.id}
-              className={cn(
-                "rounded-2xl border p-5",
-                m.is_read ? "border-border-c bg-surface" : "border-blue-400 bg-blue-100"
-              )}
-            >
-              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold">
-                    {m.full_name} <span className="font-normal text-ink-soft">— {m.email}</span>
-                  </p>
-                  <p className="text-xs text-ink-soft">{m.phone}</p>
-                  {requested && (
-                    <p className="mt-1 text-sm font-semibold text-blue-600">Interested in: {requested.title}</p>
-                  )}
-                </div>
-                <span className="text-xs text-ink-soft">{new Date(m.created_at).toLocaleString()}</span>
-              </div>
-
-              <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="rounded-lg border border-border-c bg-surface p-3">
-                  <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-ink-soft">Interest</p>
-                  <p className="whitespace-pre-line text-sm text-foreground">
-                    {m.interest?.trim() || <span className="text-ink-soft">—</span>}
-                  </p>
-                </div>
-                <div className="rounded-lg border border-border-c bg-surface p-3">
-                  <p className="mb-1 text-[11px] font-bold uppercase tracking-wider text-ink-soft">
-                    Background / Skills
-                  </p>
-                  <p className="whitespace-pre-line text-sm text-foreground">
-                    {m.skills?.trim() || <span className="text-ink-soft">—</span>}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <label htmlFor={`reply-course-${m.id}`} className="text-[11px] font-bold uppercase tracking-wider text-ink-soft">
-                  Recommend course
-                </label>
-                <select
-                  id={`reply-course-${m.id}`}
-                  value={selectedId}
-                  onChange={(e) => setReplyCourseId((prev) => ({ ...prev, [m.id]: e.target.value }))}
-                  className="min-h-[36px] flex-1 rounded-lg border border-border-c bg-surface px-3 py-1.5 text-xs font-semibold text-foreground outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 sm:flex-none sm:min-w-[240px]"
-                >
-                  <option value="">(No course — generic reply)</option>
-                  {allCourses.map((c) => (
-                    <option key={c.id} value={c.id}>{c.title}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <a
-                  href={waDigits ? `https://wa.me/${waDigits}` : undefined}
-                  target={waDigits ? "_blank" : undefined}
-                  rel={waDigits ? "noopener noreferrer" : undefined}
-                  aria-disabled={!waDigits}
-                  onClick={(e) => {
-                    if (!waDigits) e.preventDefault();
-                  }}
-                  className={cn(
-                    "inline-flex min-h-[36px] items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition",
-                    waDigits
-                      ? "border-green-600/30 bg-green-50 text-green-700 hover:border-green-600 dark:border-green-900 dark:bg-green-950 dark:text-green-300"
-                      : "cursor-not-allowed border-border-c bg-surface-alt text-ink-soft"
-                  )}
-                  title={waDigits ? "Open WhatsApp chat" : "Phone missing"}
-                >
-                  <MessageCircle size={13} aria-hidden="true" /> WhatsApp
-                </a>
-                <a
-                  href={`tel:${m.phone.replace(/\s+/g, "")}`}
-                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-border-c bg-surface px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:border-blue-400 hover:text-blue-600"
-                  title="Call this number"
-                >
-                  <Phone size={13} aria-hidden="true" /> Call
-                </a>
-                <a
-                  href={mailto}
-                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-blue-500 bg-blue-500 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-800"
-                  title={selectedCourse ? `Reply about ${selectedCourse.title}` : "Reply with generic template"}
-                >
-                  <Reply size={13} aria-hidden="true" /> Reply by Email
-                </a>
-                <div className="ms-auto flex items-center gap-2">
-                  <button
-                    onClick={() => toggleRead(m)}
-                    aria-label={
-                      m.is_read
-                        ? `Mark reservation from ${m.full_name} as unread`
-                        : `Mark reservation from ${m.full_name} as read`
-                    }
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-c bg-surface hover:border-blue-400 hover:text-blue-600"
-                    title={m.is_read ? "Mark unread" : "Mark read"}
+    <div className="overflow-hidden rounded-2xl border border-border-c bg-surface">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-surface-alt text-xs font-bold uppercase tracking-wide text-ink-soft">
+            <tr>
+              <th className="px-4 py-3 text-left">Name / Contact</th>
+              <th className="px-4 py-3 text-left">Interest</th>
+              <th className="px-4 py-3 text-left">Background / Skills</th>
+              <th className="px-4 py-3 text-left">Recommend Course</th>
+              <th className="px-4 py-3 text-left">Actions</th>
+              <th className="px-4 py-3 text-left">Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reservations.length ? (
+              reservations.map((m) => {
+                const requested = courseOf(m);
+                const selectedId = replyCourseId[m.id] ?? "";
+                const selectedCourse = selectedId ? courseById.get(selectedId) ?? null : null;
+                const waDigits = digitsOnly(m.phone);
+                const { subject, body } = buildEmailReply(m, siteUrl, selectedCourse);
+                const mailto = mailtoHref(m.email, subject, body);
+                return (
+                  <tr
+                    key={m.id}
+                    className={cn(
+                      "border-t border-border-c align-top",
+                      !m.is_read && "bg-blue-100/60"
+                    )}
                   >
-                    {m.is_read ? <MailOpen size={14} /> : <Mail size={14} />}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(m)}
-                    aria-label={`Delete reservation from ${m.full_name}`}
-                    title="Delete"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-c bg-surface hover:border-red-300 hover:text-red-500"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })
-      ) : (
-        <p className="text-center text-ink-soft">No reservations yet.</p>
-      )}
+                    <td className="max-w-[180px] px-4 py-3">
+                      <p className="truncate text-[13px] font-bold" title={m.full_name}>{m.full_name}</p>
+                      <p className="truncate text-xs text-ink-soft" title={m.email}>{m.email}</p>
+                      <p className="text-xs text-ink-soft">{m.phone}</p>
+                      {requested && (
+                        <p className="mt-0.5 truncate text-[11px] font-semibold text-blue-600" title={requested.title}>
+                          {requested.title}
+                        </p>
+                      )}
+                    </td>
+                    <td className="max-w-[160px] px-4 py-3">
+                      <p className="line-clamp-3 text-xs text-foreground" title={m.interest ?? undefined}>
+                        {m.interest?.trim() || <span className="text-ink-soft">—</span>}
+                      </p>
+                    </td>
+                    <td className="max-w-[160px] px-4 py-3">
+                      <p className="line-clamp-3 text-xs text-foreground" title={m.skills ?? undefined}>
+                        {m.skills?.trim() || <span className="text-ink-soft">—</span>}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        aria-label={`Recommend course for ${m.full_name}`}
+                        value={selectedId}
+                        onChange={(e) => setReplyCourseId((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                        className="min-h-[32px] w-full min-w-[150px] rounded-lg border border-border-c bg-surface-alt px-2 py-1 text-xs font-semibold text-foreground outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
+                      >
+                        <option value="">(No course)</option>
+                        {allCourses.map((c) => (
+                          <option key={c.id} value={c.id}>{c.title}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <a
+                          href={waDigits ? `https://wa.me/${waDigits}` : undefined}
+                          target={waDigits ? "_blank" : undefined}
+                          rel={waDigits ? "noopener noreferrer" : undefined}
+                          aria-disabled={!waDigits}
+                          aria-label={`WhatsApp ${m.full_name}`}
+                          onClick={(e) => {
+                            if (!waDigits) e.preventDefault();
+                          }}
+                          className={cn(
+                            "flex h-7 w-7 items-center justify-center rounded-lg border transition",
+                            waDigits
+                              ? "border-green-600/30 bg-green-50 text-green-700 hover:border-green-600 dark:border-green-900 dark:bg-green-950 dark:text-green-300"
+                              : "cursor-not-allowed border-border-c bg-surface-alt text-ink-soft"
+                          )}
+                          title={waDigits ? "Open WhatsApp chat" : "Phone missing"}
+                        >
+                          <MessageCircle size={13} aria-hidden="true" />
+                        </a>
+                        <a
+                          href={`tel:${m.phone.replace(/\s+/g, "")}`}
+                          aria-label={`Call ${m.full_name}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-c bg-surface hover:border-blue-400 hover:text-blue-600"
+                          title="Call this number"
+                        >
+                          <Phone size={13} aria-hidden="true" />
+                        </a>
+                        <a
+                          href={mailto}
+                          aria-label={`Reply to ${m.full_name} by email`}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-blue-500 bg-blue-500 text-white hover:bg-navy-800"
+                          title={selectedCourse ? `Reply about ${selectedCourse.title}` : "Reply with generic template"}
+                        >
+                          <Reply size={13} aria-hidden="true" />
+                        </a>
+                        <button
+                          onClick={() => toggleRead(m)}
+                          aria-label={m.is_read ? `Mark reservation from ${m.full_name} as unread` : `Mark reservation from ${m.full_name} as read`}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-c bg-surface hover:border-blue-400 hover:text-blue-600"
+                          title={m.is_read ? "Mark unread" : "Mark read"}
+                        >
+                          {m.is_read ? <MailOpen size={13} /> : <Mail size={13} />}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(m)}
+                          aria-label={`Delete reservation from ${m.full_name}`}
+                          className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-c bg-surface hover:border-red-300 hover:text-red-500"
+                          title="Delete"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-xs text-ink-soft">
+                      {new Date(m.created_at).toLocaleDateString()}
+                      <br />
+                      {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-ink-soft">No reservations yet.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
