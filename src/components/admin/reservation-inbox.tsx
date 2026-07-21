@@ -144,6 +144,7 @@ export function ReservationInbox({
         <table className="w-full text-sm">
           <thead className="bg-surface-alt text-xs font-bold uppercase tracking-wide text-ink-soft">
             <tr>
+              <th className="px-4 py-3 text-left">#</th>
               <th className="px-4 py-3 text-left">Name / Contact</th>
               <th className="px-4 py-3 text-left">Interest</th>
               <th className="px-4 py-3 text-left">Background / Skills</th>
@@ -154,7 +155,7 @@ export function ReservationInbox({
           </thead>
           <tbody>
             {reservations.length ? (
-              reservations.map((m) => {
+              reservations.map((m, i) => {
                 const requested = courseOf(m);
                 const selectedId = replyCourseId[m.id] ?? "";
                 const selectedCourse = selectedId ? courseById.get(selectedId) ?? null : null;
@@ -169,6 +170,7 @@ export function ReservationInbox({
                       !m.is_read && "bg-blue-100/60"
                     )}
                   >
+                    <td className="px-4 py-3 text-xs font-semibold text-ink-soft">{i + 1}</td>
                     <td className="max-w-[180px] px-4 py-3">
                       <p className="truncate text-[13px] font-bold" title={m.full_name}>{m.full_name}</p>
                       <p className="truncate text-xs text-ink-soft" title={m.email}>{m.email}</p>
@@ -267,7 +269,7 @@ export function ReservationInbox({
               })
             ) : (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-ink-soft">No reservations yet.</td>
+                <td colSpan={7} className="px-4 py-8 text-center text-ink-soft">No reservations yet.</td>
               </tr>
             )}
           </tbody>
