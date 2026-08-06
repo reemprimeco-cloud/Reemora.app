@@ -24,7 +24,7 @@ export function CourseCard({ course }: { course: CourseWithRelations }) {
 
   return (
     <div className="group flex flex-col overflow-hidden rounded-[22px] border border-border-c bg-surface transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl">
-      <div className="relative aspect-[16/10] overflow-hidden bg-blue-100">
+      <div className="relative aspect-square overflow-hidden bg-blue-100">
         <span className="absolute left-3.5 top-3.5 z-10 rounded-full bg-white px-3 py-1 text-xs font-bold text-blue-600 shadow-sm">
           {levelLabel}
         </span>

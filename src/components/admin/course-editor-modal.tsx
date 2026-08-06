@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { X } from "lucide-react";
+import { X, Trash2, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { CourseCategory, CourseLevel, CourseWithRelations, Instructor } from "@/lib/types";
 import { slugify } from "@/lib/utils";
@@ -35,7 +35,9 @@ export function CourseEditorModal({
   const [description, setDescription] = React.useState(course?.description ?? "");
   const [curriculum, setCurriculum] = React.useState((course?.curriculum ?? []).join("\n"));
   const [imageUrl, setImageUrl] = React.useState(course?.image_url ?? "");
+  const [galleryImages, setGalleryImages] = React.useState<string[]>(course?.gallery_images ?? []);
   const [uploading, setUploading] = React.useState(false);
+  const [galleryUploading, setGalleryUploading] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState("");
 
@@ -73,6 +75,55 @@ export function CourseEditorModal({
     }
   }
 
+  async function handleGalleryChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+
+    for (const file of files) {
+      if (!file.type.startsWith("image/")) {
+        setError("Please upload image files only (PNG, JPG, WEBP, etc.).");
+        continue;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Each image must be smaller than 5MB.");
+        continue;
+      }
+    }
+
+    const validFiles = files.filter((f) => f.type.startsWith("image/") && f.size <= 5 * 1024 * 1024);
+    if (!validFiles.length) {
+      e.target.value = "";
+      return;
+    }
+
+    setGalleryUploading(true);
+    setError("");
+    try {
+      const supabase = createClient();
+      const uploaded: string[] = [];
+      for (const file of validFiles) {
+        const path = `gallery/${Date.now()}-${slugify(file.name)}`;
+        const { error: uploadError } = await supabase.storage.from("course-images").upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+        if (uploadError) throw uploadError;
+        const { data } = supabase.storage.from("course-images").getPublicUrl(path);
+        uploaded.push(data.publicUrl);
+      }
+      setGalleryImages((prev) => [...prev, ...uploaded]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gallery upload failed.");
+    } finally {
+      setGalleryUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  function removeGalleryImage(url: string) {
+    setGalleryImages((prev) => prev.filter((g) => g !== url));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -104,6 +155,7 @@ export function CourseEditorModal({
       description: description.trim(),
       curriculum: curriculum.split("\n").map((s) => s.trim()).filter(Boolean),
       image_url: imageUrl || null,
+      gallery_images: galleryImages,
     };
 
     try {
@@ -166,6 +218,40 @@ export function CourseEditorModal({
               <p className="text-[13px] text-ink-soft">{uploading ? "Uploading..." : "Click to upload an image (optional — a branded placeholder is used if left empty)"}</p>
               <input type="file" accept="image/*" onChange={handleImageChange} aria-label="Course image upload" className="absolute inset-0 cursor-pointer opacity-0" />
             </label>
+          </div>
+
+          <div>
+            <span className="mb-1.5 block text-[13.5px] font-semibold">
+              Gallery Images <span className="font-normal text-ink-soft">(optional — extra photos students can preview on the course page)</span>
+            </span>
+            <div className="flex flex-wrap gap-2.5">
+              {galleryImages.map((url) => (
+                <div key={url} className="group relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border-c">
+                  <Image src={url} alt="Gallery preview" fill sizes="80px" className="object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeGalleryImage(url)}
+                    aria-label="Remove gallery image"
+                    className="absolute right-1 top-1 flex h-5.5 w-5.5 items-center justify-center rounded-full bg-navy-900/70 text-white opacity-0 transition group-hover:opacity-100"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              ))}
+              <label className="relative flex h-20 w-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border-c text-ink-soft hover:border-blue-400 hover:text-blue-600">
+                <Plus size={16} aria-hidden="true" />
+                <span className="text-[10px] font-semibold">{galleryUploading ? "Uploading..." : "Add"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleGalleryChange}
+                  disabled={galleryUploading}
+                  aria-label="Upload gallery images"
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                />
+              </label>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -250,7 +336,7 @@ export function CourseEditorModal({
             </p>
           )}
 
-          <button type="submit" disabled={saving || uploading} className="w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-[15px] font-semibold text-white transition hover:bg-navy-800 disabled:opacity-60">
+          <button type="submit" disabled={saving || uploading || galleryUploading} className="w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-[15px] font-semibold text-white transition hover:bg-navy-800 disabled:opacity-60">
             {saving ? "Saving..." : "Save Course"}
           </button>
         </form>

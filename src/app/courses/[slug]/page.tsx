@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { InquiryModal } from "@/components/inquiry-modal";
 import { WaitlistModal } from "@/components/waitlist-modal";
+import { CourseGallery } from "@/components/course-gallery";
 import { getCourseBySlug, getCourses } from "@/lib/data/courses";
 import { courseImageSrc, formatDuration, primarySchedule } from "@/lib/course-utils";
 import { getWebsiteSettings } from "@/lib/data/settings";
@@ -125,9 +125,10 @@ export default async function CourseDetailPage({ params }: Props) {
           </Link>
           <div className="grid grid-cols-1 items-start gap-11 lg:grid-cols-[1.5fr_1fr]">
             <div>
-              <div className="relative mb-7.5 aspect-square overflow-hidden rounded-[22px] shadow-lg">
-                <Image src={image} alt={course.title} fill priority sizes="(max-width: 1024px) 100vw, 60vw" className="object-cover" />
-              </div>
+              <CourseGallery
+                images={[image, ...(course.gallery_images ?? []).filter((g) => g && g !== image)]}
+                alt={course.title}
+              />
               <span className="mb-3 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">
                 {course.category?.name ?? dict.courseDetail.categoryFallback} · {levelLabel}
               </span>

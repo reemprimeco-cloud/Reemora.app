@@ -71,6 +71,7 @@ export const SEED_COURSES: CourseWithRelations[] = [
     price: 450,
     currency: "KWD",
     image_url: null,
+    gallery_images: [],
     short_description:
       "Design, build and ship a full AI-powered application from scratch using modern no-code and low-code AI tools.",
     description:
@@ -118,6 +119,7 @@ export const SEED_COURSES: CourseWithRelations[] = [
     price: 180,
     currency: "KWD",
     image_url: null,
+    gallery_images: [],
     short_description:
       "Master the art and science of writing prompts that get reliable, production-ready results from AI models.",
     description:
@@ -165,6 +167,7 @@ export const SEED_COURSES: CourseWithRelations[] = [
     price: 380,
     currency: "KWD",
     image_url: null,
+    gallery_images: [],
     short_description:
       "Build autonomous AI agents that plan, use tools, and automate multi-step business workflows.",
     description:
@@ -212,6 +215,7 @@ export const SEED_COURSES: CourseWithRelations[] = [
     price: 220,
     currency: "KWD",
     image_url: null,
+    gallery_images: [],
     short_description:
       "Turn your idea into a working AI-powered app without writing a single line of code.",
     description:

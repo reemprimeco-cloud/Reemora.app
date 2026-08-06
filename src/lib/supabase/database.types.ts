@@ -257,6 +257,7 @@ export interface Database {
           price: number;
           currency: string;
           image_url: string | null;
+          gallery_images: string[];
           short_description: string;
           description: string;
           curriculum: string[];
@@ -278,6 +279,7 @@ export interface Database {
           price: number;
           currency?: string;
           image_url?: string | null;
+          gallery_images?: string[];
           short_description: string;
           description: string;
           curriculum?: string[];
