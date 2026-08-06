@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { InquiryModal } from "@/components/inquiry-modal";
 import { WaitlistModal } from "@/components/waitlist-modal";
+import { PrivateSessionModal } from "@/components/private-session-modal";
 import { CourseGallery } from "@/components/course-gallery";
 import { getCourseBySlug, getCourses } from "@/lib/data/courses";
 import { courseImageSrc, formatDuration, primarySchedule } from "@/lib/course-utils";
@@ -176,6 +177,9 @@ export default async function CourseDetailPage({ params }: Props) {
               )}
               <div className="mt-3">
                 <InquiryModal courseId={course.id} courseScheduleId={schedule?.id ?? null} courseTitle={course.title} />
+              </div>
+              <div className="mt-3">
+                <PrivateSessionModal courseId={course.id} courseTitle={course.title} />
               </div>
             </div>
           </div>

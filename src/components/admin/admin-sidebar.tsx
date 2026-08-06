@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, BookOpen, CalendarClock, ClipboardList, LogOut, Tags, GraduationCap, Quote, Mail, Settings, Briefcase, HelpCircle, UserPlus, ListOrdered, Menu, X } from "lucide-react";
+import { LayoutDashboard, BookOpen, CalendarClock, ClipboardList, LogOut, Tags, GraduationCap, Quote, Mail, Settings, Briefcase, HelpCircle, UserPlus, ListOrdered, CalendarPlus, Menu, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +17,7 @@ const LINKS = [
   { href: "/admin/reservations", label: "Seat Reservations", icon: UserPlus },
   { href: "/admin/waitlist", label: "Waitlist", icon: ListOrdered },
   { href: "/admin/inquiries", label: "Course Inquiries", icon: HelpCircle },
+  { href: "/admin/private-sessions", label: "Private Session Requests", icon: CalendarPlus },
   { href: "/admin/trainer", label: "Trainer & Certificates", icon: GraduationCap },
   { href: "/admin/testimonials", label: "Testimonials", icon: Quote },
   { href: "/admin/portfolio", label: "Portfolio", icon: Briefcase },

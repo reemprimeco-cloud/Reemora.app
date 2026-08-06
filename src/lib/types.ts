@@ -18,6 +18,7 @@ export type ContactMessage = Tables["contact_messages"]["Row"];
 export type CourseInquiry = Tables["course_inquiries"]["Row"];
 export type SeatReservation = Tables["seat_reservations"]["Row"];
 export type CourseWaitlistEntry = Tables["course_waitlist"]["Row"];
+export type PrivateSessionRequest = Tables["private_session_requests"]["Row"];
 
 export type CourseLevel = Course["level"];
 export type ScheduleStatus = CourseSchedule["status"];

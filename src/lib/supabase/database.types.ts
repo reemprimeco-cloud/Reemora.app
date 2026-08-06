@@ -111,6 +111,46 @@ export interface Database {
           }
         ];
       };
+      private_session_requests: {
+        Row: {
+          id: string;
+          course_id: string | null;
+          full_name: string;
+          email: string;
+          phone: string;
+          preferred_date: string | null;
+          preferred_time: string | null;
+          group_size: number | null;
+          certificate_needed: boolean;
+          notes: string | null;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          course_id?: string | null;
+          full_name: string;
+          email: string;
+          phone: string;
+          preferred_date?: string | null;
+          preferred_time?: string | null;
+          group_size?: number | null;
+          certificate_needed?: boolean;
+          notes?: string | null;
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["private_session_requests"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "private_session_requests_course_id_fkey";
+            columns: ["course_id"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       course_waitlist: {
         Row: {
           id: string;
