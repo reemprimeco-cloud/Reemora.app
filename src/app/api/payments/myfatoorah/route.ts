@@ -3,6 +3,8 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createMyFatoorahPayment } from "@/lib/myfatoorah";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { computeOrderTotal, type Attendee } from "@/lib/course-utils";
+import { formatMoney } from "@/lib/utils";
+import { sendTelegramNotification } from "@/lib/telegram";
 import type { Json } from "@/lib/supabase/database.types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -144,6 +146,20 @@ export async function POST(request: Request) {
     console.error("registration insert error:", insertError?.message);
     return NextResponse.json({ error: "Could not save your registration. Please try again." }, { status: 500 });
   }
+
+  // Notify as soon as the order exists — this is the "someone registered"
+  // moment, independent of whether payment completes right after.
+  await sendTelegramNotification(
+    [
+      "🎓 New course registration",
+      `Course: ${course.title}`,
+      `Name: ${fullName}`,
+      `Seats: ${seats}`,
+      `Total: ${formatMoney(total, course.currency)}`,
+      `Phone: ${phone}`,
+      `Email: ${email}`,
+    ].join("\n")
+  );
 
   // Read the site-wide payment mode. Defaults to MyFatoorah when the
   // settings row is missing so a fresh install never silently switches to
