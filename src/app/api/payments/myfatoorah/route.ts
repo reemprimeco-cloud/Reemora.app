@@ -5,6 +5,7 @@ import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { computeOrderTotal, type Attendee } from "@/lib/course-utils";
 import { formatMoney } from "@/lib/utils";
 import { sendTelegramNotification } from "@/lib/telegram";
+import { sendWebPushToAdmins } from "@/lib/webpush";
 import type { Json } from "@/lib/supabase/database.types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -149,17 +150,24 @@ export async function POST(request: Request) {
 
   // Notify as soon as the order exists — this is the "someone registered"
   // moment, independent of whether payment completes right after.
-  await sendTelegramNotification(
-    [
-      "🎓 New course registration",
-      `Course: ${course.title}`,
-      `Name: ${fullName}`,
-      `Seats: ${seats}`,
-      `Total: ${formatMoney(total, course.currency)}`,
-      `Phone: ${phone}`,
-      `Email: ${email}`,
-    ].join("\n")
-  );
+  await Promise.all([
+    sendTelegramNotification(
+      [
+        "🎓 New course registration",
+        `Course: ${course.title}`,
+        `Name: ${fullName}`,
+        `Seats: ${seats}`,
+        `Total: ${formatMoney(total, course.currency)}`,
+        `Phone: ${phone}`,
+        `Email: ${email}`,
+      ].join("\n")
+    ),
+    sendWebPushToAdmins({
+      title: "🎓 New course registration",
+      body: `${fullName} registered for ${course.title} — ${formatMoney(total, course.currency)}`,
+      url: "/admin/registrations",
+    }),
+  ]);
 
   // Read the site-wide payment mode. Defaults to MyFatoorah when the
   // settings row is missing so a fresh install never silently switches to
