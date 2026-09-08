@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { MessageCircle, Phone } from "lucide-react";
+import { MessageCircle, Phone, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMoney } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/toast-provider";
+import { useConfirm } from "@/components/confirm-dialog";
 import type { RegistrationStatus, PaymentPlan } from "@/lib/types";
 
 function digitsOnly(phone: string): string {
@@ -60,7 +61,9 @@ function statusLabel(status: RegistrationStatus): string {
 export function RegistrationsTable({ initialRows }: { initialRows: RegistrationRow[] }) {
   const [rows, setRows] = React.useState(initialRows);
   const [saving, setSaving] = React.useState<Record<string, boolean>>({});
+  const [deleting, setDeleting] = React.useState<Record<string, boolean>>({});
   const { showToast } = useToast();
+  const confirm = useConfirm();
 
   async function changeStatus(id: string, next: RegistrationStatus) {
     const prev = rows.find((r) => r.id === id);
@@ -113,6 +116,32 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
       return rest;
     });
     showToast("success", `Status updated to ${statusLabel(next)}.${seatMessage}`);
+  }
+
+  async function handleDelete(r: RegistrationRow) {
+    if (
+      !(await confirm(
+        `Delete the registration for "${r.full_name}" (${r.course_title})? This also removes its payment records. This can't be undone.`
+      ))
+    )
+      return;
+
+    setDeleting((d) => ({ ...d, [r.id]: true }));
+    const supabase = createClient();
+    const { error } = await supabase.from("registrations").delete().eq("id", r.id);
+
+    if (error) {
+      setDeleting((d) => {
+        const { [r.id]: _omit, ...rest } = d;
+        void _omit;
+        return rest;
+      });
+      showToast("error", error.message);
+      return;
+    }
+
+    setRows((current) => current.filter((it) => it.id !== r.id));
+    showToast("success", "Registration deleted.");
   }
 
   return (
@@ -203,6 +232,15 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
                       >
                         <Phone size={13} aria-hidden="true" />
                       </a>
+                      <button
+                        onClick={() => handleDelete(r)}
+                        disabled={Boolean(deleting[r.id])}
+                        aria-label={`Delete registration from ${r.full_name}`}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-border-c bg-surface hover:border-red-300 hover:text-red-500 disabled:opacity-60"
+                        title="Delete this registration"
+                      >
+                        <Trash2 size={13} aria-hidden="true" />
+                      </button>
                     </div>
                   </td>
                   <td className="px-6 py-3.5">
