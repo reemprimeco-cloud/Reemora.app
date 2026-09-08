@@ -84,6 +84,36 @@ function mailtoHref(email: string, subject: string, body: string): string {
   return `mailto:${email}?${params.toString().replace(/\+/g, "%20")}`;
 }
 
+/** Bulk-announce version of mailtoHref: no "to", everyone in bcc so
+ *  recipients don't see each other's addresses. Opens the admin's own
+ *  email client with the whole list pre-filled — no email service or
+ *  domain setup needed, which is the whole point of doing it this way. */
+function mailtoAllHref(emails: string[], subject: string, body: string): string {
+  const params = new URLSearchParams({ bcc: emails.join(","), subject, body });
+  return `mailto:?${params.toString().replace(/\+/g, "%20")}`;
+}
+
+function buildAnnouncement(course: ReservationCourse, siteUrl: string) {
+  const link = `${siteUrl}/register/${course.slug}`;
+  const subject = `🎉 ${course.title} is now open for registration`;
+  const emailBody = [
+    "Hi there,",
+    "",
+    `Great news — the course you were interested in, "${course.title}", is now open for registration!`,
+    "",
+    course.short_description,
+    "",
+    "Reserve your seat here:",
+    link,
+    "",
+    "See you soon,",
+    "Reemora Training",
+  ].join("\n");
+  const waTemplate = (name: string) =>
+    `Hi ${name}, great news! Our course "${course.title}" is now open for registration. Reserve your seat here: ${link}`;
+  return { subject, emailBody, waTemplate };
+}
+
 export function ReservationInbox({
   initialReservations,
   allCourses,
@@ -104,6 +134,7 @@ export function ReservationInbox({
     }
     return seed;
   });
+  const [announceCourseId, setAnnounceCourseId] = React.useState("");
   const { showToast } = useToast();
   const confirm = useConfirm();
 
@@ -112,6 +143,13 @@ export function ReservationInbox({
     for (const c of allCourses) map.set(c.id, c);
     return map;
   }, [allCourses]);
+
+  const announceCourse = announceCourseId ? courseById.get(announceCourseId) ?? null : null;
+  const announcement = announceCourse ? buildAnnouncement(announceCourse, siteUrl) : null;
+  const announceEmails = React.useMemo(
+    () => Array.from(new Set(reservations.map((r) => r.email.trim()).filter(Boolean))),
+    [reservations]
+  );
 
   async function toggleRead(m: ReservationRow) {
     const supabase = createClient();
@@ -139,7 +177,48 @@ export function ReservationInbox({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border-c bg-surface">
+    <div>
+      <div className="mb-4 flex flex-wrap items-end gap-3 rounded-2xl border border-border-c bg-surface-alt p-4">
+        <div>
+          <label htmlFor="announce-course" className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-soft">
+            Announce a course
+          </label>
+          <select
+            id="announce-course"
+            value={announceCourseId}
+            onChange={(e) => setAnnounceCourseId(e.target.value)}
+            className="min-h-[38px] min-w-[220px] rounded-lg border border-border-c bg-surface px-3 py-2 text-sm font-semibold text-foreground outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20"
+          >
+            <option value="">Select a course…</option>
+            {allCourses.map((c) => (
+              <option key={c.id} value={c.id}>{c.title}</option>
+            ))}
+          </select>
+        </div>
+        <a
+          href={announcement ? mailtoAllHref(announceEmails, announcement.subject, announcement.emailBody) : undefined}
+          aria-disabled={!announcement || announceEmails.length === 0}
+          onClick={(e) => {
+            if (!announcement || announceEmails.length === 0) e.preventDefault();
+          }}
+          className={cn(
+            "inline-flex min-h-[38px] items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition",
+            announcement && announceEmails.length > 0
+              ? "border-blue-500 bg-blue-500 text-white hover:bg-navy-800"
+              : "cursor-not-allowed border-border-c bg-surface text-ink-soft"
+          )}
+        >
+          <Mail size={14} aria-hidden="true" />
+          Email all {announceEmails.length ? `(${announceEmails.length})` : ""}
+        </a>
+        {announcement && (
+          <p className="max-w-sm text-xs text-ink-soft">
+            Opens your email app with everyone BCC&apos;d. For WhatsApp, each row&apos;s WhatsApp button below is now
+            pre-filled with this announcement — tap through them one by one.
+          </p>
+        )}
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-border-c bg-surface">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-surface-alt text-xs font-bold uppercase tracking-wide text-ink-soft">
@@ -207,7 +286,13 @@ export function ReservationInbox({
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <a
-                          href={waDigits ? `https://wa.me/${waDigits}` : undefined}
+                          href={
+                            waDigits
+                              ? `https://wa.me/${waDigits}${
+                                  announcement ? `?text=${encodeURIComponent(announcement.waTemplate(firstName(m.full_name)))}` : ""
+                                }`
+                              : undefined
+                          }
                           target={waDigits ? "_blank" : undefined}
                           rel={waDigits ? "noopener noreferrer" : undefined}
                           aria-disabled={!waDigits}
@@ -221,7 +306,13 @@ export function ReservationInbox({
                               ? "border-green-600/30 bg-green-50 text-green-700 hover:border-green-600 dark:border-green-900 dark:bg-green-950 dark:text-green-300"
                               : "cursor-not-allowed border-border-c bg-surface-alt text-ink-soft"
                           )}
-                          title={waDigits ? "Open WhatsApp chat" : "Phone missing"}
+                          title={
+                            !waDigits
+                              ? "Phone missing"
+                              : announcement
+                              ? `Send announcement for ${announcement.subject.replace("🎉 ", "")}`
+                              : "Open WhatsApp chat"
+                          }
                         >
                           <MessageCircle size={13} aria-hidden="true" />
                         </a>
@@ -274,6 +365,7 @@ export function ReservationInbox({
             )}
           </tbody>
         </table>
+      </div>
       </div>
     </div>
   );
