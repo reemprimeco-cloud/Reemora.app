@@ -103,11 +103,11 @@ export async function createUPaymentInvoice(params: CreateInvoiceParams) {
         amount: params.amount,
       },
       paymentGateway: { src: "create-invoice" },
-      // "link" returns the checkout URL directly in the response instead of
-      // having UPayments email/SMS it themselves — we present it ourselves
-      // (redirect for the immediate half, or via our own WhatsApp reminder
-      // for the deferred half).
-      notificationType: "link",
+      // "all" makes UPayments text/email the customer the payment link
+      // itself (in addition to returning it to us in the response), so the
+      // link goes out even if the browser redirect is missed or closed
+      // early — on top of the immediate redirect we still do ourselves.
+      notificationType: "all",
       language: "en",
       reference: { id: shortId(params.referenceId) },
       customer: {
@@ -121,6 +121,10 @@ export async function createUPaymentInvoice(params: CreateInvoiceParams) {
       notificationUrl: params.notificationUrl,
     },
   });
+
+  console.log(
+    `[UPayments /charge] invoice_id=${data.data.invoice_id} sms=${data.data.sms} email=${data.data.email} link=${data.data.link} hasUrl=${Boolean(data.data.url)}`
+  );
 
   return { checkoutUrl: data.data.url, invoiceId: data.data.invoice_id };
 }
