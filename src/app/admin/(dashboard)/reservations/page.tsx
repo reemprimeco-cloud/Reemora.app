@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { getCourses } from "@/lib/data/courses";
+import { getWebsiteSettings } from "@/lib/data/settings";
 import { ReservationInbox, type ReservationCourse } from "@/components/admin/reservation-inbox";
 import type { SeatReservation } from "@/lib/types";
 
@@ -12,7 +13,7 @@ type Row = SeatReservation & { courses?: ReservationCourse | ReservationCourse[]
 export default async function AdminReservationsPage() {
   let reservations: Row[] = [];
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://reemora.app";
-  const courses = await getCourses();
+  const [courses, settings] = await Promise.all([getCourses(), getWebsiteSettings()]);
   const allCourses: ReservationCourse[] = courses.map((c) => ({
     id: c.id,
     title: c.title,
@@ -35,7 +36,12 @@ export default async function AdminReservationsPage() {
       <p className="mb-6 max-w-2xl text-sm text-ink-soft">
         Leads from the &ldquo;Reserve Your Seat&rdquo; hero form — visitors who shared their interest, background, and (optionally) which course they want to join. Tap WhatsApp / Call to reach them, pick the course you want to recommend, and Reply opens a pre-filled email for that course.
       </p>
-      <ReservationInbox initialReservations={reservations} allCourses={allCourses} siteUrl={siteUrl} />
+      <ReservationInbox
+        initialReservations={reservations}
+        allCourses={allCourses}
+        siteUrl={siteUrl}
+        adminEmail={settings.contact_email}
+      />
     </div>
   );
 }

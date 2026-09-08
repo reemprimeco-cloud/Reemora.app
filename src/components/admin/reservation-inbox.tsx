@@ -84,13 +84,15 @@ function mailtoHref(email: string, subject: string, body: string): string {
   return `mailto:${email}?${params.toString().replace(/\+/g, "%20")}`;
 }
 
-/** Bulk-announce version of mailtoHref: no "to", everyone in bcc so
- *  recipients don't see each other's addresses. Opens the admin's own
- *  email client with the whole list pre-filled — no email service or
- *  domain setup needed, which is the whole point of doing it this way. */
-function mailtoAllHref(emails: string[], subject: string, body: string): string {
+/** Bulk-announce version of mailtoHref: recipients go in bcc so they don't
+ *  see each other's addresses, with the site's own contact address as "to"
+ *  — most webmail (Gmail included) refuses to send a bcc-only draft with
+ *  no "to" at all, so this keeps the button reliably usable. Opens the
+ *  admin's own email client with the whole list pre-filled — no email
+ *  service or domain setup needed, which is the whole point of this. */
+function mailtoAllHref(to: string, emails: string[], subject: string, body: string): string {
   const params = new URLSearchParams({ bcc: emails.join(","), subject, body });
-  return `mailto:?${params.toString().replace(/\+/g, "%20")}`;
+  return `mailto:${to}?${params.toString().replace(/\+/g, "%20")}`;
 }
 
 function buildAnnouncement(course: ReservationCourse, siteUrl: string) {
@@ -118,10 +120,12 @@ export function ReservationInbox({
   initialReservations,
   allCourses,
   siteUrl,
+  adminEmail,
 }: {
   initialReservations: ReservationRow[];
   allCourses: ReservationCourse[];
   siteUrl: string;
+  adminEmail: string;
 }) {
   const [reservations, setReservations] = React.useState(initialReservations);
   // Admin's per-row course override (keyed by reservation id).
@@ -196,7 +200,7 @@ export function ReservationInbox({
           </select>
         </div>
         <a
-          href={announcement ? mailtoAllHref(announceEmails, announcement.subject, announcement.emailBody) : undefined}
+          href={announcement ? mailtoAllHref(adminEmail, announceEmails, announcement.subject, announcement.emailBody) : undefined}
           aria-disabled={!announcement || announceEmails.length === 0}
           onClick={(e) => {
             if (!announcement || announceEmails.length === 0) e.preventDefault();
