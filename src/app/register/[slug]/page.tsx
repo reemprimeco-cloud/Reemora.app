@@ -22,7 +22,7 @@ export async function generateStaticParams() {
 
 export const metadata: Metadata = {
   title: "Register",
-  description: "Reserve your seat and complete secure payment via MyFatoorah.",
+  description: "Reserve your seat and complete secure payment via UPayments.",
   robots: { index: false, follow: true },
 };
 
@@ -58,7 +58,7 @@ export default async function RegisterPage({ params }: Props) {
                 <p className="text-ink-soft">{dict.registerPage.subtitle}</p>
               </div>
               <Suspense fallback={null}>
-                <RegisterForm course={course} schedule={schedule} />
+                <RegisterForm course={course} schedule={schedule} paymentMode={settings.payment_mode} />
               </Suspense>
             </>
           )}

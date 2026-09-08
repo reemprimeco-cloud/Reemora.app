@@ -421,6 +421,7 @@ export interface Database {
           attendees: Json;
           currency: string;
           status: "pending" | "confirmed" | "cancelled" | "refunded" | "no_show" | "waitlist";
+          payment_plan: "full" | "split_50_50";
           created_at: string;
         };
         Insert: {
@@ -437,6 +438,7 @@ export interface Database {
           attendees?: Json;
           currency?: string;
           status?: "pending" | "confirmed" | "cancelled" | "refunded" | "no_show" | "waitlist";
+          payment_plan?: "full" | "split_50_50";
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["registrations"]["Insert"]>;
@@ -465,8 +467,11 @@ export interface Database {
           currency: string;
           status: "pending" | "paid" | "failed" | "refunded" | "cancelled";
           method: string;
-          myfatoorah_invoice_id: string | null;
-          myfatoorah_payment_id: string | null;
+          gateway_invoice_id: string | null;
+          gateway_track_id: string | null;
+          due_date: string | null;
+          checkout_url: string | null;
+          reminder_ready_at: string | null;
           paid_at: string | null;
           created_at: string;
           updated_at: string;
@@ -478,8 +483,11 @@ export interface Database {
           currency?: string;
           status?: "pending" | "paid" | "failed" | "refunded" | "cancelled";
           method?: string;
-          myfatoorah_invoice_id?: string | null;
-          myfatoorah_payment_id?: string | null;
+          gateway_invoice_id?: string | null;
+          gateway_track_id?: string | null;
+          due_date?: string | null;
+          checkout_url?: string | null;
+          reminder_ready_at?: string | null;
           paid_at?: string | null;
           created_at?: string;
           updated_at?: string;

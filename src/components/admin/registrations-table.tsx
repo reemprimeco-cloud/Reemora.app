@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { formatMoney } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/toast-provider";
-import type { RegistrationStatus } from "@/lib/types";
+import type { RegistrationStatus, PaymentPlan } from "@/lib/types";
 
 function digitsOnly(phone: string): string {
   return phone.replace(/\D+/g, "");
@@ -26,6 +26,10 @@ export interface RegistrationRow {
   course_schedule_id: string;
   /** Null for older rows saved before payments.method existed. */
   payment_method: string | null;
+  payment_plan: PaymentPlan;
+  /** The deferred second half of a split plan — null unless payment_plan
+   *  is 'split_50_50' and a second payments row exists. */
+  second_installment: { amount: number; status: string; due_date: string | null } | null;
 }
 
 /** Status vocabulary the admin can pick from. Order = order in the
@@ -80,9 +84,9 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
       return;
     }
 
-    // WhatsApp-manual registrations never hit a MyFatoorah webhook, so
+    // WhatsApp-manual registrations never hit a UPayments webhook, so
     // there's nothing else to decrement/release a seat when payment is
-    // confirmed by hand. Only adjust for that payment method — MyFatoorah
+    // confirmed by hand. Only adjust for that payment method — UPayments
     // registrations already get this from the payment callback, and
     // adjusting here too would double-count.
     let seatMessage = "";
@@ -123,6 +127,7 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
               <th className="px-6 py-3.5 text-left">Course</th>
               <th className="px-6 py-3.5 text-left">Seats</th>
               <th className="px-6 py-3.5 text-left">Amount</th>
+              <th className="px-6 py-3.5 text-left">Payment Plan</th>
               <th className="px-6 py-3.5 text-left">Contact</th>
               <th className="px-6 py-3.5 text-left">Status</th>
               <th className="px-6 py-3.5 text-left">Date</th>
@@ -138,6 +143,32 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
                   <td className="px-6 py-3.5">{r.course_title}</td>
                   <td className="px-6 py-3.5">{r.seats}</td>
                   <td className="px-6 py-3.5 font-bold text-foreground">{formatMoney(r.amount, r.currency)}</td>
+                  <td className="px-6 py-3.5">
+                    {r.payment_plan === "split_50_50" ? (
+                      <div className="flex flex-col gap-1">
+                        <span className="inline-flex w-fit rounded-full bg-purple-100 px-2.5 py-1 text-xs font-bold text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                          Split 50/50
+                        </span>
+                        {r.second_installment && (
+                          <span className="text-xs text-ink-soft">
+                            2nd: {formatMoney(r.second_installment.amount, r.currency)} —{" "}
+                            {r.second_installment.status === "paid" ? (
+                              <span className="font-semibold text-green-700 dark:text-green-400">Paid</span>
+                            ) : (
+                              <>
+                                due{" "}
+                                {r.second_installment.due_date
+                                  ? new Date(r.second_installment.due_date).toLocaleDateString()
+                                  : "—"}
+                              </>
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-ink-soft">Full</span>
+                    )}
+                  </td>
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-1.5">
                       {(() => {
@@ -202,7 +233,7 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
               ))
             ) : (
               <tr>
-                <td colSpan={9} className="px-6 py-8 text-center text-ink-soft">No registrations yet.</td>
+                <td colSpan={10} className="px-6 py-8 text-center text-ink-soft">No registrations yet.</td>
               </tr>
             )}
           </tbody>

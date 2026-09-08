@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { createMyFatoorahPayment } from "@/lib/myfatoorah";
+import { createUPaymentInvoice } from "@/lib/upayment";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
-import { computeOrderTotal, type Attendee } from "@/lib/course-utils";
+import { computeOrderTotal, computeSplitPayment, type Attendee } from "@/lib/course-utils";
 import { formatMoney } from "@/lib/utils";
 import { sendTelegramNotification } from "@/lib/telegram";
 import { sendWebPushToAdmins } from "@/lib/webpush";
@@ -11,6 +11,7 @@ import type { Json } from "@/lib/supabase/database.types";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
 const MAX_SEATS = 10;
+const SPLIT_REMINDER_DAYS = 30;
 
 /** Parse an attendee entry from the request body. Trims strings, drops
  *  everything else. Missing fields become empty string so validation can
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
     phone?: unknown;
     notes?: unknown;
     attendees?: unknown;
+    paymentPlan?: unknown;
   };
 
   try {
@@ -57,6 +59,7 @@ export async function POST(request: Request) {
   const notes = typeof body.notes === "string" ? body.notes.trim() : "";
   const extraAttendeesRaw = Array.isArray(body.attendees) ? body.attendees.slice(0, MAX_SEATS - 1) : [];
   const extraAttendees = extraAttendeesRaw.map(parseAttendee);
+  const requestedPaymentPlan = body.paymentPlan === "split_50_50" ? "split_50_50" : "full";
   // Seats = booker (1) + extra attendee entries. Never trust a client-sent
   // seat count — derive it from the attendees list.
   const seats = 1 + extraAttendees.length;
@@ -123,6 +126,19 @@ export async function POST(request: Request) {
     ...extraAttendees,
   ];
 
+  // Read the site-wide payment mode. Defaults to UPayments when the
+  // settings row is missing so a fresh install never silently switches to
+  // manual mode. Split payment only makes sense when the real gateway is
+  // active — there's no automatic reminder link to generate later
+  // otherwise — so it silently downgrades to a full payment in
+  // whatsapp_manual mode.
+  const { data: settingsRows } = await supabase
+    .from("website_settings")
+    .select("key, value")
+    .eq("key", "payment_mode");
+  const paymentMode = settingsRows?.[0]?.value === "whatsapp_manual" ? "whatsapp_manual" : "upayment";
+  const paymentPlan = paymentMode === "upayment" ? requestedPaymentPlan : "full";
+
   const { data: registration, error: insertError } = await supabase
     .from("registrations")
     .insert({
@@ -139,6 +155,7 @@ export async function POST(request: Request) {
       attendees: attendeesForDb as unknown as Json,
       currency: course.currency,
       status: "pending",
+      payment_plan: paymentPlan,
     })
     .select()
     .single();
@@ -150,6 +167,7 @@ export async function POST(request: Request) {
 
   // Notify as soon as the order exists — this is the "someone registered"
   // moment, independent of whether payment completes right after.
+  const planNote = paymentPlan === "split_50_50" ? " (split payment: 50% now, 50% in 30 days)" : "";
   await Promise.all([
     sendTelegramNotification(
       [
@@ -157,46 +175,37 @@ export async function POST(request: Request) {
         `Course: ${course.title}`,
         `Name: ${fullName}`,
         `Seats: ${seats}`,
-        `Total: ${formatMoney(total, course.currency)}`,
+        `Total: ${formatMoney(total, course.currency)}${planNote}`,
         `Phone: ${phone}`,
         `Email: ${email}`,
       ].join("\n")
     ),
     sendWebPushToAdmins({
       title: "🎓 New course registration",
-      body: `${fullName} registered for ${course.title} — ${formatMoney(total, course.currency)}`,
+      body: `${fullName} registered for ${course.title} — ${formatMoney(total, course.currency)}${planNote}`,
       url: "/admin/registrations",
     }),
   ]);
 
-  // Read the site-wide payment mode. Defaults to MyFatoorah when the
-  // settings row is missing so a fresh install never silently switches to
-  // manual mode.
-  const { data: settingsRows } = await supabase
-    .from("website_settings")
-    .select("key, value")
-    .eq("key", "payment_mode");
-  const paymentMode = settingsRows?.[0]?.value === "whatsapp_manual" ? "whatsapp_manual" : "myfatoorah";
-
-  const { data: payment, error: paymentError } = await supabase
-    .from("payments")
-    .insert({
-      registration_id: registration.id,
-      amount: total,
-      currency: course.currency,
-      status: "pending",
-      method: paymentMode === "whatsapp_manual" ? "whatsapp_manual" : "myfatoorah",
-    })
-    .select()
-    .single();
-
-  if (paymentError || !payment) {
-    console.error("payment insert error:", paymentError?.message);
-    return NextResponse.json({ error: "Could not start payment. Please try again." }, { status: 500 });
-  }
-
   if (paymentMode === "whatsapp_manual") {
-    // Temporary fallback while MyFatoorah is switched off: skip the
+    const { data: payment, error: paymentError } = await supabase
+      .from("payments")
+      .insert({
+        registration_id: registration.id,
+        amount: total,
+        currency: course.currency,
+        status: "pending",
+        method: "whatsapp_manual",
+      })
+      .select()
+      .single();
+
+    if (paymentError || !payment) {
+      console.error("payment insert error:", paymentError?.message);
+      return NextResponse.json({ error: "Could not start payment. Please try again." }, { status: 500 });
+    }
+
+    // Temporary fallback while UPayments is switched off: skip the
     // gateway entirely. Staff message the student directly using the
     // phone number they just submitted (the Registrations admin table has
     // a WhatsApp button per row for exactly this). The student sees an
@@ -214,30 +223,85 @@ export async function POST(request: Request) {
     });
   }
 
+  // UPayments gateway. For a split plan, the first installment is charged
+  // immediately (redirect below); the second is recorded now but its
+  // checkout link is generated later by the reminder cron, since a link
+  // created 30 days ahead of time may have expired by then.
+  const isSplit = paymentPlan === "split_50_50";
+  const { dueNow, dueLater } = computeSplitPayment(total);
+  const firstAmount = isSplit ? dueNow : total;
+
+  const { data: payment, error: paymentError } = await supabase
+    .from("payments")
+    .insert({
+      registration_id: registration.id,
+      amount: firstAmount,
+      currency: course.currency,
+      status: "pending",
+      method: "upayment",
+      due_date: null,
+    })
+    .select()
+    .single();
+
+  if (paymentError || !payment) {
+    console.error("payment insert error:", paymentError?.message);
+    return NextResponse.json({ error: "Could not start payment. Please try again." }, { status: 500 });
+  }
+
+  if (isSplit) {
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + SPLIT_REMINDER_DAYS);
+    const { error: deferredError } = await supabase.from("payments").insert({
+      registration_id: registration.id,
+      amount: dueLater,
+      currency: course.currency,
+      status: "pending",
+      method: "upayment",
+      due_date: dueDate.toISOString().slice(0, 10),
+    });
+    if (deferredError) {
+      // Not fatal to the checkout in progress — log loudly so it can be
+      // fixed manually (the reminder cron would otherwise never see this
+      // registration's second half).
+      console.error("deferred installment insert error:", deferredError.message);
+    }
+  }
+
   try {
-    const { invoiceUrl, invoiceId } = await createMyFatoorahPayment({
+    const { checkoutUrl, invoiceId } = await createUPaymentInvoice({
       customerName: fullName,
       customerEmail: email,
       customerPhone: phone,
-      amount: total,
+      amount: firstAmount,
       currency: course.currency,
-      reference: payment.id,
-      itemName: seats > 1 ? `${course.title} × ${seats} seats` : course.title,
-      callbackUrl: `${siteUrl}/api/payments/callback?paymentRowId=${payment.id}&courseSlug=${course.slug}`,
-      errorUrl: `${siteUrl}/register/${course.slug}?status=failed&ref=${registration.id}`,
+      orderId: payment.id,
+      referenceId: registration.id,
+      orderDescription: isSplit
+        ? `${course.title} × ${seats} seat${seats > 1 ? "s" : ""} — 1st of 2 payments`
+        : seats > 1
+        ? `${course.title} × ${seats} seats`
+        : course.title,
+      returnUrl: `${siteUrl}/api/payments/callback?courseSlug=${course.slug}`,
+      cancelUrl: `${siteUrl}/api/payments/callback?courseSlug=${course.slug}`,
+      notificationUrl: `${siteUrl}/api/payments/upayment-webhook`,
     });
 
-    await supabase.from("payments").update({ myfatoorah_invoice_id: String(invoiceId) }).eq("id", payment.id);
+    if (!checkoutUrl) {
+      throw new Error("UPayments did not return a checkout URL.");
+    }
+
+    await supabase.from("payments").update({ gateway_invoice_id: invoiceId, checkout_url: checkoutUrl }).eq("id", payment.id);
     await supabase.from("payment_transactions").insert({
       payment_id: payment.id,
       event_type: "created",
       status: "invoice_created",
-      raw_response: { invoiceId, invoiceUrl, subtotal, discount, total },
+      raw_response: { invoiceId, checkoutUrl, subtotal, discount, total, paymentPlan },
     });
 
-    return NextResponse.json({ invoiceUrl, registrationId: registration.id });
+    return NextResponse.json({ invoiceUrl: checkoutUrl, registrationId: registration.id });
   } catch (err) {
-    console.error("MyFatoorah error:", err);
+    console.error("UPayments error:", err);
     await supabase.from("payment_transactions").insert({
       payment_id: payment.id,
       event_type: "error",

@@ -8,7 +8,8 @@ import { formatDate, formatMoney } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/context";
 import { interpolate } from "@/lib/i18n/dictionaries";
-import { computeOrderTotal, MULTI_SEAT_DISCOUNT_THRESHOLD, type Attendee } from "@/lib/course-utils";
+import { computeOrderTotal, computeSplitPayment, MULTI_SEAT_DISCOUNT_THRESHOLD, type Attendee } from "@/lib/course-utils";
+import type { PaymentPlan } from "@/lib/types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
@@ -18,7 +19,15 @@ function emptyAttendee(): Attendee {
   return { full_name: "", email: "", phone: "" };
 }
 
-export function RegisterForm({ course, schedule }: { course: CourseWithRelations; schedule: CourseSchedule }) {
+export function RegisterForm({
+  course,
+  schedule,
+  paymentMode,
+}: {
+  course: CourseWithRelations;
+  schedule: CourseSchedule;
+  paymentMode: "upayment" | "whatsapp_manual";
+}) {
   const searchParams = useSearchParams();
   const initialStatus = searchParams.get("status");
   const { dict, lang } = useLanguage();
@@ -28,6 +37,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [extraAttendees, setExtraAttendees] = React.useState<Attendee[]>([]);
+  const [paymentPlan, setPaymentPlan] = React.useState<PaymentPlan>("full");
   const [notes, setNotes] = React.useState("");
   const [agreed, setAgreed] = React.useState(false);
   const [errors, setErrors] = React.useState<Record<string, boolean>>({});
@@ -44,6 +54,8 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
   const maxSeats = Math.min(MAX_SEATS, schedule.seats_available);
   const canAddSeat = seats < maxSeats;
   const { subtotal, discount, total } = computeOrderTotal(course.price, seats);
+  const isSplit = paymentMode === "upayment" && paymentPlan === "split_50_50";
+  const { dueNow, dueLater } = computeSplitPayment(total);
 
   function updateAttendee(idx: number, patch: Partial<Attendee>) {
     setExtraAttendees((prev) => prev.map((a, i) => (i === idx ? { ...a, ...patch } : a)));
@@ -83,7 +95,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/payments/myfatoorah", {
+      const res = await fetch("/api/payments/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -93,6 +105,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
           phone,
           attendees: extraAttendees,
           notes,
+          paymentPlan,
         }),
       });
 
@@ -262,6 +275,43 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
             </button>
           </div>
 
+          {paymentMode === "upayment" && (
+            <div className="mb-5">
+              <h3 className="mb-2 text-[15px] font-semibold">{t.paymentPlanHeading}</h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label
+                  className={cn(
+                    "flex cursor-pointer flex-col gap-1 rounded-xl border p-4 text-sm transition",
+                    paymentPlan === "full" ? "border-blue-400 bg-blue-50 dark:bg-blue-950" : "border-border-c bg-surface-alt"
+                  )}
+                >
+                  <span className="flex items-center gap-2 font-semibold">
+                    <input type="radio" name="payment_plan" checked={paymentPlan === "full"} onChange={() => setPaymentPlan("full")} />
+                    {t.paymentPlanFull}
+                  </span>
+                  <span className="text-xs text-ink-soft">{t.paymentPlanFullHint}</span>
+                </label>
+                <label
+                  className={cn(
+                    "flex cursor-pointer flex-col gap-1 rounded-xl border p-4 text-sm transition",
+                    paymentPlan === "split_50_50" ? "border-blue-400 bg-blue-50 dark:bg-blue-950" : "border-border-c bg-surface-alt"
+                  )}
+                >
+                  <span className="flex items-center gap-2 font-semibold">
+                    <input
+                      type="radio"
+                      name="payment_plan"
+                      checked={paymentPlan === "split_50_50"}
+                      onChange={() => setPaymentPlan("split_50_50")}
+                    />
+                    {t.paymentPlanSplit}
+                  </span>
+                  <span className="text-xs text-ink-soft">{t.paymentPlanSplitHint}</span>
+                </label>
+              </div>
+            </div>
+          )}
+
           <div className="mb-5">
             <label htmlFor="reg-notes" className="mb-1.5 block text-[13.5px] font-semibold">
               {t.notes} <span className="font-normal text-ink-soft">{t.optional}</span>
@@ -310,10 +360,23 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
             <span>− {formatMoney(discount, course.currency)}</span>
           </div>
         )}
-        <div className="flex justify-between pt-4 text-[17px] font-bold text-foreground">
-          <span>{t.totalDue}</span>
-          <span>{formatMoney(total, course.currency)}</span>
-        </div>
+        {isSplit ? (
+          <>
+            <div className="flex justify-between pt-4 text-[17px] font-bold text-foreground">
+              <span>{t.dueNow}</span>
+              <span>{formatMoney(dueNow, course.currency)}</span>
+            </div>
+            <div className="flex justify-between border-t border-border-c py-2.5 text-sm text-ink-soft">
+              <span>{t.dueIn30Days}</span>
+              <span>{formatMoney(dueLater, course.currency)}</span>
+            </div>
+          </>
+        ) : (
+          <div className="flex justify-between pt-4 text-[17px] font-bold text-foreground">
+            <span>{t.totalDue}</span>
+            <span>{formatMoney(total, course.currency)}</span>
+          </div>
+        )}
         <div className="mt-4.5 flex flex-wrap gap-2.5">
           {[t.badgeSecure, t.badgeMf, t.badgeCards].map((b) => (
             <span key={b} className="rounded-lg border border-border-c bg-surface px-3 py-2 text-xs font-semibold text-ink-soft">{b}</span>

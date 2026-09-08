@@ -2,9 +2,16 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { RegistrationsTable, type RegistrationRow } from "@/components/admin/registrations-table";
-import type { RegistrationStatus } from "@/lib/types";
+import type { RegistrationStatus, PaymentPlan } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Registrations" };
+
+interface DbPayment {
+  method: string;
+  amount: number;
+  status: string;
+  due_date: string | null;
+}
 
 interface DbRow {
   id: string;
@@ -15,13 +22,14 @@ interface DbRow {
   amount: number;
   currency: string;
   status: RegistrationStatus;
+  payment_plan: PaymentPlan;
   created_at: string;
   course_schedule_id: string;
   course_schedule:
     | { courses: { title: string } | { title: string }[] | null }
     | { courses: { title: string } | { title: string }[] | null }[]
     | null;
-  payments: { method: string } | { method: string }[] | null;
+  payments: DbPayment | DbPayment[] | null;
 }
 
 function courseTitleOf(r: DbRow): string {
@@ -31,9 +39,23 @@ function courseTitleOf(r: DbRow): string {
   return course?.title ?? "—";
 }
 
+function paymentsOf(r: DbRow): DbPayment[] {
+  return Array.isArray(r.payments) ? r.payments : r.payments ? [r.payments] : [];
+}
+
+/** The first installment (due_date null) — for a full payment this is the
+ *  only row; for a split plan it's the one charged at checkout. */
 function paymentMethodOf(r: DbRow): string | null {
-  const p = Array.isArray(r.payments) ? r.payments[0] : r.payments;
-  return p?.method ?? null;
+  const payments = paymentsOf(r);
+  return payments.find((p) => p.due_date === null)?.method ?? payments[0]?.method ?? null;
+}
+
+/** The deferred second half of a split plan, if any. */
+function secondInstallmentOf(r: DbRow): RegistrationRow["second_installment"] {
+  if (r.payment_plan !== "split_50_50") return null;
+  const second = paymentsOf(r).find((p) => p.due_date !== null);
+  if (!second) return null;
+  return { amount: second.amount, status: second.status, due_date: second.due_date };
 }
 
 export default async function AdminRegistrationsPage() {
@@ -44,7 +66,7 @@ export default async function AdminRegistrationsPage() {
     const { data } = await supabase
       .from("registrations")
       .select(
-        "id, full_name, email, phone, seats, amount, currency, status, created_at, course_schedule_id, course_schedule(courses(title)), payments(method)"
+        "id, full_name, email, phone, seats, amount, currency, status, payment_plan, created_at, course_schedule_id, course_schedule(courses(title)), payments(method, amount, status, due_date)"
       )
       .order("created_at", { ascending: false });
     const raw = (data as unknown as DbRow[]) ?? [];
@@ -61,6 +83,8 @@ export default async function AdminRegistrationsPage() {
       course_title: courseTitleOf(r),
       course_schedule_id: r.course_schedule_id,
       payment_method: paymentMethodOf(r),
+      payment_plan: r.payment_plan,
+      second_installment: secondInstallmentOf(r),
     }));
   }
 
@@ -68,7 +92,7 @@ export default async function AdminRegistrationsPage() {
     <div>
       <h1 className="mb-3 text-2xl font-bold">Registrations</h1>
       <p className="mb-6 max-w-2xl text-sm text-ink-soft">
-        Use the status dropdown on each row to move a registration through Pending → Accepted → Cancelled / Refunded / No-show / Waitlist. For MyFatoorah registrations, status is a label only — seats are freed/reserved automatically by the payment webhook. For WhatsApp (manual) registrations, moving to Accepted reserves a seat and moving away from it releases the seat back, since there&apos;s no webhook to do that for you.
+        Use the status dropdown on each row to move a registration through Pending → Accepted → Cancelled / Refunded / No-show / Waitlist. For UPayments registrations, status is a label only — seats are freed/reserved automatically by the payment webhook. For WhatsApp (manual) registrations, moving to Accepted reserves a seat and moving away from it releases the seat back, since there&apos;s no webhook to do that for you.
       </p>
       <RegistrationsTable initialRows={rows} />
     </div>

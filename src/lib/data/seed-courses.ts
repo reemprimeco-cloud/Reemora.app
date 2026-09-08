@@ -286,7 +286,7 @@ export const SEED_SETTINGS = {
   stat_courses_count: "4+",
   stat_students_count: "500+",
   stat_satisfaction_rate: "98%",
-  payment_mode: "myfatoorah" as const,
+  payment_mode: "upayment" as const,
 };
 
 export const isSupabaseConfigured = Boolean(

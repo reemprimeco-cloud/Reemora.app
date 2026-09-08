@@ -24,6 +24,7 @@ export type CourseLevel = Course["level"];
 export type ScheduleStatus = CourseSchedule["status"];
 export type PaymentStatus = Payment["status"];
 export type RegistrationStatus = Registration["status"];
+export type PaymentPlan = Registration["payment_plan"];
 
 /** One row in the About Your Trainer timeline. Stored as JSONB on
  *  instructors.timeline so admins can edit these without a schema change. */
@@ -67,9 +68,9 @@ export type WebsiteSettings = {
   stat_courses_count: string;
   stat_students_count: string;
   stat_satisfaction_rate: string;
-  /** "myfatoorah" (default) runs the normal card-payment checkout.
-   *  "whatsapp_manual" skips MyFatoorah entirely — the student is
-   *  redirected to a pre-filled WhatsApp chat instead, and staff send the
-   *  payment link/instructions by hand. Meant as a temporary fallback. */
-  payment_mode: "myfatoorah" | "whatsapp_manual";
+  /** "upayment" (default) runs the normal card-payment checkout via
+   *  UPayments. "whatsapp_manual" skips the gateway entirely — the student
+   *  sees a thank-you page saying a payment link is coming, and staff send
+   *  it by hand. Meant as a temporary fallback. */
+  payment_mode: "upayment" | "whatsapp_manual";
 };

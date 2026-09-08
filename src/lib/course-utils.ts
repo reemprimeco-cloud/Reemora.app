@@ -14,8 +14,17 @@ export function computeOrderTotal(pricePerSeat: number, seats: number) {
   return { subtotal, discount, total };
 }
 
-function round2(n: number): number {
+export function round2(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+/** Splits a total into two installments: half now, half later. The second
+ *  half absorbs any rounding remainder so the two always sum exactly to
+ *  `total` (e.g. 15.01 -> 7.50 + 7.51, never 7.51 rounding twice). */
+export function computeSplitPayment(total: number) {
+  const dueNow = round2(total / 2);
+  const dueLater = round2(total - dueNow);
+  return { dueNow, dueLater };
 }
 
 /** One attendee taking a seat in a cohort. Stored as JSONB on
