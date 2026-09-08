@@ -2,8 +2,35 @@
 -- add support for a 50/50 split-payment plan (first half now, second half
 -- due 30 days later with a WhatsApp reminder).
 
-alter table public.payments rename column myfatoorah_invoice_id to gateway_invoice_id;
-alter table public.payments rename column myfatoorah_payment_id to gateway_track_id;
+-- Guarded rather than plain `rename column` so this migration is safe to
+-- re-run no matter how far a previous partial run got (each ALTER TABLE
+-- statement in the Supabase SQL editor commits on its own, so a script
+-- that fails partway through can leave some renames already applied).
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'payments' and column_name = 'myfatoorah_invoice_id'
+  ) and not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'payments' and column_name = 'gateway_invoice_id'
+  ) then
+    alter table public.payments rename column myfatoorah_invoice_id to gateway_invoice_id;
+  end if;
+end $$;
+
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'payments' and column_name = 'myfatoorah_payment_id'
+  ) and not exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'payments' and column_name = 'gateway_track_id'
+  ) then
+    alter table public.payments rename column myfatoorah_payment_id to gateway_track_id;
+  end if;
+end $$;
 
 alter table public.payments alter column method set default 'upayment';
 
