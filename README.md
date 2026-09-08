@@ -1,8 +1,8 @@
 # Reemora — Build Apps with AI
 
-Production platform for Reemora: dynamic marketing site, AI course catalog, MyFatoorah-powered registration, and a Supabase-authenticated admin panel for managing courses, scheduling, instructors, testimonials, site settings and contact messages.
+Production platform for Reemora: dynamic marketing site, AI course catalog, UPayments-powered registration (pay in full or 2 installments), and a Supabase-authenticated admin panel for managing courses, scheduling, instructors, testimonials, site settings and contact messages.
 
-**Stack:** Next.js 15 (App Router) · TypeScript · Tailwind CSS v4 · Supabase (Postgres + Auth + Storage) · MyFatoorah.
+**Stack:** Next.js 15 (App Router) · TypeScript · Tailwind CSS v4 · Supabase (Postgres + Auth + Storage) · UPayments · Twilio (installment reminders).
 
 ## Status
 
@@ -31,8 +31,10 @@ Copy `.env.example` to `.env.local` and fill in:
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase project connection (public, safe for the browser) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only key used by API routes to write registrations/payments — never expose to the client |
-| `MYFATOORAH_API_KEY` / `MYFATOORAH_BASE_URL` | MyFatoorah payment gateway (test or live) |
-| `NEXT_PUBLIC_SITE_URL` | Canonical site URL, used for SEO metadata and MyFatoorah callback URLs |
+| `UPAYMENTS_API_KEY` / `UPAYMENTS_BASE_URL` | UPayments gateway (sandbox or live) |
+| `CRON_SECRET` | Protects the daily installment-reminder cron (`vercel.json`) |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM` | SMS or WhatsApp sender for second-installment reminders |
+| `NEXT_PUBLIC_SITE_URL` | Canonical site URL, used for SEO metadata, UPayments callback URLs and reminder pay-links |
 
 ## Database schema
 
@@ -42,7 +44,7 @@ Copy `.env.example` to `.env.local` and fill in:
 2. `0002_tables.sql` — all 13 tables, indexes, triggers, and the `decrement_seats()` RPC:
    - `users` (extends `auth.users`, auto-populated by an `on_auth_user_created` trigger), `instructors`, `certificates`
    - `course_categories`, `courses`, `course_schedule` (a course can have multiple cohorts/schedules)
-   - `registrations`, `payments`, `payment_transactions` (audit log of every MyFatoorah interaction)
+   - `registrations`, `payments`, `payment_transactions` (audit log of every gateway interaction and reminder)
    - `testimonials`, `website_settings` (key/value site config), `portfolio`, `contact_messages`
 3. `0003_rls.sql` — `is_admin()` helper (checks `public.users.role`) plus RLS policies for every table: public read on published content, admin-only writes, no public access at all to `payments`/`payment_transactions`, and a public `course-images` + `site-assets` storage bucket pair.
 4. `0004_seed.sql` — starter categories, one instructor with 3 certificates, 4 courses with schedules, 3 testimonials, and default site settings.
@@ -73,7 +75,9 @@ src/
     admin/(dashboard)/           Auth-gated: dashboard, courses, categories, schedule,
                                   registrations, trainer & certificates, testimonials,
                                   contact messages, settings
-    api/payments/myfatoorah/     Creates registration + payment rows, starts a MyFatoorah session (server-only)
+    api/payments/upayments/      Creates registration + payment rows, starts a UPayments checkout (server-only)
+    api/payments/installments/   Daily cron + admin trigger for 2nd-installment SMS reminders
+    pay/[paymentId]/             Public pay page for an outstanding installment
     api/payments/callback/       Verifies payment status, updates payment/registration, decrements seats
     api/contact/                 Inserts a contact_messages row (public RLS insert policy)
   components/                    Reusable UI (header, footer, sliders, cards, admin CRUD widgets)
@@ -85,7 +89,9 @@ src/
       database.types.ts          Hand-authored Database type (regenerate once the project is reachable)
     data/                        Data-access layer; every function falls back to seed data on error
     course-utils.ts              Pure helpers (e.g. primarySchedule) safe to import from client components
-    myfatoorah.ts                MyFatoorah API wrapper
+    upayments.ts                 UPayments API wrapper
+    sms.ts                       Twilio SMS/WhatsApp sender
+    payments/                    Checkout, verification, settlement + installment maths
   middleware.ts                  Refreshes the Supabase session + protects /admin routes (fails closed on error)
 supabase/
   migrations/                    Numbered migration files (source of truth)

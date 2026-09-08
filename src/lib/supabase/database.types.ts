@@ -421,6 +421,8 @@ export interface Database {
           attendees: Json;
           currency: string;
           status: "pending" | "confirmed" | "cancelled" | "refunded" | "no_show" | "waitlist";
+          payment_plan: "full" | "installments";
+          amount_paid: number;
           created_at: string;
         };
         Insert: {
@@ -437,6 +439,8 @@ export interface Database {
           attendees?: Json;
           currency?: string;
           status?: "pending" | "confirmed" | "cancelled" | "refunded" | "no_show" | "waitlist";
+          payment_plan?: "full" | "installments";
+          amount_paid?: number;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["registrations"]["Insert"]>;
@@ -467,6 +471,15 @@ export interface Database {
           method: string;
           myfatoorah_invoice_id: string | null;
           myfatoorah_payment_id: string | null;
+          installment_no: number;
+          installments_total: number;
+          due_date: string | null;
+          gateway_order_id: string | null;
+          gateway_track_id: string | null;
+          gateway_payment_id: string | null;
+          gateway_link: string | null;
+          reminder_count: number;
+          last_reminder_at: string | null;
           paid_at: string | null;
           created_at: string;
           updated_at: string;
@@ -480,6 +493,15 @@ export interface Database {
           method?: string;
           myfatoorah_invoice_id?: string | null;
           myfatoorah_payment_id?: string | null;
+          installment_no?: number;
+          installments_total?: number;
+          due_date?: string | null;
+          gateway_order_id?: string | null;
+          gateway_track_id?: string | null;
+          gateway_payment_id?: string | null;
+          gateway_link?: string | null;
+          reminder_count?: number;
+          last_reminder_at?: string | null;
           paid_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -499,7 +521,7 @@ export interface Database {
         Row: {
           id: string;
           payment_id: string;
-          event_type: "created" | "callback" | "webhook" | "status_check" | "error";
+          event_type: "created" | "callback" | "webhook" | "status_check" | "error" | "reminder";
           status: string | null;
           raw_response: Json | null;
           created_at: string;
@@ -507,7 +529,7 @@ export interface Database {
         Insert: {
           id?: string;
           payment_id: string;
-          event_type: "created" | "callback" | "webhook" | "status_check" | "error";
+          event_type: "created" | "callback" | "webhook" | "status_check" | "error" | "reminder";
           status?: string | null;
           raw_response?: Json | null;
           created_at?: string;
@@ -628,6 +650,10 @@ export interface Database {
       };
       adjust_seats_available: {
         Args: { p_schedule_id: string; p_delta: number };
+        Returns: undefined;
+      };
+      add_registration_paid_amount: {
+        Args: { p_registration_id: string; p_amount: number };
         Returns: undefined;
       };
     };

@@ -3,13 +3,13 @@
 ## Completed
 
 ### Phase 1 — Static site
-Initial marketing site (hero, CV/About, certificates, course catalog, course details, registration + MyFatoorah flow, admin panel) built as static HTML/CSS/JS.
+Initial marketing site (hero, CV/About, certificates, course catalog, course details, registration + UPayments flow, admin panel) built as static HTML/CSS/JS.
 
 ### Phase 2 — Production platform rebuild
 Rebuilt from scratch as a production Next.js 15 + TypeScript + Tailwind CSS application:
 - Supabase-backed data layer with a seed-data fallback for offline/degraded operation
 - Supabase Auth-gated admin panel (CRUD for courses, categories, scheduling, trainer/certificates, testimonials, contact messages, site settings)
-- Registration flow with server-derived pricing and MyFatoorah payment integration
+- Registration flow with server-derived pricing and UPayments payment integration (pay in full or 2 installments)
 - Dark/light mode, responsive design, SEO metadata
 
 ### Phase 3 — Database
@@ -37,7 +37,7 @@ This `/docs` set: Architecture, Database, Deployment, Admin Guide, API reference
 
 - **Deploy to Vercel and connect the `reemora.app` domain** — the app is deploy-ready (zero-config Next.js project, no `vercel.json` required); this is the last step before public launch. See [Deployment.md](./Deployment.md).
 - **Replace placeholder content** — trainer CV PDF, certificate images, at least one real course photo — via the admin panel per [AdminGuide.md](./AdminGuide.md#content-to-replace-before-launch).
-- **Live end-to-end payment verification** — a real registration should be run against the MyFatoorah **test** environment post-deploy before switching to live keys.
+- **Live end-to-end payment verification** — a real registration should be run against the UPayments **sandbox** environment post-deploy before switching to live keys.
 
 ## Future ideas (not scheduled)
 

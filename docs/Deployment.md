@@ -16,10 +16,19 @@ Target: Vercel, custom domain `reemora.app`, Supabase-hosted Postgres/Auth/Stora
    - `anon public` key → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` (**server-only, never expose to the client or commit to git**)
 
-## 2. Provision MyFatoorah
+## 2. Provision UPayments
 
-1. Get an API key from the MyFatoorah dashboard (test environment first: `https://apitest.myfatoorah.com`; switch to `https://api.myfatoorah.com` for live).
-2. Set `MYFATOORAH_API_KEY` and `MYFATOORAH_BASE_URL` accordingly.
+1. Get an API key from the UPayments merchant dashboard (sandbox first: `https://sandboxapi.upayments.com/api/v1`; switch to `https://apiv2api.upayments.com/api/v1` with your live key when going live). Sandbox test cards/KNET details are on the UPayments developer portal under **Test Mode**.
+2. Set `UPAYMENTS_API_KEY` and `UPAYMENTS_BASE_URL` accordingly.
+3. Return / cancel / notification URLs are generated per payment by the app (`https://reemora.app/api/payments/callback?...`) — nothing to whitelist unless UPayments asks for your domain.
+
+### Installment reminders
+
+Students can pay in two 50% installments. The second is chased automatically by SMS (or WhatsApp) via Twilio:
+
+1. Create a Twilio account, buy an SMS-capable number (or enable the WhatsApp sender) and set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM`.
+2. Set `CRON_SECRET` to a long random string. `vercel.json` schedules `/api/payments/installments/remind` daily at 06:00 UTC (09:00 Kuwait); Vercel calls it with that secret.
+3. Without Twilio, the cron still runs and Telegrams you the list of students to chase manually.
 
 ## 3. Environment variables
 
@@ -30,15 +39,17 @@ Set the following in **Vercel → Project Settings → Environment Variables** (
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Public — safe in the browser bundle |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Public — RLS enforces access control, not secrecy |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | **Secret.** Mark as "Sensitive" in Vercel so it's write-only after saving |
-| `MYFATOORAH_API_KEY` | Yes | **Secret.** Mark as "Sensitive" |
-| `MYFATOORAH_BASE_URL` | Yes | `https://apitest.myfatoorah.com` (test) or `https://api.myfatoorah.com` (live) |
+| `UPAYMENTS_API_KEY` | Yes | **Secret.** Mark as "Sensitive" |
+| `UPAYMENTS_BASE_URL` | Yes | `https://sandboxapi.upayments.com/api/v1` (test) or `https://apiv2api.upayments.com/api/v1` (live) |
+| `CRON_SECRET` | Yes | **Secret.** Protects the daily reminder cron |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM` | For reminders | Twilio SMS or WhatsApp sender for installment reminders |
 | `NEXT_PUBLIC_SITE_URL` | Yes | `https://reemora.app` in Production; leave as the Preview URL (or omit and let it default) for Preview deployments |
 
 Never commit `.env.local`; it's already covered by `.gitignore` (`.env*` with a tracked `.env.example` exception).
 
 ## 4. Deploy to Vercel
 
-This is a standard Next.js 15 App Router project — Vercel needs **zero configuration** to build and run it correctly. There is no `vercel.json` in this repository; Vercel auto-detects the Next.js framework, runs `next build` (from `package.json`'s `build` script), and serves the App Router's Server Components, static pages, API routes, and Edge Middleware natively.
+This is a standard Next.js 15 App Router project — Vercel needs **zero configuration** to build and run it correctly. `vercel.json` only declares the daily reminder cron; Vercel auto-detects the Next.js framework, runs `next build` (from `package.json`'s `build` script), and serves the App Router's Server Components, static pages, API routes, and Edge Middleware natively.
 
 1. **Import the project**: Vercel dashboard → **Add New → Project** → select this Git repository.
 2. Vercel auto-detects **Framework Preset: Next.js** — leave the build command, output directory, and install command on their defaults.
@@ -54,14 +65,14 @@ Security headers (`Content-Security-Policy`, `Strict-Transport-Security`, `Permi
    - Apex domain (`reemora.app`): an `A` record to Vercel's anycast IP (Vercel displays the exact value on the Domains page), or delegate the zone to Vercel's nameservers.
    - `www.reemora.app`: a `CNAME` record to `cname.vercel-dns.com`.
 3. Wait for DNS propagation, then confirm the domain shows **Valid Configuration** in Vercel. HTTPS is provisioned automatically (Vercel issues and renews the certificate).
-4. Set `NEXT_PUBLIC_SITE_URL=https://reemora.app` in the **Production** environment variables (already required above) so canonical URLs, the sitemap, and MyFatoorah callback URLs point at the production domain rather than a preview URL.
+4. Set `NEXT_PUBLIC_SITE_URL=https://reemora.app` in the **Production** environment variables (already required above) so canonical URLs, the sitemap, UPayments callback URLs and reminder pay-links point at the production domain rather than a preview URL.
 
 ## 6. Post-deploy checklist
 
 - [ ] Load `/` and confirm real Supabase data renders (not the seed-data fallback) — check **Vercel → Project → Deployments → (deployment) → Functions/Logs** for any `Host not in allowlist` or connection errors.
 - [ ] Log into `/admin/login` with the promoted admin account.
 - [ ] Replace placeholder content per the [Admin Guide](./AdminGuide.md#content-to-replace-before-launch): trainer CV, certificate images, at least one real course image.
-- [ ] Run a full test registration end-to-end against the **test** MyFatoorah environment before switching `MYFATOORAH_BASE_URL` to live.
+- [ ] Run a full test registration end-to-end against the UPayments **sandbox** environment before switching `UPAYMENTS_BASE_URL` to live.
 - [ ] Verify `/sitemap.xml` and `/robots.txt` resolve and reference the production domain.
 - [ ] Confirm `/admin/**` is not indexed (check `robots.txt` disallows `/admin` and `/api`).
 

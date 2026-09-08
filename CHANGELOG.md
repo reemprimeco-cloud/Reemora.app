@@ -2,6 +2,19 @@
 
 All notable changes to the Reemora platform are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- **Payment gateway switched from MyFatoorah to UPayments.** New `src/lib/upayments.ts` client (`POST /charge`, `GET /get-payment-status/{track_id}`), registration route moved to `POST /api/payments/upayments`, and the callback now accepts both the browser return (`GET`) and the server-to-server notification (`POST`). Every result is re-verified against UPayments' status API — redirect params alone never mark a payment paid. Site setting `payment_mode` value `myfatoorah` → `upayments` (migrated in `0018`).
+
+### Added
+
+- **Two-installment payment plan.** On the registration form students choose *Pay in full* or *2 installments*: 50% now, 50% due 30 days after the first payment clears. The seat is confirmed on the first installment; the second stays `pending` and can be paid any time from a public `/pay/{paymentId}` page.
+- **Automatic installment reminders.** A Vercel cron (`vercel.json`, daily 06:00 UTC) hits `/api/payments/installments/remind` and texts students (Twilio SMS, or WhatsApp via `TWILIO_FROM=whatsapp:…`) a bilingual reminder with their pay link — 3 days before the due date, then every 3 days until paid, max 5. Admins can also send one immediately from the Registrations page (**Remind** button), which now shows the plan, paid/remaining balance and due date per row.
+- Schema: `registrations.payment_plan` / `amount_paid`; `payments.installment_no`, `installments_total`, `due_date`, `gateway_*`, `reminder_count`, `last_reminder_at`; `payment_transactions.event_type` gains `reminder`; RPC `add_registration_paid_amount`.
+- New env vars: `UPAYMENTS_API_KEY`, `UPAYMENTS_BASE_URL`, `CRON_SECRET`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` (see `docs/EnvironmentVariables.md`).
+
 ## [1.0.0] — 2026-07-02
 
 First production release. Reemora is a Next.js 15 + TypeScript + Tailwind CSS platform backed by Supabase (Postgres, Auth, Storage), deployed on Vercel at [reemora.app](https://reemora.app).

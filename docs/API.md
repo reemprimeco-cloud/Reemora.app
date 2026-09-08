@@ -1,77 +1,95 @@
 # API Reference
 
-Reemora exposes three Next.js API routes under `src/app/api/`. All three run server-side using the **service-role** Supabase client (`createServiceRoleClient()`), which bypasses Row Level Security — this is intentional and is the only way `registrations`/`payments` rows get written, since those tables have no public insert policy (see [Database.md](./Database.md#row-level-security)).
+Reemora exposes its payment, form and admin-push API routes under `src/app/api/`. The payment routes run server-side using the **service-role** Supabase client (`createServiceRoleClient()`), which bypasses Row Level Security — this is intentional and is the only way `registrations`/`payments` rows get written, since those tables have no public insert policy (see [Database.md](./Database.md#row-level-security)).
 
 There is no public REST API for reading course/instructor/testimonial data — public pages read directly from Supabase (or seed-data fallback) at render time via `src/lib/data/*`, not through these routes.
 
 ---
 
-## `POST /api/payments/myfatoorah`
+## `POST /api/payments/upayments`
 
-Starts a registration and a MyFatoorah hosted-payment session. Called by `src/components/register-form.tsx` when a visitor submits the registration form.
+Starts a registration and a UPayments hosted-checkout session. Called by `src/components/register-form.tsx` when a visitor submits the registration form.
 
 ### Request body
 
 ```jsonc
 {
-  "courseScheduleId": "uuid",   // required — the cohort being registered for
-  "fullName": "string",         // required, min 2 chars (trimmed)
-  "email": "string",            // required, validated against /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  "phone": "string",            // required, validated against /^[0-9+\s()-]{7,20}$/
-  "seats": 1,                   // required, integer, 1–10
-  "notes": "string"             // optional, free text
+  "courseScheduleId": "uuid",          // required — the cohort being booked
+  "fullName": "string",                // required, min 2 chars
+  "email": "string",                   // required, validated
+  "phone": "string",                   // required, 7–20 chars of digits/+/()/-/space
+  "attendees": [{ "full_name": "", "email": "", "phone": "" }], // optional, one per extra seat (max 9)
+  "notes": "string",                   // optional
+  "paymentPlan": "full" | "installments", // optional, default "full"
+  "lang": "en" | "ar"                  // optional, language for the hosted checkout page
 }
 ```
 
-`fullName`, `email`, `phone`, and `notes` are trimmed server-side; `seats` is truncated to an integer. **Price, currency, course title, and slug are never read from the request body** — they're looked up server-side from `course_schedule` joined with `courses` using only `courseScheduleId`, so a tampered client request cannot register someone at an arbitrary price.
+Price, currency and course identity are derived **server-side** from the cohort id — nothing money-related is trusted from the client.
 
-### Validation order
+### Behavior
 
-1. Field-level validation (shape/format) — see rules above.
-2. Cohort lookup — 404 if `courseScheduleId` doesn't resolve to a real, published course.
-3. Cohort status check — 409 if the cohort's `status` is `cancelled` or `completed`.
-4. Seat availability check — 409 if `seats` exceeds `seats_available`.
-5. Insert `registrations` row (`status: "pending"`), then `payments` row (`status: "pending"`), then call the MyFatoorah `SendPayment` API.
+1. Validates the body, loads the cohort + course, checks `is_published`, `registration_open`, cohort status and seat availability.
+2. Computes the total (`computeOrderTotal`: 5% off for 2+ seats).
+3. Inserts a `registrations` row (`status: "pending"`, `payment_plan`).
+4. Notifies the admin (Telegram + Web Push).
+5. Inserts `payments` rows:
+   - **Pay in full** → one row (`installment_no 1 / 1`).
+   - **2 installments** → two rows: 50% now (`installment_no 1 / 2`) and 50% with a provisional `due_date` 30 days out (`installment_no 2 / 2`). The second row's `due_date` is re-anchored to the first payment's `paid_at` + 30 days once it clears. Rounding remainder lands on the second installment so the two always sum to the total.
+6. If `website_settings.payment_mode = "whatsapp_manual"`, returns `{ whatsappManual: true, registrationId }` and skips the gateway.
+7. Otherwise calls UPayments `POST /charge` for installment 1 (via `createCheckoutLink` in `src/lib/payments/checkout.ts`), stores `gateway_order_id` / `gateway_track_id` / `gateway_link` on the payment row and logs a `payment_transactions` `created` event.
 
 ### Responses
 
 | Status | Body | Meaning |
 |---|---|---|
-| `200` | `{ "invoiceUrl": "...", "registrationId": "uuid" }` | Success — client should redirect the browser to `invoiceUrl` |
-| `400` | `{ "error": "Please fix the highlighted fields.", "fieldErrors": { "email": "..." } }` | Field validation failed |
-| `404` | `{ "error": "This course cohort could not be found." }` or `"...not currently available..."` | Unknown/unpublished cohort |
-| `409` | `{ "error": "This cohort is no longer open for registration." }` or a seats-left message | Cohort closed or full |
-| `500` | `{ "error": "Could not save your registration..." }` or `"...start payment..."` | Database write failed |
-| `502` | `{ "error": "...couldn't reach the payment gateway...", "registrationId": "uuid", "savedOnly": true }` | Registration was saved but MyFatoorah call failed — the row exists so staff can follow up manually |
-
-Every outcome (including errors) is logged to `payment_transactions` when a `payments` row already exists, so there's a durable audit trail even for failures.
+| `200` | `{ "invoiceUrl": "https://…upayments…", "registrationId": "uuid" }` | Redirect the browser to `invoiceUrl` |
+| `200` | `{ "whatsappManual": true, "registrationId": "uuid" }` | Manual mode — show the thank-you page |
+| `400` | `{ "error", "fieldErrors": { field: message } }` | Validation failed |
+| `403` / `404` / `409` | `{ "error" }` | Registration locked / course not found / cohort closed or not enough seats |
+| `500` | `{ "error" }` | Database write failed |
+| `502` | `{ "error", "registrationId", "savedOnly": true }` | Registration saved but UPayments call failed — staff can follow up manually |
 
 ---
 
-## `GET /api/payments/callback`
+## `GET | POST /api/payments/callback`
 
-MyFatoorah redirects the browser here after the customer completes (or abandons) the hosted payment page. Not called directly by the frontend — the URL is generated server-side in the `myfatoorah` route above and passed to MyFatoorah as the `callbackUrl`.
+UPayments sends the student back here (`GET`, via `returnUrl` / `cancelUrl`) and POSTs the same fields server-to-server (`notificationUrl`). Both go through the same verification.
 
-### Query parameters (set by MyFatoorah / by us when constructing the callback URL)
+### Parameters
 
 | Param | Set by | Meaning |
 |---|---|---|
-| `paymentId` | MyFatoorah | MyFatoorah's own payment identifier, used to query status |
 | `paymentRowId` | us (embedded in the callback URL) | Our internal `payments.id` |
-| `courseSlug` | us (embedded in the callback URL) | Used to build the redirect back to the registration page |
+| `cancelled=1` | us (only on `cancelUrl`) | Student backed out |
+| `result` | UPayments | `CAPTURED` / `SUCCESS` on success; `NOT CAPTURED`, `CANCELED`, `ERROR`, `FAILURE` otherwise |
+| `track_id`, `payment_id`, `requested_order_id`, `tran_id`, `ref`, `auth`, `post_date`, `payment_type` | UPayments | Gateway identifiers (stored for audit) |
 
 ### Behavior
 
-1. Calls `GetPaymentStatus(paymentId)` against MyFatoorah.
-2. Loads the matching `payments` row (joined with its `registrations` row).
-3. **Verifies the amount**: a payment is only treated as paid if `InvoiceStatus === "Paid"` **and** the invoice value matches the stored `payments.amount` within 1 cent. A status of "Paid" with a mismatched amount is logged as an error and treated as a failed payment — this guards against a stale or mismatched `paymentId` being replayed against a different invoice.
-4. Updates `payments.status` (`"paid"` or `"failed"`) and `payments.paid_at`.
-5. Logs the raw MyFatoorah response to `payment_transactions` (`event_type: "callback"`).
-6. Updates the linked `registrations.status` (`"confirmed"` or `"cancelled"`).
-7. On success, calls the `decrement_seats` RPC to atomically reduce `course_schedule.seats_available`.
-8. Redirects the browser to `/register/{courseSlug}?status=success|failed&ref={registrationId}`, which `register-form.tsx` reads to show a success/failure banner.
+1. Logs the raw params to `payment_transactions` (`event_type: "callback"`).
+2. If the payment is already `paid`, redirects to success without touching anything (idempotent — the return redirect and the webhook both hit this route).
+3. Otherwise calls UPayments `GET /get-payment-status/{track_id}` — **the redirect params are never trusted on their own**. A `CAPTURED` result whose echoed order id or amount doesn't match the stored row is treated as a failure and logged.
+4. **Paid** → `payments.status = paid`, `paid_at`, `registrations.amount_paid += amount` (RPC `add_registration_paid_amount`). On installment 1 (or a full payment): `registrations.status = confirmed`, `decrement_seats`, and the second installment's `due_date` is set to today + 30. Admin is notified (Telegram + push).
+5. **Failed** → installment 1: `payments.status = failed`, `registrations.status = cancelled`. Installment 2: stays `pending` so the student can retry from their pay link.
+6. **Unverifiable** (gateway unreachable / unknown response) → nothing changes; a Telegram alert asks the admin to verify by hand; the student sees a "still confirming" banner.
 
-There is no JSON response — this route always issues a redirect (`307`), including on internal errors (redirects to `?status=failed` rather than showing a raw error page).
+Redirects: installment 1 → `/register/{slug}?status=success|failed|pending&ref=…` (`&plan=installments&due=YYYY-MM-DD` on the installment plan); installment 2 → `/pay/{paymentId}?status=…`. The `POST` variant returns `{ ok, outcome }` JSON.
+
+---
+
+## `POST /api/payments/pay/[paymentId]`
+
+"Pay now" for an outstanding installment. The public page `/pay/[paymentId]` (the link sent in reminders) posts a plain HTML form here; the route mints a fresh UPayments checkout link for that payment row and `303`-redirects to it. Already-paid rows redirect back with `?status=success`; cancelled/refunded registrations with `?status=closed`.
+
+---
+
+## `GET | POST /api/payments/installments/remind`
+
+Second-installment reminders by SMS/WhatsApp (Twilio, see `src/lib/sms.ts`).
+
+- **`GET`** — run daily by the Vercel cron declared in `vercel.json` (`0 6 * * *` UTC = 09:00 Kuwait). Requires `Authorization: Bearer $CRON_SECRET` (Vercel adds it automatically). Selects pending second installments whose `due_date` is within 3 days or past, with fewer than 5 reminders sent and none in the last 3 days, whose registration is `confirmed`. Sends each one a bilingual message with their `/pay/{id}` link, logs a `payment_transactions` `reminder` event, bumps `reminder_count` / `last_reminder_at`, and posts a summary to Telegram. If Twilio isn't configured it only Telegrams the list so the admin can chase by hand.
+- **`POST`** `{ "paymentId" }` — an admin (cookie session + `is_admin()`) sending one reminder now from the Registrations page. Ignores the schedule but still honours the 5-reminder cap.
 
 ---
 

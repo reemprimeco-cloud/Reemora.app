@@ -13,10 +13,11 @@ Actionable, step-by-step checklist for shipping Reemora to production. Narrative
 - [ ] Admin user promoted: `update public.users set role = 'admin' where email = '...';`
 - [ ] Project URL, anon key, and service-role key copied from Project Settings → API
 
-## 2. MyFatoorah
+## 2. UPayments
 
-- [ ] API key obtained from the MyFatoorah dashboard
-- [ ] Confirmed which environment to launch on: test (`apitest.myfatoorah.com`) vs. live (`api.myfatoorah.com`)
+- [ ] API key obtained from the UPayments merchant dashboard
+- [ ] Confirmed which environment to launch on: sandbox (`sandboxapi.upayments.com/api/v1`) vs. live (`apiv2api.upayments.com/api/v1`)
+- [ ] Twilio SMS/WhatsApp sender ready for installment reminders (`TWILIO_*`), and `CRON_SECRET` generated
 
 ## 3. Environment variables
 
@@ -25,8 +26,10 @@ Set in Vercel → Project Settings → Environment Variables (see [EnvironmentVa
 - [ ] `NEXT_PUBLIC_SUPABASE_URL`
 - [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` (marked Sensitive)
-- [ ] `MYFATOORAH_API_KEY` (marked Sensitive)
-- [ ] `MYFATOORAH_BASE_URL`
+- [ ] `UPAYMENTS_API_KEY` (marked Sensitive)
+- [ ] `UPAYMENTS_BASE_URL`
+- [ ] `CRON_SECRET` (marked Sensitive)
+- [ ] `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` (Sensitive), `TWILIO_FROM`
 - [ ] `NEXT_PUBLIC_SITE_URL` (set to the real production URL, e.g. `https://reemora.app`, for the Production environment)
 
 ## 4. Vercel project
@@ -52,9 +55,9 @@ Set in Vercel → Project Settings → Environment Variables (see [EnvironmentVa
 - [ ] `/admin` and all sub-routes require authentication (visiting while logged out redirects to `/admin/login`)
 - [ ] `/sitemap.xml` resolves and lists the production domain
 - [ ] `/robots.txt` resolves and disallows `/admin` and `/api`
-- [ ] A full test registration completed end-to-end against the MyFatoorah **test** environment: form submission → redirect to MyFatoorah → payment → callback → registration shows as `confirmed` in `/admin/registrations` → seat count decremented
+- [ ] A full test registration completed end-to-end against the UPayments **sandbox** environment (both pay-in-full and the 2-installment plan, plus a second-installment payment from a `/pay/…` link): form submission → redirect to MyFatoorah → payment → callback → registration shows as `confirmed` in `/admin/registrations` → seat count decremented
 - [ ] Contact form submission arrives in `/admin/messages`
-- [ ] Switch `MYFATOORAH_BASE_URL`/`MYFATOORAH_API_KEY` to live credentials only after the test-environment run above passes
+- [ ] Switch `UPAYMENTS_BASE_URL`/`UPAYMENTS_API_KEY` to live credentials only after the test-environment run above passes
 
 ## 7. Content
 

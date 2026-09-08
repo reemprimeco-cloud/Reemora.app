@@ -9,7 +9,7 @@
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in Supabase + MyFatoorah values, or leave blank to use seed data
+cp .env.example .env.local   # fill in Supabase + UPayments values, or leave blank to use seed data
 npm run dev                  # http://localhost:3000
 ```
 
@@ -40,7 +40,7 @@ Use the shared UX primitives instead of native browser dialogs:
 - `useConfirm()` from `@/components/confirm-dialog` — `await confirm(message, title?)` returns a `Promise<boolean>`; use it before any destructive action instead of `window.confirm()`. Never use `window.alert()`/`window.confirm()` directly — they're inaccessible and inconsistent with the rest of the UI.
 
 ### Forms
-Client-side validation should mirror server-side validation exactly (see `register-form.tsx` / `api/payments/myfatoorah/route.ts` for the reference pattern): same regexes, same bounds, and the client should merge any `fieldErrors` returned by the server back into its own error state so server-side rejections still highlight the right field. Every field needs a `<label htmlFor>` paired with a matching `id`, and error banners need `role="alert"`.
+Client-side validation should mirror server-side validation exactly (see `register-form.tsx` / `api/payments/upayments/route.ts` for the reference pattern): same regexes, same bounds, and the client should merge any `fieldErrors` returned by the server back into its own error state so server-side rejections still highlight the right field. Every field needs a `<label htmlFor>` paired with a matching `id`, and error banners need `role="alert"`.
 
 ### Images
 Always use `next/image`, always pass `sizes`. For course cards/detail images, use `courseImageSrc()` (`src/lib/course-utils.ts`) rather than guessing a path from the course slug — see [Architecture.md](./Architecture.md) for why. `next.config.ts` only allows remote images from `*.supabase.co/storage/v1/object/public/**`; if you need another remote host, add it to `images.remotePatterns` deliberately.

@@ -70,11 +70,11 @@ export function SettingsManager({ initialSettings }: { initialSettings: WebsiteS
                   type="radio"
                   name="payment_mode"
                   className="mt-0.5"
-                  checked={settings.payment_mode === "myfatoorah"}
-                  onChange={() => update("payment_mode", "myfatoorah")}
+                  checked={settings.payment_mode === "upayments"}
+                  onChange={() => update("payment_mode", "upayments")}
                 />
                 <span>
-                  <strong>MyFatoorah checkout</strong> — students pay online by card immediately after registering.
+                  <strong>UPayments checkout</strong> — students pay online (KNET / cards) immediately after registering, in full or as two 50% installments.
                 </span>
               </label>
               <label className="flex items-start gap-2.5 text-sm">

@@ -22,7 +22,7 @@ export async function generateStaticParams() {
 
 export const metadata: Metadata = {
   title: "Register",
-  description: "Reserve your seat and complete secure payment via MyFatoorah.",
+  description: "Reserve your seat and complete secure payment via UPayments.",
   robots: { index: false, follow: true },
 };
 

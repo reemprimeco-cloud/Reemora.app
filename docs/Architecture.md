@@ -12,7 +12,7 @@ Reemora is a Next.js 15 (App Router) application backed by Supabase (Postgres, A
 | Database | Supabase Postgres (13 tables, see [Database.md](./Database.md)) |
 | Auth | Supabase Auth (email/password), session refreshed via middleware |
 | Storage | Supabase Storage (`course-images`, `site-assets` public buckets) |
-| Payments | MyFatoorah (hosted payment page + server-to-server status checks) |
+| Payments | UPayments (hosted checkout + server-to-server status verification); optional 2-installment plan with Twilio SMS/WhatsApp reminders via Vercel Cron |
 | Hosting | Vercel (zero-config Next.js deployment) |
 
 ## High-level request flow
@@ -30,7 +30,7 @@ Browser
   │       session (browser client); RLS enforces admin-only writes
   │
   └─ API routes (/api/**)
-        → api/payments/myfatoorah  — creates registration + payment, starts MyFatoorah session
+        → api/payments/upayments   — creates registration + payment(s), starts UPayments checkout
         → api/payments/callback    — verifies payment status, confirms registration, decrements seats
         → api/contact              — inserts a contact_messages row
         All three use the service-role Supabase client (bypasses RLS) because they
@@ -50,8 +50,11 @@ src/
     admin/login/page.tsx         Supabase Auth login (outside the dashboard layout)
     admin/(dashboard)/           Auth-gated route group: dashboard, courses, categories, schedule,
                                   registrations, trainer & certificates, testimonials, contact messages, settings
-    api/payments/myfatoorah/     POST — starts a registration + MyFatoorah payment session
-    api/payments/callback/       GET  — MyFatoorah redirects here after payment
+    api/payments/upayments/      POST — starts a registration + UPayments checkout (full or 2 installments)
+    api/payments/callback/       GET/POST — UPayments return URL + webhook; verifies via get-payment-status
+    api/payments/pay/[id]/       POST — mints a checkout link for an outstanding installment
+    api/payments/installments/remind/  GET (cron) / POST (admin) — SMS reminders for the 2nd installment
+    pay/[paymentId]/             Public pay page linked from reminder messages
     api/contact/                 POST — public contact form submission
     sitemap.ts / robots.ts       Next.js file-convention SEO routes
     layout.tsx                   Root layout: fonts, ThemeProvider, organization JSON-LD
@@ -70,7 +73,10 @@ src/
     course-utils.ts              Pure, dependency-free helpers safe to import from client components
                                   (primarySchedule, courseImageSrc) — kept separate from lib/data to avoid
                                   pulling server-only Supabase imports into client bundles
-    myfatoorah.ts                MyFatoorah REST API wrapper (SendPayment, GetPaymentStatus)
+    upayments.ts                 UPayments REST API wrapper (charge, get-payment-status)
+    sms.ts                       Twilio SMS/WhatsApp sender (reminders)
+    payments/checkout.ts         Shared checkout / verification / settlement helpers
+    payments/installments.ts     50/50 split maths + reminder schedule constants
     types.ts                     Domain types derived from Database, plus composed types
                                   (CourseWithRelations, InstructorWithCertificates, WebsiteSettings)
   middleware.ts                  Refreshes the Supabase session cookie and protects /admin/** routes

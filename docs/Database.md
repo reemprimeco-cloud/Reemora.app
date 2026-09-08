@@ -131,12 +131,16 @@ Indexed on `course_id`, `status`, `start_date`.
 | `registration_id` | uuid FK → `registrations`, not null | `on delete cascade` |
 | `amount`, `currency` | numeric / text | mirrors the registration at creation time |
 | `status` | text not null default `'pending'` | check: `'pending' \| 'paid' \| 'failed' \| 'refunded' \| 'cancelled'` |
-| `method` | text not null default `'myfatoorah'` | |
-| `myfatoorah_invoice_id`, `myfatoorah_payment_id` | text | |
+| `method` | text not null default `'myfatoorah'` | `'upayments'` for gateway payments, `'whatsapp_manual'` for manual mode (legacy rows keep `'myfatoorah'`) |
+| `myfatoorah_invoice_id`, `myfatoorah_payment_id` | text | Legacy (pre-UPayments) identifiers |
+| `installment_no`, `installments_total` | integer, default 1 | `1/1` pay-in-full; `1/2` and `2/2` for the installment plan |
+| `due_date` | date | Second installment due date (first payment `paid_at` + 30 days) |
+| `gateway_order_id`, `gateway_track_id`, `gateway_payment_id`, `gateway_link` | text | UPayments identifiers / last checkout link |
+| `reminder_count`, `last_reminder_at` | integer / timestamptz | Reminder throttling (max 5, min 3 days apart) |
 | `paid_at` | timestamptz | set when confirmed |
 
 ### `payment_transactions`
-Audit log of every interaction with the MyFatoorah API for a given payment.
+Audit log of every interaction with the payment gateway (and every reminder sent) for a given payment. `event_type` ∈ `created`, `callback`, `webhook`, `status_check`, `error`, `reminder`.
 
 | Column | Type | Notes |
 |---|---|---|

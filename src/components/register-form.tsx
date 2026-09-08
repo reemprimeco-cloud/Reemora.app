@@ -2,13 +2,14 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { Plus, Trash2, Tag } from "lucide-react";
+import { Plus, Trash2, Tag, CreditCard, CalendarClock } from "lucide-react";
 import type { CourseWithRelations, CourseSchedule } from "@/lib/types";
 import { formatDate, formatMoney } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/context";
 import { interpolate } from "@/lib/i18n/dictionaries";
 import { computeOrderTotal, MULTI_SEAT_DISCOUNT_THRESHOLD, type Attendee } from "@/lib/course-utils";
+import { splitInstallments, secondInstallmentDueDate, type PaymentPlan } from "@/lib/payments/installments";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
@@ -21,6 +22,8 @@ function emptyAttendee(): Attendee {
 export function RegisterForm({ course, schedule }: { course: CourseWithRelations; schedule: CourseSchedule }) {
   const searchParams = useSearchParams();
   const initialStatus = searchParams.get("status");
+  const initialPlan = searchParams.get("plan");
+  const initialDue = searchParams.get("due");
   const { dict, lang } = useLanguage();
   const t = dict.registerPage;
 
@@ -32,11 +35,20 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
   const [agreed, setAgreed] = React.useState(false);
   const [errors, setErrors] = React.useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = React.useState(false);
+  const [paymentPlan, setPaymentPlan] = React.useState<PaymentPlan>("full");
   const [alert, setAlert] = React.useState<{ type: "error" | "info" | "success"; message: string } | null>(
     initialStatus === "success"
-      ? { type: "success", message: t.successAlert }
+      ? {
+          type: "success",
+          message:
+            initialPlan === "installments"
+              ? interpolate(t.successInstallmentAlert, { date: formatDate(initialDue, lang) })
+              : t.successAlert,
+        }
       : initialStatus === "failed"
       ? { type: "error", message: t.failedAlert }
+      : initialStatus === "pending"
+      ? { type: "info", message: t.pendingAlert }
       : null
   );
 
@@ -44,6 +56,8 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
   const maxSeats = Math.min(MAX_SEATS, schedule.seats_available);
   const canAddSeat = seats < maxSeats;
   const { subtotal, discount, total } = computeOrderTotal(course.price, seats);
+  const installments = splitInstallments(total);
+  const secondDueDate = React.useMemo(() => secondInstallmentDueDate(), []);
 
   function updateAttendee(idx: number, patch: Partial<Attendee>) {
     setExtraAttendees((prev) => prev.map((a, i) => (i === idx ? { ...a, ...patch } : a)));
@@ -83,7 +97,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/payments/myfatoorah", {
+      const res = await fetch("/api/payments/upayments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -93,6 +107,8 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
           phone,
           attendees: extraAttendees,
           notes,
+          paymentPlan,
+          lang,
         }),
       });
 
@@ -262,6 +278,30 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
             </button>
           </div>
 
+          <fieldset className="mb-5">
+            <legend className="mb-2 text-[15px] font-semibold">{t.paymentPlanHeading}</legend>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <PlanOption
+                id="plan-full"
+                checked={paymentPlan === "full"}
+                onSelect={() => setPaymentPlan("full")}
+                icon={<CreditCard size={16} aria-hidden="true" />}
+                title={t.planFull}
+                hint={t.planFullHint}
+                amount={formatMoney(total, course.currency)}
+              />
+              <PlanOption
+                id="plan-installments"
+                checked={paymentPlan === "installments"}
+                onSelect={() => setPaymentPlan("installments")}
+                icon={<CalendarClock size={16} aria-hidden="true" />}
+                title={t.planInstallments}
+                hint={t.planInstallmentsHint}
+                amount={`${formatMoney(installments.first, course.currency)} + ${formatMoney(installments.second, course.currency)}`}
+              />
+            </div>
+          </fieldset>
+
           <div className="mb-5">
             <label htmlFor="reg-notes" className="mb-1.5 block text-[13.5px] font-semibold">
               {t.notes} <span className="font-normal text-ink-soft">{t.optional}</span>
@@ -314,6 +354,20 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
           <span>{t.totalDue}</span>
           <span>{formatMoney(total, course.currency)}</span>
         </div>
+        {paymentPlan === "installments" && (
+          <div className="mt-3 space-y-1.5 rounded-xl border border-blue-200 bg-blue-100/60 p-3.5 text-sm dark:border-blue-900 dark:bg-blue-950/60">
+            <div className="flex justify-between font-semibold text-foreground">
+              <span>{t.dueToday}</span>
+              <span>{formatMoney(installments.first, course.currency)}</span>
+            </div>
+            <div className="flex justify-between text-ink-soft">
+              <span>
+                {t.dueLater} · {formatDate(secondDueDate, lang)}
+              </span>
+              <span>{formatMoney(installments.second, course.currency)}</span>
+            </div>
+          </div>
+        )}
         <div className="mt-4.5 flex flex-wrap gap-2.5">
           {[t.badgeSecure, t.badgeMf, t.badgeCards].map((b) => (
             <span key={b} className="rounded-lg border border-border-c bg-surface px-3 py-2 text-xs font-semibold text-ink-soft">{b}</span>
@@ -350,5 +404,43 @@ function Field({
       {children}
       {error && errorText && <p id={`${id}-error`} className="mt-1 text-xs text-red-500">{errorText}</p>}
     </div>
+  );
+}
+
+function PlanOption({
+  id,
+  checked,
+  onSelect,
+  icon,
+  title,
+  hint,
+  amount,
+}: {
+  id: string;
+  checked: boolean;
+  onSelect: () => void;
+  icon: React.ReactNode;
+  title: string;
+  hint: string;
+  amount: string;
+}) {
+  return (
+    <label
+      htmlFor={id}
+      className={cn(
+        "flex cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition",
+        checked ? "border-blue-500 bg-blue-100/60 dark:bg-blue-950/60" : "border-border-c bg-surface-alt hover:border-blue-300"
+      )}
+    >
+      <input id={id} type="radio" name="payment_plan" checked={checked} onChange={onSelect} className="mt-1" />
+      <span className="flex-1">
+        <span className="flex items-center gap-2 text-[15px] font-semibold text-foreground">
+          <span className={cn("text-blue-600", !checked && "text-ink-soft")}>{icon}</span>
+          {title}
+        </span>
+        <span className="mt-1 block text-xs text-ink-soft">{hint}</span>
+        <span className="mt-2 block text-sm font-bold text-foreground">{amount}</span>
+      </span>
+    </label>
   );
 }

@@ -1,90 +1,184 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { getMyFatoorahPaymentStatus } from "@/lib/myfatoorah";
+import {
+  loadPaymentContext,
+  settleFailedPayment,
+  settlePaidPayment,
+  siteUrlFrom,
+  verifyWithGateway,
+} from "@/lib/payments/checkout";
+import { sendTelegramNotification } from "@/lib/telegram";
 import type { Json } from "@/lib/supabase/database.types";
 
-export async function GET(request: Request) {
+/** UPayments sends the student back here (GET, via returnUrl/cancelUrl)
+ *  and also POSTs the same fields server-to-server (notificationUrl).
+ *  Both paths run the same verification: the gateway's own
+ *  get-payment-status is the only thing that flips a payment to paid —
+ *  the query params are treated as hints. */
+
+interface CallbackParams {
+  paymentRowId: string;
+  result: string;
+  trackId: string;
+  gatewayPaymentId: string;
+  requestedOrderId: string;
+  cancelled: boolean;
+  raw: Record<string, string>;
+}
+
+function pick(source: URLSearchParams, keys: string[]): string {
+  for (const key of keys) {
+    const v = source.get(key);
+    if (v && v.trim()) return v.trim();
+  }
+  return "";
+}
+
+async function readParams(request: Request): Promise<CallbackParams> {
   const url = new URL(request.url);
-  const paymentId = url.searchParams.get("paymentId"); // MyFatoorah's PaymentId
-  const paymentRowId = url.searchParams.get("paymentRowId"); // our payments.id
-  const courseSlug = url.searchParams.get("courseSlug") || "";
+  const merged = new URLSearchParams(url.searchParams);
 
-  const redirectBase = `${url.origin}/register/${courseSlug}`;
-
-  if (!paymentId || !paymentRowId) {
-    return NextResponse.redirect(`${redirectBase}?status=failed`);
+  if (request.method === "POST") {
+    const contentType = request.headers.get("content-type") ?? "";
+    try {
+      if (contentType.includes("application/json")) {
+        const body = (await request.json()) as Record<string, unknown>;
+        for (const [k, v] of Object.entries(body)) {
+          if (v !== null && v !== undefined && typeof v !== "object") merged.set(k, String(v));
+        }
+      } else {
+        const text = await request.text();
+        for (const [k, v] of new URLSearchParams(text)) merged.set(k, v);
+      }
+    } catch {
+      // Body unreadable — fall back to query params only.
+    }
   }
 
+  return {
+    paymentRowId: pick(merged, ["paymentRowId"]),
+    result: pick(merged, ["result", "Result"]).toUpperCase(),
+    trackId: pick(merged, ["track_id", "trackId", "TrackId"]),
+    gatewayPaymentId: pick(merged, ["payment_id", "paymentId", "PaymentId"]),
+    requestedOrderId: pick(merged, ["requested_order_id", "requestedOrderId", "order_id", "OrderID"]),
+    cancelled: merged.get("cancelled") === "1",
+    raw: Object.fromEntries(merged.entries()),
+  };
+}
+
+type Outcome = "success" | "failed" | "pending";
+
+async function processCallback(params: CallbackParams): Promise<{
+  outcome: Outcome;
+  redirect: { kind: "register"; slug: string; ref: string; plan: string; due: string } | { kind: "pay"; paymentId: string };
+}> {
   const supabase = await createServiceRoleClient();
+  const ctx = await loadPaymentContext(supabase, params.paymentRowId);
+  if (!ctx) throw new Error(`payment ${params.paymentRowId} not found`);
+
+  const { payment, registration, course } = ctx;
+  const redirect =
+    payment.installment_no === 1
+      ? ({ kind: "register", slug: course?.slug ?? "", ref: registration.id, plan: registration.payment_plan, due: "" } as const)
+      : ({ kind: "pay", paymentId: payment.id } as const);
+
+  await supabase.from("payment_transactions").insert({
+    payment_id: payment.id,
+    event_type: "callback",
+    status: params.cancelled ? `cancelled:${params.result || "none"}` : params.result || "none",
+    raw_response: params.raw as unknown as Json,
+  });
+
+  // Already settled by an earlier callback/webhook — nothing to redo.
+  if (payment.status === "paid") {
+    return { outcome: "success", redirect: await withDue(redirect) };
+  }
+
+  // A cancel redirect without a track id means the student backed out
+  // before the gateway created a transaction — nothing to verify.
+  if (!params.trackId) {
+    await settleFailedPayment(supabase, ctx, params.cancelled ? "CANCELED" : params.result);
+    return { outcome: "failed", redirect };
+  }
+
+  const verified = await verifyWithGateway(supabase, payment, params.trackId);
+
+  if (verified.outcome === "paid") {
+    await settlePaidPayment(supabase, ctx, { trackId: params.trackId, paymentId: params.gatewayPaymentId || null });
+    return { outcome: "success", redirect: await withDue(redirect) };
+  }
+
+  if (verified.outcome === "failed") {
+    await settleFailedPayment(supabase, ctx, verified.result);
+    return { outcome: "failed", redirect };
+  }
+
+  // Gateway unreachable / unrecognised response: keep the payment pending
+  // and flag it for a human rather than guessing either way.
+  await sendTelegramNotification(
+    [
+      "⚠️ Payment needs manual verification",
+      `Student: ${registration.full_name} (${registration.phone})`,
+      `Course: ${course?.title ?? "—"}`,
+      `Payment row: ${payment.id}`,
+      `Track id: ${params.trackId}`,
+      `Gateway said: ${params.result || "no result param"}`,
+    ].join("\n")
+  );
+  return { outcome: "pending", redirect };
+
+  async function withDue<T extends { kind: string }>(r: T): Promise<T> {
+    if (r.kind !== "register" || registration.payment_plan !== "installments") return r;
+    const { data } = await supabase
+      .from("payments")
+      .select("due_date")
+      .eq("registration_id", registration.id)
+      .eq("installment_no", 2)
+      .maybeSingle();
+    return { ...r, due: data?.due_date ?? "" };
+  }
+}
+
+function redirectFor(siteUrl: string, res: Awaited<ReturnType<typeof processCallback>>): string {
+  const status = res.outcome;
+  if (res.redirect.kind === "pay") {
+    return `${siteUrl}/pay/${res.redirect.paymentId}?status=${status}`;
+  }
+  const q = new URLSearchParams({ status, ref: res.redirect.ref });
+  if (res.redirect.plan === "installments") {
+    q.set("plan", "installments");
+    if (res.redirect.due) q.set("due", res.redirect.due);
+  }
+  return `${siteUrl}/register/${res.redirect.slug}?${q.toString()}`;
+}
+
+export async function GET(request: Request) {
+  const siteUrl = siteUrlFrom(request);
+  const params = await readParams(request);
+
+  if (!params.paymentRowId) {
+    return NextResponse.redirect(`${siteUrl}/courses?status=failed`);
+  }
 
   try {
-    const mfStatus = await getMyFatoorahPaymentStatus(paymentId);
-
-    const { data: payment } = await supabase
-      .from("payments")
-      .select("*, registrations(id, course_schedule_id, seats)")
-      .eq("id", paymentRowId)
-      .maybeSingle();
-
-    if (!payment) {
-      return NextResponse.redirect(`${redirectBase}?status=failed`);
-    }
-
-    // Only trust "Paid" when the invoice MyFatoorah confirms also matches
-    // the amount we originally requested — guards against a stale or
-    // mismatched paymentId being replayed against a different invoice.
-    const amountMatches = Math.abs(Number(mfStatus.InvoiceValue) - Number(payment.amount)) < 0.01;
-    const isPaid = mfStatus.InvoiceStatus === "Paid" && amountMatches;
-    if (mfStatus.InvoiceStatus === "Paid" && !amountMatches) {
-      console.error(`payment callback: amount mismatch for payment ${paymentRowId} — expected ${payment.amount}, got ${mfStatus.InvoiceValue}`);
-    }
-
-    // The callback can legitimately fire more than once for the same
-    // payment (browser back/refresh after redirect, a network-level retry,
-    // MyFatoorah re-sending the callback). Updating payment/registration
-    // status again is harmless (same value in, same value out), but
-    // decrement_seats is not idempotent — running it twice would deduct a
-    // seat twice for one registration. Only decrement on the transition
-    // into "paid", never on a repeat callback that finds it already paid.
-    const wasAlreadyPaid = payment.status === "paid";
-
-    await supabase
-      .from("payments")
-      .update({
-        status: isPaid ? "paid" : "failed",
-        myfatoorah_payment_id: paymentId,
-        paid_at: isPaid ? new Date().toISOString() : null,
-      })
-      .eq("id", paymentRowId);
-
-    await supabase.from("payment_transactions").insert({
-      payment_id: paymentRowId,
-      event_type: "callback",
-      status: mfStatus.InvoiceStatus,
-      raw_response: mfStatus as unknown as Json,
-    });
-
-    const registration = Array.isArray(payment.registrations) ? payment.registrations[0] : payment.registrations;
-
-    if (registration) {
-      await supabase
-        .from("registrations")
-        .update({ status: isPaid ? "confirmed" : "cancelled" })
-        .eq("id", registration.id);
-
-      if (isPaid && !wasAlreadyPaid) {
-        await supabase.rpc("decrement_seats", {
-          p_schedule_id: registration.course_schedule_id,
-          p_seats: registration.seats,
-        });
-      }
-    }
-
-    return NextResponse.redirect(
-      `${redirectBase}?status=${isPaid ? "success" : "failed"}&ref=${registration?.id ?? ""}`
-    );
+    const res = await processCallback(params);
+    return NextResponse.redirect(redirectFor(siteUrl, res));
   } catch (err) {
     console.error("payment callback error:", err);
-    return NextResponse.redirect(`${redirectBase}?status=failed`);
+    return NextResponse.redirect(`${siteUrl}/courses?status=failed`);
+  }
+}
+
+export async function POST(request: Request) {
+  const params = await readParams(request);
+  if (!params.paymentRowId) {
+    return NextResponse.json({ ok: false, error: "Missing paymentRowId" }, { status: 400 });
+  }
+  try {
+    const res = await processCallback(params);
+    return NextResponse.json({ ok: true, outcome: res.outcome });
+  } catch (err) {
+    console.error("payment webhook error:", err);
+    return NextResponse.json({ ok: false }, { status: 500 });
   }
 }

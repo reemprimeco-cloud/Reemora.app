@@ -13,7 +13,7 @@ Code-level readiness, verified as of this release. Infrastructure/deploy steps l
 ## Security
 
 - [x] No secrets committed to git (`.env.local` gitignored; `.env.example` contains no real values)
-- [x] Service-role Supabase key and MyFatoorah API key are server-only (never `NEXT_PUBLIC_`-prefixed, never referenced from a `"use client"` file)
+- [x] Service-role Supabase key, UPayments API key and Twilio/cron secrets are server-only (never `NEXT_PUBLIC_`-prefixed, never referenced from a `"use client"` file)
 - [x] Row Level Security enabled and policy-covered on all 13 database tables
 - [x] Payment amount is derived server-side from the database, never trusted from client input
 - [x] Payment callback verifies the gateway-reported amount against the stored amount before confirming

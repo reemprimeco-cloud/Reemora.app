@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { MessageCircle, Phone } from "lucide-react";
+import { MessageCircle, Phone, BellRing } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { formatMoney } from "@/lib/utils";
+import { formatMoney, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/toast-provider";
 import type { RegistrationStatus } from "@/lib/types";
@@ -26,6 +26,15 @@ export interface RegistrationRow {
   course_schedule_id: string;
   /** Null for older rows saved before payments.method existed. */
   payment_method: string | null;
+  payment_plan: "full" | "installments";
+  amount_paid: number;
+  second_installment: {
+    id: string;
+    status: string;
+    due_date: string | null;
+    reminder_count: number;
+    last_reminder_at: string | null;
+  } | null;
 }
 
 /** Status vocabulary the admin can pick from. Order = order in the
@@ -56,7 +65,50 @@ function statusLabel(status: RegistrationStatus): string {
 export function RegistrationsTable({ initialRows }: { initialRows: RegistrationRow[] }) {
   const [rows, setRows] = React.useState(initialRows);
   const [saving, setSaving] = React.useState<Record<string, boolean>>({});
+  const [reminding, setReminding] = React.useState<Record<string, boolean>>({});
   const { showToast } = useToast();
+
+  async function sendReminder(row: RegistrationRow) {
+    const inst = row.second_installment;
+    if (!inst) return;
+    setReminding((s) => ({ ...s, [row.id]: true }));
+    try {
+      const res = await fetch("/api/payments/installments/remind", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId: inst.id }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; detail?: string };
+      if (!res.ok) {
+        showToast("error", data.error || "Couldn't send the reminder.");
+        return;
+      }
+      const now = new Date().toISOString();
+      setRows((current) =>
+        current.map((r) =>
+          r.id === row.id && r.second_installment
+            ? {
+                ...r,
+                second_installment: {
+                  ...r.second_installment,
+                  reminder_count: r.second_installment.reminder_count + 1,
+                  last_reminder_at: now,
+                },
+              }
+            : r
+        )
+      );
+      showToast("success", `Reminder sent (${data.detail ?? "ok"}).`);
+    } catch {
+      showToast("error", "Couldn't send the reminder.");
+    } finally {
+      setReminding((s) => {
+        const { [row.id]: _omit, ...rest } = s;
+        void _omit;
+        return rest;
+      });
+    }
+  }
 
   async function changeStatus(id: string, next: RegistrationStatus) {
     const prev = rows.find((r) => r.id === id);
@@ -80,9 +132,9 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
       return;
     }
 
-    // WhatsApp-manual registrations never hit a MyFatoorah webhook, so
+    // WhatsApp-manual registrations never hit a gateway callback, so
     // there's nothing else to decrement/release a seat when payment is
-    // confirmed by hand. Only adjust for that payment method — MyFatoorah
+    // confirmed by hand. Only adjust for that payment method — UPayments
     // registrations already get this from the payment callback, and
     // adjusting here too would double-count.
     let seatMessage = "";
@@ -123,6 +175,7 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
               <th className="px-6 py-3.5 text-left">Course</th>
               <th className="px-6 py-3.5 text-left">Seats</th>
               <th className="px-6 py-3.5 text-left">Amount</th>
+              <th className="px-6 py-3.5 text-left">Plan</th>
               <th className="px-6 py-3.5 text-left">Contact</th>
               <th className="px-6 py-3.5 text-left">Status</th>
               <th className="px-6 py-3.5 text-left">Date</th>
@@ -138,6 +191,9 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
                   <td className="px-6 py-3.5">{r.course_title}</td>
                   <td className="px-6 py-3.5">{r.seats}</td>
                   <td className="px-6 py-3.5 font-bold text-foreground">{formatMoney(r.amount, r.currency)}</td>
+                  <td className="px-6 py-3.5">
+                    <PlanCell row={r} reminding={Boolean(reminding[r.id])} onRemind={() => sendReminder(r)} />
+                  </td>
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-1.5">
                       {(() => {
@@ -202,12 +258,47 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
               ))
             ) : (
               <tr>
-                <td colSpan={9} className="px-6 py-8 text-center text-ink-soft">No registrations yet.</td>
+                <td colSpan={10} className="px-6 py-8 text-center text-ink-soft">No registrations yet.</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function PlanCell({ row, reminding, onRemind }: { row: RegistrationRow; reminding: boolean; onRemind: () => void }) {
+  if (row.payment_plan !== "installments") {
+    return <span className="text-xs font-semibold text-ink-soft">Full</span>;
+  }
+  const inst = row.second_installment;
+  const remaining = Math.max(0, row.amount - row.amount_paid);
+  const fullyPaid = remaining <= 0.005 || inst?.status === "paid";
+  const canRemind = Boolean(inst) && !fullyPaid && row.status === "confirmed" && (inst?.reminder_count ?? 0) < 5;
+
+  return (
+    <div className="flex min-w-[170px] flex-col gap-1 text-xs">
+      <span className="font-bold text-foreground">2 installments</span>
+      <span className={cn(fullyPaid ? "text-green-700 dark:text-green-300" : "text-ink-soft")}>
+        {fullyPaid ? "Fully paid" : `Paid ${formatMoney(row.amount_paid, row.currency)} · Due ${formatMoney(remaining, row.currency)}`}
+      </span>
+      {!fullyPaid && inst?.due_date && <span className="text-ink-soft">2nd due {formatDate(inst.due_date)}</span>}
+      {!fullyPaid && inst && (
+        <span className="text-ink-soft">
+          {inst.reminder_count ? `${inst.reminder_count} reminder${inst.reminder_count === 1 ? "" : "s"} sent` : "No reminders yet"}
+        </span>
+      )}
+      {canRemind && (
+        <button
+          type="button"
+          onClick={onRemind}
+          disabled={reminding}
+          className="mt-1 inline-flex w-fit items-center gap-1 rounded-full border border-blue-200 bg-blue-100 px-2.5 py-1 text-[11px] font-bold text-blue-600 transition hover:border-blue-400 disabled:opacity-60 dark:border-blue-900 dark:bg-blue-950"
+        >
+          <BellRing size={11} aria-hidden="true" /> {reminding ? "Sending…" : "Remind"}
+        </button>
+      )}
     </div>
   );
 }

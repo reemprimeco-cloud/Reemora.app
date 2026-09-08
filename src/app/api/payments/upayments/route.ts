@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { createMyFatoorahPayment } from "@/lib/myfatoorah";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { computeOrderTotal, type Attendee } from "@/lib/course-utils";
 import { formatMoney } from "@/lib/utils";
 import { sendTelegramNotification } from "@/lib/telegram";
 import { sendWebPushToAdmins } from "@/lib/webpush";
+import { parsePaymentPlan, secondInstallmentDueDate, splitInstallments } from "@/lib/payments/installments";
+import { createCheckoutLink, loadPaymentContext, siteUrlFrom } from "@/lib/payments/checkout";
 import type { Json } from "@/lib/supabase/database.types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,7 +27,7 @@ function parseAttendee(raw: unknown): Attendee {
 }
 
 export async function POST(request: Request) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+  const siteUrl = siteUrlFrom(request);
 
   if (!isSupabaseConfigured) {
     return NextResponse.json(
@@ -42,6 +43,8 @@ export async function POST(request: Request) {
     phone?: unknown;
     notes?: unknown;
     attendees?: unknown;
+    paymentPlan?: unknown;
+    lang?: unknown;
   };
 
   try {
@@ -60,6 +63,8 @@ export async function POST(request: Request) {
   // Seats = booker (1) + extra attendee entries. Never trust a client-sent
   // seat count — derive it from the attendees list.
   const seats = 1 + extraAttendees.length;
+  const paymentPlan = parsePaymentPlan(body.paymentPlan);
+  const lang: "en" | "ar" = body.lang === "ar" ? "ar" : "en";
 
   const fieldErrors: Record<string, string> = {};
   if (!courseScheduleId) fieldErrors.courseScheduleId = "Missing course selection.";
@@ -139,6 +144,7 @@ export async function POST(request: Request) {
       attendees: attendeesForDb as unknown as Json,
       currency: course.currency,
       status: "pending",
+      payment_plan: paymentPlan,
     })
     .select()
     .single();
@@ -158,6 +164,7 @@ export async function POST(request: Request) {
         `Name: ${fullName}`,
         `Seats: ${seats}`,
         `Total: ${formatMoney(total, course.currency)}`,
+        `Plan: ${paymentPlan === "installments" ? "2 installments (50% now, 50% in 30 days)" : "Pay in full"}`,
         `Phone: ${phone}`,
         `Email: ${email}`,
       ].join("\n")
@@ -169,43 +176,61 @@ export async function POST(request: Request) {
     }),
   ]);
 
-  // Read the site-wide payment mode. Defaults to MyFatoorah when the
+  // Read the site-wide payment mode. Defaults to UPayments when the
   // settings row is missing so a fresh install never silently switches to
   // manual mode.
   const { data: settingsRows } = await supabase
     .from("website_settings")
     .select("key, value")
     .eq("key", "payment_mode");
-  const paymentMode = settingsRows?.[0]?.value === "whatsapp_manual" ? "whatsapp_manual" : "myfatoorah";
+  const paymentMode = settingsRows?.[0]?.value === "whatsapp_manual" ? "whatsapp_manual" : "upayments";
+  const method = paymentMode === "whatsapp_manual" ? "whatsapp_manual" : "upayments";
 
-  const { data: payment, error: paymentError } = await supabase
+  // One payment row for pay-in-full; two for the installment plan. The
+  // second installment's due date is provisional here (30 days from
+  // registration) and is re-anchored to the first payment's paid_at once
+  // that clears.
+  const split = paymentPlan === "installments" ? splitInstallments(total) : null;
+  const paymentRows = split
+    ? [
+        { amount: split.first, installment_no: 1, installments_total: 2, due_date: null as string | null },
+        { amount: split.second, installment_no: 2, installments_total: 2, due_date: secondInstallmentDueDate() },
+      ]
+    : [{ amount: total, installment_no: 1, installments_total: 1, due_date: null as string | null }];
+
+  const { data: payments, error: paymentError } = await supabase
     .from("payments")
-    .insert({
-      registration_id: registration.id,
-      amount: total,
-      currency: course.currency,
-      status: "pending",
-      method: paymentMode === "whatsapp_manual" ? "whatsapp_manual" : "myfatoorah",
-    })
-    .select()
-    .single();
+    .insert(
+      paymentRows.map((row) => ({
+        registration_id: registration.id,
+        amount: row.amount,
+        currency: course.currency,
+        status: "pending" as const,
+        method,
+        installment_no: row.installment_no,
+        installments_total: row.installments_total,
+        due_date: row.due_date,
+      }))
+    )
+    .select();
 
+  const payment = payments?.find((p) => p.installment_no === 1);
   if (paymentError || !payment) {
     console.error("payment insert error:", paymentError?.message);
     return NextResponse.json({ error: "Could not start payment. Please try again." }, { status: 500 });
   }
 
   if (paymentMode === "whatsapp_manual") {
-    // Temporary fallback while MyFatoorah is switched off: skip the
-    // gateway entirely. Staff message the student directly using the
-    // phone number they just submitted (the Registrations admin table has
-    // a WhatsApp button per row for exactly this). The student sees an
-    // on-site thank-you page telling them a payment link is coming.
+    // Temporary fallback while the gateway is switched off: skip it
+    // entirely. Staff message the student directly using the phone number
+    // they just submitted (the Registrations admin table has a WhatsApp
+    // button per row for exactly this). The student sees an on-site
+    // thank-you page telling them a payment link is coming.
     await supabase.from("payment_transactions").insert({
       payment_id: payment.id,
       event_type: "created",
       status: "awaiting_manual_whatsapp",
-      raw_response: { subtotal, discount, total },
+      raw_response: { subtotal, discount, total, paymentPlan },
     });
 
     return NextResponse.json({
@@ -215,29 +240,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { invoiceUrl, invoiceId } = await createMyFatoorahPayment({
-      customerName: fullName,
-      customerEmail: email,
-      customerPhone: phone,
-      amount: total,
-      currency: course.currency,
-      reference: payment.id,
-      itemName: seats > 1 ? `${course.title} × ${seats} seats` : course.title,
-      callbackUrl: `${siteUrl}/api/payments/callback?paymentRowId=${payment.id}&courseSlug=${course.slug}`,
-      errorUrl: `${siteUrl}/register/${course.slug}?status=failed&ref=${registration.id}`,
-    });
+    const ctx = await loadPaymentContext(supabase, payment.id);
+    if (!ctx) throw new Error("Payment context could not be loaded.");
+    const { link } = await createCheckoutLink(supabase, ctx, { siteUrl, lang });
 
-    await supabase.from("payments").update({ myfatoorah_invoice_id: String(invoiceId) }).eq("id", payment.id);
-    await supabase.from("payment_transactions").insert({
-      payment_id: payment.id,
-      event_type: "created",
-      status: "invoice_created",
-      raw_response: { invoiceId, invoiceUrl, subtotal, discount, total },
-    });
-
-    return NextResponse.json({ invoiceUrl, registrationId: registration.id });
+    return NextResponse.json({ invoiceUrl: link, registrationId: registration.id });
   } catch (err) {
-    console.error("MyFatoorah error:", err);
+    console.error("UPayments error:", err);
     await supabase.from("payment_transactions").insert({
       payment_id: payment.id,
       event_type: "error",

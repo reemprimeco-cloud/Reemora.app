@@ -17,7 +17,7 @@ const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
 
 /** Non-committal "learn more" form for the course detail page. Captures a
  *  soft lead into course_inquiries without going through the paid
- *  registration + MyFatoorah flow — same person can still register + pay
+ *  registration + UPayments flow — same person can still register + pay
  *  afterwards via the main Register CTA. */
 export function InquiryModal({ courseId, courseScheduleId, courseTitle }: Props) {
   const { dict } = useLanguage();
