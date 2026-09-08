@@ -25,6 +25,14 @@ interface CreateInvoiceParams {
   notificationUrl: string;
 }
 
+/** UPayments caps reference.id at 35 characters; a standard UUID is 36
+ *  with its dashes. Stripping the dashes gives a 32-char hex string that's
+ *  still globally unique and comfortably under every id-field limit we've
+ *  hit so far. */
+function shortId(id: string): string {
+  return id.replace(/-/g, "");
+}
+
 function readApiKey() {
   const raw = process.env.UPAYMENT_API_KEY ?? "";
   const trimmed = raw.trim();
@@ -88,8 +96,8 @@ export async function createUPaymentInvoice(params: CreateInvoiceParams) {
     method: "POST",
     body: {
       order: {
-        id: params.orderId,
-        reference: params.referenceId,
+        id: shortId(params.orderId),
+        reference: shortId(params.referenceId),
         description: params.orderDescription,
         currency: params.currency,
         amount: params.amount,
@@ -101,9 +109,9 @@ export async function createUPaymentInvoice(params: CreateInvoiceParams) {
       // for the deferred half).
       notificationType: "link",
       language: "en",
-      reference: { id: params.referenceId },
+      reference: { id: shortId(params.referenceId) },
       customer: {
-        uniqueId: params.orderId,
+        uniqueId: shortId(params.orderId),
         name: params.customerName,
         email: params.customerEmail,
         mobile: params.customerPhone,
