@@ -65,7 +65,7 @@ export default async function AdminDashboardPage() {
           <table className="w-full text-sm">
             <thead className="bg-surface-alt text-xs font-bold uppercase tracking-wide text-ink-soft">
               <tr>
-                <th className="px-6 py-3.5 text-left">Student</th>
+                <th className="px-6 py-3.5 text-left">Participant</th>
                 <th className="px-6 py-3.5 text-left">Course</th>
                 <th className="px-6 py-3.5 text-left">Seats</th>
                 <th className="px-6 py-3.5 text-left">Amount</th>

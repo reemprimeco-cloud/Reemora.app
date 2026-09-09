@@ -150,7 +150,7 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
         <table className="w-full text-sm">
           <thead className="bg-surface-alt text-xs font-bold uppercase tracking-wide text-ink-soft">
             <tr>
-              <th className="px-6 py-3.5 text-left">Student</th>
+              <th className="px-6 py-3.5 text-left">Participant</th>
               <th className="px-6 py-3.5 text-left">Email</th>
               <th className="px-6 py-3.5 text-left">Phone</th>
               <th className="px-6 py-3.5 text-left">Course</th>

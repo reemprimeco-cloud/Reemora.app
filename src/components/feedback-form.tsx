@@ -48,7 +48,7 @@ export function FeedbackForm({ courses }: { courses: CourseOption[] }) {
       const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId, studentName, roleCompany, rating, quote }),
+        body: JSON.stringify({ courseId, studentName, roleCompany: roleCompany.trim() || t.defaultRole, rating, quote }),
       });
       const data = await res.json();
 

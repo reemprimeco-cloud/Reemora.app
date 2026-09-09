@@ -139,8 +139,8 @@ const en = {
     empty: "No certificates published yet.",
   },
   testimonials: {
-    eyebrow: "Student Voices",
-    title: "What our students say",
+    eyebrow: "Participant Voices",
+    title: "What our participants say",
     goToTestimonial: "Go to testimonial",
   },
   portfolio: {
@@ -218,7 +218,7 @@ const en = {
     seatsLeftValue: "{available} / {total}",
     weeksValue: "{n} weeks",
     notFound: "Course not found",
-    studentFeedback: "Student Feedback",
+    studentFeedback: "Participant Feedback",
   },
   waitlistModal: {
     title: "Join the waitlist",
@@ -343,6 +343,7 @@ const en = {
     roleLabel: "Role / Company",
     roleOptional: "(optional)",
     rolePlaceholder: "e.g. Marketing Manager, Acme Co.",
+    defaultRole: "Participant in Reemora",
     ratingLabel: "Your Rating",
     ratingError: "Please choose a rating.",
     quoteLabel: "Your Feedback",
@@ -576,8 +577,8 @@ const ar: EnDict = {
     empty: "لم يتم نشر أي شهادات بعد.",
   },
   testimonials: {
-    eyebrow: "أصوات الطلاب",
-    title: "ماذا يقول طلابنا",
+    eyebrow: "أصوات المشاركين",
+    title: "ماذا يقول المشاركون لدينا",
     goToTestimonial: "الانتقال إلى الشهادة",
   },
   portfolio: {
@@ -655,7 +656,7 @@ const ar: EnDict = {
     seatsLeftValue: "{available} / {total}",
     weeksValue: "{n} أسابيع",
     notFound: "الدورة غير موجودة",
-    studentFeedback: "آراء الطلاب",
+    studentFeedback: "آراء المشاركين",
   },
   waitlistModal: {
     title: "انضم لقائمة الانتظار",
@@ -780,6 +781,7 @@ const ar: EnDict = {
     roleLabel: "الوظيفة / الشركة",
     roleOptional: "(اختياري)",
     rolePlaceholder: "مثال: مديرة تسويق، شركة أكمي",
+    defaultRole: "مشارك في ريمورا",
     ratingLabel: "تقييمك",
     ratingError: "يرجى اختيار تقييم.",
     quoteLabel: "رأيك وملاحظاتك",
