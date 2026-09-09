@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, BookOpen, CalendarClock, ClipboardList, LogOut, Tags, GraduationCap, Quote, Mail, Settings, Briefcase, HelpCircle, UserPlus, ListOrdered, CalendarPlus, Menu, X } from "lucide-react";
+import { LayoutDashboard, BookOpen, CalendarClock, ClipboardList, LogOut, Tags, GraduationCap, Quote, Mail, Settings, Briefcase, HelpCircle, UserPlus, ListOrdered, CalendarPlus, Menu, X, Printer } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ const LINKS = [
   { href: "/admin/categories", label: "Categories", icon: Tags },
   { href: "/admin/schedule", label: "Scheduling", icon: CalendarClock },
   { href: "/admin/registrations", label: "Registrations", icon: ClipboardList },
+  { href: "/admin/attendance", label: "Attendance Sheet", icon: Printer },
   { href: "/admin/reservations", label: "Seat Reservations", icon: UserPlus },
   { href: "/admin/waitlist", label: "Waitlist", icon: ListOrdered },
   { href: "/admin/inquiries", label: "Course Inquiries", icon: HelpCircle },
@@ -50,7 +51,7 @@ export function AdminSidebar() {
       {/* Mobile: collapsed top bar with a dropdown menu instead of the full
           list rendered inline (which used to push page content down by an
           entire screen's worth of links). */}
-      <div className="sticky top-0 z-40 bg-navy-900 text-[#b7c5e0] md:hidden">
+      <div className="sticky top-0 z-40 bg-navy-900 text-[#b7c5e0] md:hidden print:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <Link href="/" className="flex items-center">
             <Image src="/images/logo.png" alt="Reemora logo" width={100} height={25} className="h-6 w-auto brightness-0 invert" />
@@ -103,7 +104,7 @@ export function AdminSidebar() {
       </div>
 
       {/* Desktop: full sidebar, unchanged. */}
-      <aside className="hidden flex-col gap-1.5 bg-navy-900 p-5 text-[#b7c5e0] md:sticky md:top-0 md:flex md:h-screen">
+      <aside className="hidden flex-col gap-1.5 bg-navy-900 p-5 text-[#b7c5e0] md:sticky md:top-0 md:flex md:h-screen print:hidden">
         <Link href="/" className="mb-6 block px-2.5 pt-1.5">
           <Image src="/images/logo.png" alt="Reemora logo" width={120} height={30} className="h-7 w-auto brightness-0 invert" />
         </Link>

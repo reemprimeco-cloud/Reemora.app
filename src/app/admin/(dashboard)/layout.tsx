@@ -6,9 +6,9 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
   return (
     <ToastProvider>
       <ConfirmProvider>
-        <div className="grid min-h-screen grid-cols-1 bg-surface-alt md:grid-cols-[250px_1fr]">
+        <div className="grid min-h-screen grid-cols-1 bg-surface-alt md:grid-cols-[250px_1fr] print:block print:bg-white">
           <AdminSidebar />
-          <main className="p-5 md:p-9">{children}</main>
+          <main className="p-5 md:p-9 print:p-0">{children}</main>
         </div>
       </ConfirmProvider>
     </ToastProvider>
