@@ -541,6 +541,7 @@ export interface Database {
           rating: number | null;
           is_published: boolean;
           display_order: number;
+          course_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -552,10 +553,19 @@ export interface Database {
           rating?: number | null;
           is_published?: boolean;
           display_order?: number;
+          course_id?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["testimonials"]["Insert"]>;
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_course_id_fkey";
+            columns: ["course_id"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["id"];
+          }
+        ];
       };
       website_settings: {
         Row: {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Star } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { InquiryModal } from "@/components/inquiry-modal";
@@ -9,6 +9,7 @@ import { WaitlistModal } from "@/components/waitlist-modal";
 import { PrivateSessionModal } from "@/components/private-session-modal";
 import { CourseGallery } from "@/components/course-gallery";
 import { getCourseBySlug, getCourses } from "@/lib/data/courses";
+import { getTestimonialsForCourse } from "@/lib/data/testimonials";
 import { courseImageSrc, formatDuration, primarySchedule } from "@/lib/course-utils";
 import { getWebsiteSettings } from "@/lib/data/settings";
 import { formatDate, formatMoney } from "@/lib/utils";
@@ -57,6 +58,7 @@ export default async function CourseDetailPage({ params }: Props) {
   if (!resolvedCourse) notFound();
   const course = resolvedCourse;
   const dict = getDict(lang);
+  const feedback = await getTestimonialsForCourse(course.id);
 
   const image = courseImageSrc(course);
   const schedule = primarySchedule(course);
@@ -147,6 +149,34 @@ export default async function CourseDetailPage({ params }: Props) {
                   </li>
                 ))}
               </ul>
+
+              {feedback.length > 0 && (
+                <div className="mt-8.5">
+                  <h2 className="mb-3.5 text-lg font-bold">{dict.courseDetail.studentFeedback}</h2>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {feedback.map((t) => (
+                      <div key={t.id} className="rounded-xl border border-border-c bg-surface-alt p-5">
+                        {t.rating && (
+                          <div className="mb-2 flex gap-0.5">
+                            {[1, 2, 3, 4, 5].map((n) => (
+                              <Star
+                                key={n}
+                                size={14}
+                                className={n <= t.rating! ? "fill-amber-400 text-amber-400" : "fill-transparent text-border-c"}
+                              />
+                            ))}
+                          </div>
+                        )}
+                        <p className="mb-2 text-sm italic text-ink-soft">&ldquo;{t.quote}&rdquo;</p>
+                        <p className="text-[13px] font-semibold">
+                          {t.student_name}
+                          {t.role_company ? ` — ${t.role_company}` : ""}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="sticky top-[100px] rounded-[22px] border border-border-c bg-surface p-7.5 shadow-sm">

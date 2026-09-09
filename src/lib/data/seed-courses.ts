@@ -270,9 +270,9 @@ export const SEED_PORTFOLIO = [
 ];
 
 export const SEED_TESTIMONIALS = [
-  { id: "seed-t1", student_name: "Sara A.", role_company: "Founder, Early-Stage Startup", quote: "I went from zero technical background to launching my own AI-powered app in six weeks. The hands-on approach made all the difference.", avatar_url: null, rating: 5, is_published: true, display_order: 1, created_at: now },
-  { id: "seed-t2", student_name: "Faisal M.", role_company: "Software Engineer", quote: "The prompt engineering course completely changed how our development team ships AI features. Practical, structured, and immediately useful.", avatar_url: null, rating: 5, is_published: true, display_order: 2, created_at: now },
-  { id: "seed-t3", student_name: "Lulwa K.", role_company: "Product Manager", quote: "Best training investment I've made. The trainer's real-world experience shows in every session.", avatar_url: null, rating: 5, is_published: true, display_order: 3, created_at: now },
+  { id: "seed-t1", student_name: "Sara A.", role_company: "Founder, Early-Stage Startup", quote: "I went from zero technical background to launching my own AI-powered app in six weeks. The hands-on approach made all the difference.", avatar_url: null, rating: 5, is_published: true, display_order: 1, course_id: null, created_at: now },
+  { id: "seed-t2", student_name: "Faisal M.", role_company: "Software Engineer", quote: "The prompt engineering course completely changed how our development team ships AI features. Practical, structured, and immediately useful.", avatar_url: null, rating: 5, is_published: true, display_order: 2, course_id: null, created_at: now },
+  { id: "seed-t3", student_name: "Lulwa K.", role_company: "Product Manager", quote: "Best training investment I've made. The trainer's real-world experience shows in every session.", avatar_url: null, rating: 5, is_published: true, display_order: 3, course_id: null, created_at: now },
 ];
 
 export const SEED_SETTINGS = {
