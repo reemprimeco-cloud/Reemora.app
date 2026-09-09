@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
+import { reconcilePendingUPayments } from "@/lib/payment-reconciliation";
 import { formatMoney } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dashboard" };
+export const dynamic = "force-dynamic";
 
 interface RegistrationRow {
   id: string;
@@ -29,6 +31,10 @@ export default async function AdminDashboardPage() {
   let registrations: RegistrationRow[] = [];
 
   if (isSupabaseConfigured) {
+    // Same settle-before-render as the Registrations page, so the two
+    // never disagree about whether someone has paid.
+    await reconcilePendingUPayments();
+
     const supabase = await createClient();
     const [{ count: cCount }, { count: uCount }, { data: regs }] = await Promise.all([
       supabase.from("courses").select("*", { count: "exact", head: true }),
