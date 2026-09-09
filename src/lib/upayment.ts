@@ -161,6 +161,20 @@ export async function getUPaymentStatusByTrackId(trackId: string): Promise<UPaym
   return data.data.transaction;
 }
 
+/** Looks up a transaction by the invoice id we stored when creating the
+ *  charge. Needed because a track_id only ever reaches us through the
+ *  return redirect or the notification webhook — and in production both
+ *  have been observed not arriving at all, leaving a genuinely paid
+ *  registration stuck pending. The invoice id we always have, so this is
+ *  the lookup that lets us verify payment without waiting to be told. */
+export async function getUPaymentStatusByInvoiceId(invoiceId: string): Promise<UPaymentTransaction> {
+  const data = await upaymentRequest<PaymentStatusResponse>(
+    `/get-payment-status?invoice_id=${encodeURIComponent(invoiceId)}`,
+    { method: "GET" }
+  );
+  return data.data.transaction;
+}
+
 /** "CAPTURED" is UPayments' success result for a completed card/KNET
  *  charge. Treated as the single source of truth for "did this transaction
  *  actually succeed" — status ("done") is a secondary/broader field we log

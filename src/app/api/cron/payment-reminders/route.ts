@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createUPaymentInvoice } from "@/lib/upayment";
+import { reconcilePendingUPayments } from "@/lib/payment-reconciliation";
 import { formatMoney } from "@/lib/utils";
 import { sendTelegramNotification } from "@/lib/telegram";
 import { sendWebPushToAdmins } from "@/lib/webpush";
@@ -23,6 +24,10 @@ export async function GET(request: Request) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
   const today = new Date().toISOString().slice(0, 10);
   const supabase = await createServiceRoleClient();
+
+  // Safety net for first installments whose capture notification never
+  // reached us — settles them even if nobody opens the admin page.
+  const swept = await reconcilePendingUPayments();
 
   const { data: duePayments, error } = await supabase
     .from("payments")
@@ -116,5 +121,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, prepared, failed, checked: duePayments?.length ?? 0 });
+  return NextResponse.json({ ok: true, prepared, failed, checked: duePayments?.length ?? 0, swept });
 }

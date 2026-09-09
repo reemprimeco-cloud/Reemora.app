@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
+import { reconcilePendingUPayments } from "@/lib/payment-reconciliation";
 import { RegistrationsTable, type RegistrationRow } from "@/components/admin/registrations-table";
 import type { RegistrationStatus, PaymentPlan } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Registrations" };
+export const dynamic = "force-dynamic";
 
 interface DbPayment {
   method: string;
@@ -62,6 +64,13 @@ export default async function AdminRegistrationsPage() {
   let rows: RegistrationRow[] = [];
 
   if (isSupabaseConfigured) {
+    // Ask UPayments directly about anything still pending before rendering.
+    // UPayments' return redirect and notification webhook have both been
+    // observed failing to arrive in production, which left genuinely paid
+    // registrations stuck on "pending"; this makes opening the page enough
+    // to settle them.
+    await reconcilePendingUPayments();
+
     const supabase = await createClient();
     const { data } = await supabase
       .from("registrations")
