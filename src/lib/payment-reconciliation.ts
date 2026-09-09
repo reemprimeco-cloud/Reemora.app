@@ -42,7 +42,10 @@ export async function reconcileUPaymentTransaction(trackId: string): Promise<Rec
 /** Same reconciliation, entered from the invoice id instead of a
  *  track_id. This is the path that doesn't depend on UPayments telling us
  *  anything — we ask them. */
-export async function reconcileUPaymentByInvoiceId(invoiceId: string): Promise<ReconcileResult> {
+export async function reconcileUPaymentByInvoiceId(
+  invoiceId: string,
+  knownPaymentId?: string
+): Promise<ReconcileResult> {
   let transaction;
   try {
     transaction = await getUPaymentStatusByInvoiceId(invoiceId);
@@ -50,7 +53,11 @@ export async function reconcileUPaymentByInvoiceId(invoiceId: string): Promise<R
     console.error(`reconcileUPaymentByInvoiceId: status lookup failed for invoice ${invoiceId}`, err);
     return { ok: false, isPaid: false, registrationId: null, courseSlug: null };
   }
-  return applyTransaction(transaction);
+  if (!transaction) {
+    console.error(`reconcileUPaymentByInvoiceId: invoice ${invoiceId} returned no transaction`);
+    return { ok: false, isPaid: false, registrationId: null, courseSlug: null };
+  }
+  return applyTransaction(transaction, knownPaymentId);
 }
 
 /** Re-checks every first-installment UPayments payment still sitting at
@@ -76,19 +83,25 @@ export async function reconcilePendingUPayments(): Promise<{ checked: number; co
   let confirmed = 0;
   for (const payment of pending) {
     if (!payment.gateway_invoice_id) continue;
-    const result = await reconcileUPaymentByInvoiceId(payment.gateway_invoice_id);
+    // We already know which row we're asking about, so matching doesn't
+    // depend on UPayments echoing our order id back.
+    const result = await reconcileUPaymentByInvoiceId(payment.gateway_invoice_id, payment.id);
     if (result.ok && result.isPaid) confirmed += 1;
   }
 
   return { checked: pending.length, confirmed };
 }
 
-async function applyTransaction(transaction: UPaymentTransaction): Promise<ReconcileResult> {
+async function applyTransaction(
+  transaction: UPaymentTransaction,
+  knownPaymentId?: string
+): Promise<ReconcileResult> {
   const supabase = await createServiceRoleClient();
 
-  // We set order.id = our payments.id when creating the invoice, and
-  // UPayments echoes it back as merchant_requested_order_id.
-  const paymentId = transaction.merchant_requested_order_id;
+  // Normally we match on order.id coming back as merchant_requested_order_id.
+  // knownPaymentId covers the sweep, which already knows the row and so
+  // doesn't care whether the gateway echoed anything useful back.
+  const paymentId = knownPaymentId ?? transaction.merchant_requested_order_id;
   const { data: payment } = await supabase
     .from("payments")
     .select("*, registrations(id, course_schedule_id, seats, status, course_schedule(courses(slug)))")
@@ -96,7 +109,9 @@ async function applyTransaction(transaction: UPaymentTransaction): Promise<Recon
     .maybeSingle();
 
   if (!payment) {
-    console.error(`reconcileUPaymentTransaction: no payment row found for order id ${paymentId}`);
+    console.error(
+      `applyTransaction: no payment row for order id ${paymentId} — transaction was ${JSON.stringify(transaction)}`
+    );
     return { ok: false, isPaid: false, registrationId: null, courseSlug: null };
   }
 

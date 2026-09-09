@@ -172,7 +172,13 @@ export async function getUPaymentStatusByInvoiceId(invoiceId: string): Promise<U
     `/get-payment-status?invoice_id=${encodeURIComponent(invoiceId)}`,
     { method: "GET" }
   );
-  return data.data.transaction;
+  // The id we store is the one /charge hands back, which is the short
+  // checkout-link slug — not obviously the same thing the invoice itself
+  // displays as its number. Logged whole until we've confirmed from live
+  // traffic that this lookup returns a real transaction rather than an
+  // empty shell.
+  console.log(`[UPayments invoice lookup] invoice_id=${invoiceId} response=${JSON.stringify(data)}`);
+  return data?.data?.transaction;
 }
 
 /** "CAPTURED" is UPayments' success result for a completed card/KNET
