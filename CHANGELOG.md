@@ -10,6 +10,7 @@ All notable changes to the Reemora platform are documented in this file. Format 
 
 ### Added
 
+- **Per-course installments toggle.** Each course has an "Allow payment in 2 installments" checkbox in the course editor (off by default, migration `0019`). Only courses with it on show the plan selector; the payment API rejects installment requests for any other course. The course detail page shows a "Pay in 2 installments available" badge when it's on.
 - **Two-installment payment plan.** On the registration form students choose *Pay in full* or *2 installments*: 50% now, 50% due 30 days after the first payment clears. The seat is confirmed on the first installment; the second stays `pending` and can be paid any time from a public `/pay/{paymentId}` page.
 - **Automatic installment reminders.** A Vercel cron (`vercel.json`, daily 06:00 UTC) hits `/api/payments/installments/remind` and texts students (Twilio SMS, or WhatsApp via `TWILIO_FROM=whatsapp:…`) a bilingual reminder with their pay link — 3 days before the due date, then every 3 days until paid, max 5. Admins can also send one immediately from the Registrations page (**Remind** button), which now shows the plan, paid/remaining balance and due date per row.
 - Schema: `registrations.payment_plan` / `amount_paid`; `payments.installment_no`, `installments_total`, `due_date`, `gateway_*`, `reminder_count`, `last_reminder_at`; `payment_transactions.event_type` gains `reminder`; RPC `add_registration_paid_amount`.

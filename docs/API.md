@@ -20,7 +20,7 @@ Starts a registration and a UPayments hosted-checkout session. Called by `src/co
   "phone": "string",                   // required, 7–20 chars of digits/+/()/-/space
   "attendees": [{ "full_name": "", "email": "", "phone": "" }], // optional, one per extra seat (max 9)
   "notes": "string",                   // optional
-  "paymentPlan": "full" | "installments", // optional, default "full"
+  "paymentPlan": "full" | "installments", // optional, default "full"; "installments" only accepted when courses.installments_enabled
   "lang": "en" | "ar"                  // optional, language for the hosted checkout page
 }
 ```

@@ -89,7 +89,7 @@ export async function POST(request: Request) {
 
   const { data: schedule, error: scheduleError } = await supabase
     .from("course_schedule")
-    .select("id, seats_available, status, courses(id, slug, title, price, currency, is_published, registration_open)")
+    .select("id, seats_available, status, courses(id, slug, title, price, currency, is_published, registration_open, installments_enabled)")
     .eq("id", courseScheduleId)
     .maybeSingle();
 
@@ -106,6 +106,13 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Registration for this course isn't open yet. Check back soon or ask a question below." },
       { status: 403 }
+    );
+  }
+
+  if (paymentPlan === "installments" && !course.installments_enabled) {
+    return NextResponse.json(
+      { error: "Paying in installments isn't available for this course. Please choose pay in full." },
+      { status: 400 }
     );
   }
 

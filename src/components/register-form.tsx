@@ -35,6 +35,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
   const [agreed, setAgreed] = React.useState(false);
   const [errors, setErrors] = React.useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = React.useState(false);
+  const installmentsAllowed = Boolean(course.installments_enabled);
   const [paymentPlan, setPaymentPlan] = React.useState<PaymentPlan>("full");
   const [alert, setAlert] = React.useState<{ type: "error" | "info" | "success"; message: string } | null>(
     initialStatus === "success"
@@ -107,7 +108,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
           phone,
           attendees: extraAttendees,
           notes,
-          paymentPlan,
+          paymentPlan: installmentsAllowed ? paymentPlan : "full",
           lang,
         }),
       });
@@ -278,6 +279,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
             </button>
           </div>
 
+          {installmentsAllowed && (
           <fieldset className="mb-5">
             <legend className="mb-2 text-[15px] font-semibold">{t.paymentPlanHeading}</legend>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -301,6 +303,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
               />
             </div>
           </fieldset>
+          )}
 
           <div className="mb-5">
             <label htmlFor="reg-notes" className="mb-1.5 block text-[13.5px] font-semibold">
@@ -354,7 +357,7 @@ export function RegisterForm({ course, schedule }: { course: CourseWithRelations
           <span>{t.totalDue}</span>
           <span>{formatMoney(total, course.currency)}</span>
         </div>
-        {paymentPlan === "installments" && (
+        {installmentsAllowed && paymentPlan === "installments" && (
           <div className="mt-3 space-y-1.5 rounded-xl border border-blue-200 bg-blue-100/60 p-3.5 text-sm dark:border-blue-900 dark:bg-blue-950/60">
             <div className="flex justify-between font-semibold text-foreground">
               <span>{t.dueToday}</span>
