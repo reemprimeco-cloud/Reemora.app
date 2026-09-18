@@ -87,7 +87,7 @@ export async function POST(request: Request) {
 
   const { data: schedule, error: scheduleError } = await supabase
     .from("course_schedule")
-    .select("id, seats_available, status, courses(id, slug, title, price, currency, is_published, registration_open)")
+    .select("id, seats_available, status, courses(id, slug, title, price, currency, is_published, registration_open, installments_enabled)")
     .eq("id", courseScheduleId)
     .maybeSingle();
 
@@ -137,7 +137,13 @@ export async function POST(request: Request) {
     .select("key, value")
     .eq("key", "payment_mode");
   const paymentMode = settingsRows?.[0]?.value === "whatsapp_manual" ? "whatsapp_manual" : "upayment";
-  const paymentPlan = paymentMode === "upayment" ? requestedPaymentPlan : "full";
+  // The split-payment plan is additionally gated per course — an admin
+  // must opt each course in from the course editor. A request for
+  // "split_50_50" on a course that hasn't opted in downgrades to a full
+  // payment rather than erroring, since the client-side selector is
+  // already hidden in that case and this can only happen from a stale
+  // page or a direct API call.
+  const paymentPlan = paymentMode === "upayment" && course.installments_enabled ? requestedPaymentPlan : "full";
 
   const { data: registration, error: insertError } = await supabase
     .from("registrations")

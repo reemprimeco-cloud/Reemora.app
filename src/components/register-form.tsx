@@ -275,7 +275,7 @@ export function RegisterForm({
             </button>
           </div>
 
-          {paymentMode === "upayment" && (
+          {paymentMode === "upayment" && course.installments_enabled && (
             <div className="mb-5">
               <h3 className="mb-2 text-[15px] font-semibold">{t.paymentPlanHeading}</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

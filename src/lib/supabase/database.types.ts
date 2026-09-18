@@ -323,6 +323,7 @@ export interface Database {
           curriculum: string[];
           is_published: boolean;
           registration_open: boolean;
+          installments_enabled: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -345,6 +346,7 @@ export interface Database {
           curriculum?: string[];
           is_published?: boolean;
           registration_open?: boolean;
+          installments_enabled?: boolean;
           created_at?: string;
           updated_at?: string;
         };

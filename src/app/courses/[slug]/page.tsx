@@ -180,7 +180,10 @@ export default async function CourseDetailPage({ params }: Props) {
             </div>
 
             <div className="sticky top-[100px] rounded-[22px] border border-border-c bg-surface p-7.5 shadow-sm">
-              <h2 className="mb-4.5 text-2xl font-bold">{formatMoney(course.price, course.currency)}</h2>
+              <h2 className={course.installments_enabled ? "mb-1.5 text-2xl font-bold" : "mb-4.5 text-2xl font-bold"}>{formatMoney(course.price, course.currency)}</h2>
+              {course.installments_enabled && (
+                <p className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-600">{dict.courseDetail.installmentsAvailable}</p>
+              )}
               {sidebarRows.map(([label, value]) => (
                 <div key={label} className="flex justify-between border-b border-border-c py-3 text-sm last:border-none">
                   <span className="text-ink-soft">{label}</span>

@@ -198,6 +198,7 @@ const en = {
     tba: "TBA",
   },
   courseDetail: {
+    installmentsAvailable: "Pay in 2 installments available",
     back: "Back to Course Catalog",
     whatYoullLearn: "What you'll learn",
     instructor: "Instructor",
@@ -636,6 +637,7 @@ const ar: EnDict = {
     tba: "قريباً",
   },
   courseDetail: {
+    installmentsAvailable: "متاح الدفع على دفعتين",
     back: "العودة إلى كتالوج الدورات",
     whatYoullLearn: "ما الذي ستتعلّمه",
     instructor: "المدرّبة",

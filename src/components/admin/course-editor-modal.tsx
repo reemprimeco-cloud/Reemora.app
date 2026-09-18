@@ -31,6 +31,7 @@ export function CourseEditorModal({
   const [durationHours, setDurationHours] = React.useState(course?.duration_hours ?? 0);
   const [isPublished, setIsPublished] = React.useState(course?.is_published ?? true);
   const [registrationOpen, setRegistrationOpen] = React.useState(course?.registration_open ?? true);
+  const [installmentsEnabled, setInstallmentsEnabled] = React.useState(course?.installments_enabled ?? false);
   const [shortDescription, setShortDescription] = React.useState(course?.short_description ?? "");
   const [description, setDescription] = React.useState(course?.description ?? "");
   const [curriculum, setCurriculum] = React.useState((course?.curriculum ?? []).join("\n"));
@@ -151,6 +152,7 @@ export function CourseEditorModal({
       duration_weeks: course?.duration_weeks ?? 0,
       is_published: isPublished,
       registration_open: registrationOpen,
+      installments_enabled: installmentsEnabled,
       short_description: shortDescription.trim(),
       description: description.trim(),
       curriculum: curriculum.split("\n").map((s) => s.trim()).filter(Boolean),
@@ -314,6 +316,15 @@ export function CourseEditorModal({
               </label>
               <p className="mt-1.5 pl-6 text-xs text-ink-soft">
                 Uncheck to lock this course — it stays visible and browsable, but the Register button is disabled everywhere and payment is blocked server-side until you re-open it.
+              </p>
+            </div>
+            <div className="sm:col-span-2 rounded-xl border border-border-c bg-surface-alt p-4">
+              <label className="flex items-center gap-2.5 text-sm font-semibold">
+                <input type="checkbox" checked={installmentsEnabled} onChange={(e) => setInstallmentsEnabled(e.target.checked)} />
+                Allow payment in 2 installments (50% now, 50% in 30 days)
+              </label>
+              <p className="mt-1.5 pl-6 text-xs text-ink-soft">
+                Off by default. When on (and UPayments is the active payment mode), the registration form offers &quot;Pay in 2 installments&quot; next to &quot;Pay in full&quot; for this course; the second half is chased automatically. When off, only pay-in-full is offered and the server rejects an installment request for this course.
               </p>
             </div>
             <div className="sm:col-span-2">
