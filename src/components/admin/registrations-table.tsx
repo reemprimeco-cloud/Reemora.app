@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { MessageCircle, Phone, Trash2 } from "lucide-react";
+import { MessageCircle, Phone, Trash2, BellOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatMoney } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,7 @@ export interface RegistrationRow {
   payment_plan: PaymentPlan;
   /** The deferred second half of a split plan — null unless payment_plan
    *  is 'split_50_50' and a second payments row exists. */
-  second_installment: { amount: number; status: string; due_date: string | null } | null;
+  second_installment: { id: string; amount: number; status: string; due_date: string | null } | null;
 }
 
 /** Status vocabulary the admin can pick from. Order = order in the
@@ -62,6 +62,7 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
   const [rows, setRows] = React.useState(initialRows);
   const [saving, setSaving] = React.useState<Record<string, boolean>>({});
   const [deleting, setDeleting] = React.useState<Record<string, boolean>>({});
+  const [waiving, setWaiving] = React.useState<Record<string, boolean>>({});
   const { showToast } = useToast();
   const confirm = useConfirm();
 
@@ -144,6 +145,47 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
     showToast("success", "Registration deleted.");
   }
 
+  async function handleWaiveInstallment(r: RegistrationRow) {
+    const installment = r.second_installment;
+    if (!installment) return;
+    if (
+      !(await confirm(
+        `Waive the remaining ${formatMoney(installment.amount, r.currency)} for "${r.full_name}"? They will not be charged for it and the reminder job will stop chasing this payment. This can't be undone from here.`
+      ))
+    )
+      return;
+
+    setWaiving((w) => ({ ...w, [r.id]: true }));
+    try {
+      const res = await fetch("/api/admin/payments/cancel-installment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId: installment.id, reason: "Withdrew after paying the first installment" }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        showToast("error", data.error || "Couldn't waive this installment.");
+        return;
+      }
+      setRows((current) =>
+        current.map((row) =>
+          row.id === r.id && row.second_installment
+            ? { ...row, second_installment: { ...row.second_installment, status: "cancelled" } }
+            : row
+        )
+      );
+      showToast("success", "Remaining installment waived — it won't be charged or chased again.");
+    } catch {
+      showToast("error", "Couldn't waive this installment.");
+    } finally {
+      setWaiving((w) => {
+        const { [r.id]: _omit, ...rest } = w;
+        void _omit;
+        return rest;
+      });
+    }
+  }
+
   return (
     <div className="overflow-hidden rounded-2xl border border-border-c bg-surface">
       <div className="overflow-x-auto">
@@ -183,6 +225,8 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
                             2nd: {formatMoney(r.second_installment.amount, r.currency)} —{" "}
                             {r.second_installment.status === "paid" ? (
                               <span className="font-semibold text-green-700 dark:text-green-400">Paid</span>
+                            ) : r.second_installment.status === "cancelled" ? (
+                              <span className="font-semibold text-gray-500 dark:text-gray-400">Waived</span>
                             ) : (
                               <>
                                 due{" "}
@@ -192,6 +236,16 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
                               </>
                             )}
                           </span>
+                        )}
+                        {r.second_installment && r.second_installment.status === "pending" && (
+                          <button
+                            onClick={() => handleWaiveInstallment(r)}
+                            disabled={Boolean(waiving[r.id])}
+                            className="inline-flex w-fit items-center gap-1 rounded-full border border-border-c bg-surface px-2.5 py-1 text-xs font-semibold text-foreground transition hover:border-amber-400 hover:text-amber-600 disabled:opacity-60"
+                            title="Withdrew — stop charging/chasing the remaining half"
+                          >
+                            <BellOff size={12} aria-hidden="true" /> {waiving[r.id] ? "Waiving…" : "Waive"}
+                          </button>
                         )}
                       </div>
                     ) : (

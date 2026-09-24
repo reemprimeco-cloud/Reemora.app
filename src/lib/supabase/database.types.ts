@@ -509,7 +509,7 @@ export interface Database {
         Row: {
           id: string;
           payment_id: string;
-          event_type: "created" | "callback" | "webhook" | "status_check" | "error";
+          event_type: "created" | "callback" | "webhook" | "status_check" | "error" | "admin_action";
           status: string | null;
           raw_response: Json | null;
           created_at: string;
@@ -517,7 +517,7 @@ export interface Database {
         Insert: {
           id?: string;
           payment_id: string;
-          event_type: "created" | "callback" | "webhook" | "status_check" | "error";
+          event_type: "created" | "callback" | "webhook" | "status_check" | "error" | "admin_action";
           status?: string | null;
           raw_response?: Json | null;
           created_at?: string;

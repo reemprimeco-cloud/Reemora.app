@@ -9,6 +9,7 @@ export const metadata: Metadata = { title: "Registrations" };
 export const dynamic = "force-dynamic";
 
 interface DbPayment {
+  id: string;
   method: string;
   amount: number;
   status: string;
@@ -57,7 +58,7 @@ function secondInstallmentOf(r: DbRow): RegistrationRow["second_installment"] {
   if (r.payment_plan !== "split_50_50") return null;
   const second = paymentsOf(r).find((p) => p.due_date !== null);
   if (!second) return null;
-  return { amount: second.amount, status: second.status, due_date: second.due_date };
+  return { id: second.id, amount: second.amount, status: second.status, due_date: second.due_date };
 }
 
 export default async function AdminRegistrationsPage() {
@@ -75,7 +76,7 @@ export default async function AdminRegistrationsPage() {
     const { data } = await supabase
       .from("registrations")
       .select(
-        "id, full_name, email, phone, seats, amount, currency, status, payment_plan, created_at, course_schedule_id, course_schedule(courses(title)), payments(method, amount, status, due_date)"
+        "id, full_name, email, phone, seats, amount, currency, status, payment_plan, created_at, course_schedule_id, course_schedule(courses(title)), payments(id, method, amount, status, due_date)"
       )
       .order("created_at", { ascending: false });
     const raw = (data as unknown as DbRow[]) ?? [];
@@ -101,7 +102,7 @@ export default async function AdminRegistrationsPage() {
     <div>
       <h1 className="mb-3 text-2xl font-bold">Registrations</h1>
       <p className="mb-6 max-w-2xl text-sm text-ink-soft">
-        Use the status dropdown on each row to move a registration through Pending → Accepted → Cancelled / Refunded / No-show / Waitlist. For UPayments registrations, status is a label only — seats are freed/reserved automatically by the payment webhook. For WhatsApp (manual) registrations, moving to Accepted reserves a seat and moving away from it releases the seat back, since there&apos;s no webhook to do that for you.
+        Use the status dropdown on each row to move a registration through Pending → Accepted → Cancelled / Refunded / No-show / Waitlist. For UPayments registrations, status is a label only — seats are freed/reserved automatically by the payment webhook. For WhatsApp (manual) registrations, moving to Accepted reserves a seat and moving away from it releases the seat back, since there&apos;s no webhook to do that for you. For a split-payment registration where the student withdraws after paying the first half, use <strong>Waive</strong> next to the 2nd installment to stop chasing the remaining half — it won&apos;t be charged and the reminder job will skip it.
       </p>
       <RegistrationsTable initialRows={rows} />
     </div>
