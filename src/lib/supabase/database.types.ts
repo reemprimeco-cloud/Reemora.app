@@ -408,6 +408,65 @@ export interface Database {
           }
         ];
       };
+      course_archive: {
+        Row: {
+          id: string;
+          course_id: string | null;
+          course_schedule_id: string | null;
+          course_title: string;
+          start_date: string | null;
+          end_date: string | null;
+          session_days: string | null;
+          session_time: string | null;
+          location: string | null;
+          seats_total: number | null;
+          participants_count: number;
+          seats_taken: number;
+          confirmed_count: number;
+          total_paid: number;
+          currency: string;
+          participants: Json;
+          notes: string | null;
+          archived_at: string;
+        };
+        Insert: {
+          id?: string;
+          course_id?: string | null;
+          course_schedule_id?: string | null;
+          course_title: string;
+          start_date?: string | null;
+          end_date?: string | null;
+          session_days?: string | null;
+          session_time?: string | null;
+          location?: string | null;
+          seats_total?: number | null;
+          participants_count?: number;
+          seats_taken?: number;
+          confirmed_count?: number;
+          total_paid?: number;
+          currency?: string;
+          participants?: Json;
+          notes?: string | null;
+          archived_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["course_archive"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "course_archive_course_id_fkey";
+            columns: ["course_id"];
+            isOneToOne: false;
+            referencedRelation: "courses";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "course_archive_course_schedule_id_fkey";
+            columns: ["course_schedule_id"];
+            isOneToOne: false;
+            referencedRelation: "course_schedule";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       registrations: {
         Row: {
           id: string;

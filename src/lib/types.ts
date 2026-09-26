@@ -8,6 +8,7 @@ export type Certificate = Tables["certificates"]["Row"];
 export type CourseCategory = Tables["course_categories"]["Row"];
 export type Course = Tables["courses"]["Row"];
 export type CourseSchedule = Tables["course_schedule"]["Row"];
+export type CourseArchiveEntry = Tables["course_archive"]["Row"];
 export type Registration = Tables["registrations"]["Row"];
 export type Payment = Tables["payments"]["Row"];
 export type PaymentTransaction = Tables["payment_transactions"]["Row"];
@@ -25,6 +26,19 @@ export type ScheduleStatus = CourseSchedule["status"];
 export type PaymentStatus = Payment["status"];
 export type RegistrationStatus = Registration["status"];
 export type PaymentPlan = Registration["payment_plan"];
+
+/** One participant as captured when a course run was archived. Stored as
+ *  JSONB on course_archive.participants — a snapshot, not a live link, so
+ *  the roster survives the cohort being reused for new dates. */
+export interface ArchivedParticipant {
+  full_name: string;
+  email: string;
+  phone: string;
+  seats: number;
+  status: string;
+  amount: number;
+  registered_at: string;
+}
 
 /** One row in the About Your Trainer timeline. Stored as JSONB on
  *  instructors.timeline so admins can edit these without a schema change. */
