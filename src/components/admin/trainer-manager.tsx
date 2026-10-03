@@ -8,6 +8,7 @@ import type { Certificate, InstructorWithCertificates, TimelineEntry } from "@/l
 import { useToast } from "@/components/toast-provider";
 import { useConfirm } from "@/components/confirm-dialog";
 import { slugify } from "@/lib/utils";
+import { compressImage } from "@/lib/compress-image";
 
 function initialTimeline(instructor: InstructorWithCertificates | null): TimelineEntry[] {
   const raw = (instructor as unknown as { timeline?: unknown } | null)?.timeline;
@@ -65,17 +66,13 @@ export function TrainerManager({ instructor: initialInstructor }: { instructor: 
       e.target.value = "";
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Image must be smaller than 5MB.");
-      e.target.value = "";
-      return;
-    }
     setUploading(true);
     setError("");
     try {
       const supabase = createClient();
-      const path = `trainer/${Date.now()}-${slugify(file.name)}`;
-      const { error: uploadError } = await supabase.storage.from("site-assets").upload(path, file, {
+      const toUpload = await compressImage(file);
+      const path = `trainer/${Date.now()}-${slugify(toUpload.name)}`;
+      const { error: uploadError } = await supabase.storage.from("site-assets").upload(path, toUpload, {
         cacheControl: "3600",
         upsert: false,
       });
@@ -137,16 +134,12 @@ export function TrainerManager({ instructor: initialInstructor }: { instructor: 
       e.target.value = "";
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      showToast("error", "Image must be smaller than 5MB.");
-      e.target.value = "";
-      return;
-    }
     setCertUploading(cert.id);
     try {
       const supabase = createClient();
-      const path = `certificates/${Date.now()}-${slugify(file.name)}`;
-      const { error: uploadError } = await supabase.storage.from("site-assets").upload(path, file, {
+      const toUpload = await compressImage(file);
+      const path = `certificates/${Date.now()}-${slugify(toUpload.name)}`;
+      const { error: uploadError } = await supabase.storage.from("site-assets").upload(path, toUpload, {
         cacheControl: "3600",
         upsert: false,
       });

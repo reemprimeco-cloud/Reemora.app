@@ -6,7 +6,21 @@ import { X, Trash2, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { CourseCategory, CourseLevel, CourseWithRelations, Instructor } from "@/lib/types";
 import { slugify } from "@/lib/utils";
+import { compressImage } from "@/lib/compress-image";
 import { useCloseOnEscape } from "@/lib/use-close-on-escape";
+
+/** Supabase errors are plain objects, not Error instances, so an
+ *  `err instanceof Error` check silently swallows every database and
+ *  storage failure behind a generic message. Read the message off
+ *  whatever shape we actually got. */
+function errorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (err && typeof err === "object" && "message" in err) {
+    const message = (err as { message?: unknown }).message;
+    if (typeof message === "string" && message) return message;
+  }
+  return fallback;
+}
 
 export function CourseEditorModal({
   course,
@@ -51,18 +65,16 @@ export function CourseEditorModal({
       e.target.value = "";
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Image must be smaller than 5MB.");
-      e.target.value = "";
-      return;
-    }
 
     setUploading(true);
     setError("");
     try {
+      // Shrunk to fit rather than rejected for size — a phone photo is
+      // routinely far larger than anything the site needs to display.
+      const toUpload = await compressImage(file);
       const supabase = createClient();
-      const path = `${Date.now()}-${slugify(file.name)}`;
-      const { error: uploadError } = await supabase.storage.from("course-images").upload(path, file, {
+      const path = `${Date.now()}-${slugify(toUpload.name)}`;
+      const { error: uploadError } = await supabase.storage.from("course-images").upload(path, toUpload, {
         cacheControl: "3600",
         upsert: false,
       });
@@ -70,9 +82,10 @@ export function CourseEditorModal({
       const { data } = supabase.storage.from("course-images").getPublicUrl(path);
       setImageUrl(data.publicUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Image upload failed.");
+      setError(errorMessage(err, "Image upload failed."));
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   }
 
@@ -80,19 +93,9 @@ export function CourseEditorModal({
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
 
-    for (const file of files) {
-      if (!file.type.startsWith("image/")) {
-        setError("Please upload image files only (PNG, JPG, WEBP, etc.).");
-        continue;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        setError("Each image must be smaller than 5MB.");
-        continue;
-      }
-    }
-
-    const validFiles = files.filter((f) => f.type.startsWith("image/") && f.size <= 5 * 1024 * 1024);
+    const validFiles = files.filter((f) => f.type.startsWith("image/"));
     if (!validFiles.length) {
+      setError("Please upload image files only (PNG, JPG, WEBP, etc.).");
       e.target.value = "";
       return;
     }
@@ -103,8 +106,9 @@ export function CourseEditorModal({
       const supabase = createClient();
       const uploaded: string[] = [];
       for (const file of validFiles) {
-        const path = `gallery/${Date.now()}-${slugify(file.name)}`;
-        const { error: uploadError } = await supabase.storage.from("course-images").upload(path, file, {
+        const toUpload = await compressImage(file);
+        const path = `gallery/${Date.now()}-${slugify(toUpload.name)}`;
+        const { error: uploadError } = await supabase.storage.from("course-images").upload(path, toUpload, {
           cacheControl: "3600",
           upsert: false,
         });
@@ -114,7 +118,7 @@ export function CourseEditorModal({
       }
       setGalleryImages((prev) => [...prev, ...uploaded]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gallery upload failed.");
+      setError(errorMessage(err, "Gallery upload failed."));
     } finally {
       setGalleryUploading(false);
       e.target.value = "";
@@ -186,7 +190,7 @@ export function CourseEditorModal({
       }
       onSaved();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save course.");
+      setError(errorMessage(err, "Could not save course."));
     } finally {
       setSaving(false);
     }
@@ -211,13 +215,30 @@ export function CourseEditorModal({
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <span className="mb-1.5 block text-[13.5px] font-semibold">Course Image</span>
+            {/* Preview sits outside the upload label so its Remove button is
+                tappable — inside, every tap would reopen the file picker. */}
+            {imageUrl && (
+              <div className="relative mb-2 h-[130px] w-full overflow-hidden rounded-lg border border-border-c">
+                <Image src={imageUrl} alt="Course image preview" fill className="object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setImageUrl("")}
+                  aria-label="Remove course image"
+                  title="Remove image"
+                  className="absolute right-2 top-2 inline-flex items-center gap-1.5 rounded-full bg-navy-900/80 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-500"
+                >
+                  <Trash2 size={12} aria-hidden="true" /> Remove
+                </button>
+              </div>
+            )}
             <label className="relative flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border-c p-5 text-center hover:border-blue-400">
-              {imageUrl && (
-                <div className="relative h-[130px] w-full overflow-hidden rounded-lg">
-                  <Image src={imageUrl} alt="Course image preview" fill className="object-cover" />
-                </div>
-              )}
-              <p className="text-[13px] text-ink-soft">{uploading ? "Uploading..." : "Click to upload an image (optional — a branded placeholder is used if left empty)"}</p>
+              <p className="text-[13px] text-ink-soft">
+                {uploading
+                  ? "Uploading..."
+                  : imageUrl
+                  ? "Click to replace this image"
+                  : "Click to upload an image (optional — a branded placeholder is used if left empty)"}
+              </p>
               <input type="file" accept="image/*" onChange={handleImageChange} aria-label="Course image upload" className="absolute inset-0 cursor-pointer opacity-0" />
             </label>
           </div>
@@ -234,7 +255,9 @@ export function CourseEditorModal({
                     type="button"
                     onClick={() => removeGalleryImage(url)}
                     aria-label="Remove gallery image"
-                    className="absolute right-1 top-1 flex h-5.5 w-5.5 items-center justify-center rounded-full bg-navy-900/70 text-white opacity-0 transition group-hover:opacity-100"
+                    // Always visible: a hover-only control can't be reached
+                    // on a touch screen, which is where these get uploaded.
+                    className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-navy-900/80 text-white transition hover:bg-red-500"
                   >
                     <Trash2 size={11} />
                   </button>

@@ -8,6 +8,7 @@ import type { PortfolioItem } from "@/lib/types";
 import { useToast } from "@/components/toast-provider";
 import { useConfirm } from "@/components/confirm-dialog";
 import { slugify } from "@/lib/utils";
+import { compressImage } from "@/lib/compress-image";
 
 const inputClass = "w-full rounded-lg border border-border-c bg-surface-alt px-4 py-3 text-sm outline-none focus:border-blue-400 focus:bg-surface";
 
@@ -48,14 +49,11 @@ export function PortfolioManager({ initialItems }: { initialItems: PortfolioItem
       setError("Please upload an image file (PNG, JPG, WEBP, etc.).");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Image must be smaller than 5MB.");
-      return;
-    }
     setError("");
     const supabase = createClient();
-    const path = `portfolio/${Date.now()}-${slugify(file.name)}`;
-    const { error: uploadError } = await supabase.storage.from("site-assets").upload(path, file, {
+    const toUpload = await compressImage(file);
+    const path = `portfolio/${Date.now()}-${slugify(toUpload.name)}`;
+    const { error: uploadError } = await supabase.storage.from("site-assets").upload(path, toUpload, {
       cacheControl: "3600",
       upsert: false,
     });
