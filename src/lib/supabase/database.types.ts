@@ -334,7 +334,9 @@ export interface Database {
           category_id?: string | null;
           instructor_id?: string | null;
           level: "Beginner" | "Intermediate" | "Advanced";
-          duration_weeks: number;
+          /** Legacy — nothing reads it; duration is days + hours now.
+           *  Defaults to 0 in the database (migration 0025). */
+          duration_weeks?: number;
           duration_days?: number;
           duration_hours?: number;
           price: number;

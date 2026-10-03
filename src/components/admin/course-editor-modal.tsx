@@ -151,9 +151,6 @@ export function CourseEditorModal({
       currency,
       duration_days: durationDays,
       duration_hours: durationHours,
-      // duration_weeks is a legacy column kept for backward compatibility;
-      // preserve the existing value on edits, default to 0 on new rows.
-      duration_weeks: course?.duration_weeks ?? 0,
       is_published: isPublished,
       registration_open: registrationOpen,
       installments_enabled: installmentsEnabled,
