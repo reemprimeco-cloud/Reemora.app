@@ -36,11 +36,11 @@ export function TestimonialSlider({ testimonials }: { testimonials: Testimonial[
               key={item.id}
               aria-label={`${dict.testimonials.goToTestimonial} ${i + 1}`}
               onClick={() => setCurrent(i)}
-              className={cn(
-                "h-2 rounded-full bg-border-c transition-all",
-                i === current ? "w-5.5 bg-blue-500" : "w-2"
-              )}
-            />
+              aria-current={i === current ? "true" : undefined}
+              className="relative flex h-11 min-w-[24px] items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/60"
+            >
+              <span aria-hidden="true" className={cn("block h-2 rounded-full bg-border-c transition-all", i === current ? "w-5.5 bg-blue-500" : "w-2")} />
+            </button>
           ))}
         </div>
       )}

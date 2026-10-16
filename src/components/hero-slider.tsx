@@ -126,11 +126,11 @@ export function HeroSlider({
               key={i}
               aria-label={`${dict.hero.goToSlide} ${i + 1}`}
               onClick={() => setCurrent(i)}
-              className={cn(
-                "h-2.5 rounded-full bg-white/35 transition-all",
-                i === current ? "w-7 bg-white" : "w-2.5"
-              )}
-            />
+              aria-current={i === current ? "true" : undefined}
+              className="relative flex h-11 min-w-[28px] items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+            >
+              <span aria-hidden="true" className={cn("block h-2.5 rounded-full bg-white/35 transition-all", i === current ? "w-7 bg-white" : "w-2.5")} />
+            </button>
           ))}
         </div>
       </div>

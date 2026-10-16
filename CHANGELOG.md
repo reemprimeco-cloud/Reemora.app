@@ -24,6 +24,8 @@ All notable changes to the Reemora platform are documented in this file. Format 
 
 ### Changed
 
+- Design system recorded in `DESIGN.md` (tokens, type ramp, named rules, components) with a `.impeccable/design.json` sidecar for tooling; public pages polished against it: the homepage no longer scrolls sideways on phones (the Lounge section's decorative glow is clipped), slider dots, footer links, the theme toggle and the course "back" link all have 40px+ hit areas, the admin-only hint under Certificates no longer shows to visitors, the course gallery and price card sit flat at rest per the system's flat-by-default rule, the course description has a readable measure, and scroll-reveal sections now show immediately when already in view, when motion is reduced, or when the observer is unavailable.
+
 - Lounge navigation is faster: Vercel functions now run in Mumbai (`bom1`) next to the Supabase project, the middleware verifies the session JWT locally instead of calling the auth server, the viewer loader runs its queries in parallel, and `/lounge` has an instant loading skeleton so tab switches paint immediately.
 
 - `sendWebPushToAdmins` now targets admin subscriptions only (members can also subscribe to push).

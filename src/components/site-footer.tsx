@@ -20,16 +20,16 @@ export async function SiteFooter({ settings }: { settings: WebsiteSettings }) {
           <div>
             <h4 className="mb-4 text-[14.5px] font-semibold text-white">{dict.footer.exploreHeading}</h4>
             <ul className="flex flex-col gap-2.5 text-sm">
-              <li><Link href="/" className="hover:text-blue-400">{dict.footer.home}</Link></li>
-              <li><Link href="/courses" className="hover:text-blue-400">{dict.footer.courses}</Link></li>
-              <li><Link href="/#about" className="hover:text-blue-400">{dict.footer.aboutCv}</Link></li>
+              <li><Link href="/" className="-my-2.5 inline-block py-2.5 hover:text-blue-400">{dict.footer.home}</Link></li>
+              <li><Link href="/courses" className="-my-2.5 inline-block py-2.5 hover:text-blue-400">{dict.footer.courses}</Link></li>
+              <li><Link href="/#about" className="-my-2.5 inline-block py-2.5 hover:text-blue-400">{dict.footer.aboutCv}</Link></li>
             </ul>
           </div>
           <div>
             <h4 className="mb-4 text-[14.5px] font-semibold text-white">{dict.footer.companyHeading}</h4>
             <ul className="flex flex-col gap-2.5 text-sm">
-              <li><Link href="/contact" className="hover:text-blue-400">{dict.footer.contact}</Link></li>
-              <li><Link href="/admin" className="hover:text-blue-400">{dict.footer.admin}</Link></li>
+              <li><Link href="/contact" className="-my-2.5 inline-block py-2.5 hover:text-blue-400">{dict.footer.contact}</Link></li>
+              <li><Link href="/admin" className="-my-2.5 inline-block py-2.5 hover:text-blue-400">{dict.footer.admin}</Link></li>
             </ul>
           </div>
           <div>

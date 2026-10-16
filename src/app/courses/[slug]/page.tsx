@@ -123,8 +123,8 @@ export default async function CourseDetailPage({ params }: Props) {
       <SiteHeader />
       <main className="pb-20 pt-[130px]">
         <div className="mx-auto max-w-[1180px] px-6">
-          <Link href="/courses" className="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600">
-            <ArrowLeft size={15} /> {dict.courseDetail.back}
+          <Link href="/courses" className="-my-2.5 mb-2.5 inline-flex min-h-[40px] items-center gap-1.5 py-2.5 text-sm font-semibold text-blue-600 hover:underline">
+            <ArrowLeft size={15} className="rtl:rotate-180" aria-hidden="true" /> {dict.courseDetail.back}
           </Link>
           <div className="grid grid-cols-1 items-start gap-11 lg:grid-cols-[1.5fr_1fr]">
             <div>
@@ -136,7 +136,7 @@ export default async function CourseDetailPage({ params }: Props) {
                 {course.category?.name ?? dict.courseDetail.categoryFallback} · {levelLabel}
               </span>
               <h1 className="mb-4 text-[32px] font-bold sm:text-[38px]">{course.title}</h1>
-              <p className="mb-8.5 text-[16.5px] text-ink-soft">{course.description}</p>
+              <p className="mb-8.5 max-w-[68ch] text-[16.5px] leading-relaxed text-ink-soft">{course.description}</p>
 
               <h2 className="mb-3.5 text-lg font-bold">{dict.courseDetail.whatYoullLearn}</h2>
               <ul className="mb-5">
@@ -179,7 +179,7 @@ export default async function CourseDetailPage({ params }: Props) {
               )}
             </div>
 
-            <div className="sticky top-[100px] rounded-[22px] border border-border-c bg-surface p-7.5 shadow-sm">
+            <div className="sticky top-[100px] rounded-[22px] border border-border-c bg-surface p-7.5">
               <h2 className={course.installments_enabled ? "mb-1.5 text-2xl font-bold" : "mb-4.5 text-2xl font-bold"}>{formatMoney(course.price, course.currency)}</h2>
               {course.installments_enabled && (
                 <p className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-600">{dict.courseDetail.installmentsAvailable}</p>

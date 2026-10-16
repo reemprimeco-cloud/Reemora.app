@@ -11,7 +11,7 @@ export function ThemeToggle() {
   React.useEffect(() => setMounted(true), []);
 
   if (!mounted) {
-    return <div className="h-9 w-9 rounded-full" aria-hidden />;
+    return <div className="h-10 w-10 rounded-full" aria-hidden />;
   }
 
   const isDark = resolvedTheme === "dark";
@@ -21,7 +21,7 @@ export function ThemeToggle() {
       type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label="Toggle dark mode"
-      className="flex h-9 w-9 items-center justify-center rounded-full border border-border-c bg-surface text-foreground transition-colors hover:border-blue-400"
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-border-c bg-surface text-foreground transition-colors hover:border-blue-400"
     >
       {isDark ? <Sun size={16} /> : <Moon size={16} />}
     </button>

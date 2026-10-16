@@ -220,9 +220,6 @@ export default async function HomePage() {
             ) : (
               <p className="text-center text-ink-soft">{dict.certificates.empty}</p>
             )}
-            <p className="mt-6.5 text-center text-[12.5px] text-ink-soft">
-              {dict.certificates.adminHelp}
-            </p>
           </div>
         </section>
 
@@ -256,7 +253,7 @@ export default async function HomePage() {
         )}
 
         {/* Reemora Lounge — members-only community teaser */}
-        <section id="lounge" className="py-16 sm:py-24">
+        <section id="lounge" className="overflow-hidden py-16 sm:py-24">
           <div className="mx-auto grid max-w-[1180px] items-center gap-10 px-5 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
             <Reveal>
               <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.lounge.name}</span>

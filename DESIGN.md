@@ -42,6 +42,16 @@ typography:
     fontSize: "15px"
     fontWeight: 400
     lineHeight: 1.6
+  lead:
+    fontFamily: "Inter, Arial, sans-serif"
+    fontSize: "17px"
+    fontWeight: 400
+    lineHeight: 1.6
+  metric:
+    fontFamily: "Poppins, Inter, sans-serif"
+    fontSize: "clamp(28px, 3vw, 36px)"
+    fontWeight: 700
+    lineHeight: 1.1
   label:
     fontFamily: "Inter, Arial, sans-serif"
     fontSize: "13px"
@@ -177,7 +187,9 @@ Green (approved, paid, helpful), amber (pending, needs work, muted), red (reject
 - **Display** (700, clamp 34→46→58px, line-height 1.15): the hero headline only, with one accent word in Signal Blue Light.
 - **Headline** (700, 24px → 30px → 36px, line-height 1.2): section titles, always preceded by an eyebrow chip.
 - **Title** (700, 17–19px, line-height 1.3): card titles, post titles, profile names.
-- **Body** (400, 15px; 17px for section lead paragraphs, line-height 1.6): all running text; max measure about 65 characters (`max-w-[520px]` to `[640px]`).
+- **Body** (400, 15px, line-height 1.6): all running text; max measure about 65 characters (`max-w-[520px]` to `[640px]`).
+- **Lead** (400, 17px, line-height 1.6): the one paragraph under a section headline and the course description.
+- **Metric** (700, 28px → 36px, Poppins): the numbers in the stats band and the floating experience badge; always paired with a 13px Ink Soft label.
 - **Label** (700, 11–13px, letter-spacing 0.05em, uppercase for eyebrows): eyebrow chips, legends, tiny status pills.
 - **Meta** (400–600, 11.5–13px, Ink Soft): timestamps, counts, hints under inputs.
 

@@ -4,52 +4,392 @@
   "title": "Design System: Reemora",
   "extensions": {
     "colorMeta": {
-      "signal-blue": { "role": "primary", "displayName": "Signal Blue", "canonical": "#4f7fbf", "tonalRamp": ["#0b1730", "#142a4f", "#2c4f84", "#3f6bb0", "#4f7fbf", "#6f9bd4", "#a9c4e8", "#e7effa"] },
-      "signal-blue-deep": { "role": "primary", "displayName": "Signal Blue Deep", "canonical": "#3f6bb0", "tonalRamp": ["#0b1730", "#142a4f", "#2c4f84", "#3f6bb0", "#4f7fbf", "#6f9bd4", "#a9c4e8", "#e7effa"] },
-      "signal-blue-light": { "role": "primary", "displayName": "Signal Blue Light", "canonical": "#6f9bd4", "tonalRamp": ["#0b1730", "#142a4f", "#2c4f84", "#3f6bb0", "#4f7fbf", "#6f9bd4", "#a9c4e8", "#e7effa"] },
-      "blue-tint": { "role": "primary", "displayName": "Blue Tint", "canonical": "#e7effa", "tonalRamp": ["#16233d", "#2c4f84", "#4f7fbf", "#8fb4e6", "#c6d3ea", "#d7e2f4", "#e7effa", "#f4f8fd"] },
-      "blue-haze": { "role": "primary", "displayName": "Blue Haze", "canonical": "#f4f8fd", "tonalRamp": ["#0f1830", "#2c4f84", "#4f7fbf", "#8fb4e6", "#c6d3ea", "#d7e2f4", "#e7effa", "#f4f8fd"] },
-      "midnight-navy": { "role": "secondary", "displayName": "Midnight Navy", "canonical": "#0b1730", "tonalRamp": ["#0b1730", "#0f1e3c", "#142a4f", "#1f3a66", "#2c4f84", "#3f6bb0", "#6f9bd4", "#a9c4e8"] },
-      "deep-navy": { "role": "secondary", "displayName": "Deep Navy", "canonical": "#0f1e3c", "tonalRamp": ["#0b1730", "#0f1e3c", "#142a4f", "#1f3a66", "#2c4f84", "#3f6bb0", "#6f9bd4", "#a9c4e8"] },
-      "slate-navy": { "role": "secondary", "displayName": "Slate Navy", "canonical": "#142a4f", "tonalRamp": ["#0b1730", "#0f1e3c", "#142a4f", "#1f3a66", "#2c4f84", "#3f6bb0", "#6f9bd4", "#a9c4e8"] },
-      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#182437", "tonalRamp": ["#182437", "#2b3a52", "#3f4f6a", "#55637a", "#7a879c", "#a3adbf", "#d0d7e3", "#e4e9f1"] },
-      "ink-soft": { "role": "neutral", "displayName": "Ink Soft", "canonical": "#55637a", "tonalRamp": ["#182437", "#2b3a52", "#3f4f6a", "#55637a", "#7a879c", "#a3adbf", "#d0d7e3", "#e4e9f1"] },
-      "surface": { "role": "neutral", "displayName": "Surface", "canonical": "#ffffff", "tonalRamp": ["#0b1220", "#101a30", "#223251", "#55637a", "#a3adbf", "#e4e9f1", "#f4f8fd", "#ffffff"] },
-      "surface-alt": { "role": "neutral", "displayName": "Surface Alt", "canonical": "#f4f8fd", "tonalRamp": ["#0e1729", "#101a30", "#223251", "#55637a", "#a3adbf", "#e4e9f1", "#f4f8fd", "#ffffff"] },
-      "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "#e4e9f1", "tonalRamp": ["#223251", "#3f4f6a", "#55637a", "#7a879c", "#a3adbf", "#d0d7e3", "#e4e9f1", "#f4f8fd"] },
-      "night-ground": { "role": "neutral", "displayName": "Night Ground (dark mode)", "canonical": "#0b1220", "tonalRamp": ["#0b1220", "#0e1729", "#101a30", "#16233d", "#223251", "#3f4f6a", "#93a1bd", "#e6ecf7"] },
-      "night-surface": { "role": "neutral", "displayName": "Night Surface (dark mode)", "canonical": "#101a30", "tonalRamp": ["#0b1220", "#0e1729", "#101a30", "#16233d", "#223251", "#3f4f6a", "#93a1bd", "#e6ecf7"] },
-      "night-surface-alt": { "role": "neutral", "displayName": "Night Surface Alt (dark mode)", "canonical": "#0e1729", "tonalRamp": ["#0b1220", "#0e1729", "#101a30", "#16233d", "#223251", "#3f4f6a", "#93a1bd", "#e6ecf7"] },
-      "night-hairline": { "role": "neutral", "displayName": "Night Hairline (dark mode)", "canonical": "#223251", "tonalRamp": ["#0b1220", "#0e1729", "#101a30", "#16233d", "#223251", "#3f4f6a", "#93a1bd", "#e6ecf7"] },
-      "night-ink": { "role": "neutral", "displayName": "Night Ink (dark mode)", "canonical": "#e6ecf7", "tonalRamp": ["#0b1220", "#223251", "#3f4f6a", "#55637a", "#93a1bd", "#c6d3ea", "#e6ecf7", "#ffffff"] },
-      "night-ink-soft": { "role": "neutral", "displayName": "Night Ink Soft (dark mode)", "canonical": "#93a1bd", "tonalRamp": ["#0b1220", "#223251", "#3f4f6a", "#55637a", "#93a1bd", "#c6d3ea", "#e6ecf7", "#ffffff"] }
+      "signal-blue": {
+        "role": "primary",
+        "displayName": "Signal Blue",
+        "canonical": "#4f7fbf",
+        "tonalRamp": [
+          "#0b1730",
+          "#142a4f",
+          "#2c4f84",
+          "#3f6bb0",
+          "#4f7fbf",
+          "#6f9bd4",
+          "#a9c4e8",
+          "#e7effa"
+        ]
+      },
+      "signal-blue-deep": {
+        "role": "primary",
+        "displayName": "Signal Blue Deep",
+        "canonical": "#3f6bb0",
+        "tonalRamp": [
+          "#0b1730",
+          "#142a4f",
+          "#2c4f84",
+          "#3f6bb0",
+          "#4f7fbf",
+          "#6f9bd4",
+          "#a9c4e8",
+          "#e7effa"
+        ]
+      },
+      "signal-blue-light": {
+        "role": "primary",
+        "displayName": "Signal Blue Light",
+        "canonical": "#6f9bd4",
+        "tonalRamp": [
+          "#0b1730",
+          "#142a4f",
+          "#2c4f84",
+          "#3f6bb0",
+          "#4f7fbf",
+          "#6f9bd4",
+          "#a9c4e8",
+          "#e7effa"
+        ]
+      },
+      "blue-tint": {
+        "role": "primary",
+        "displayName": "Blue Tint",
+        "canonical": "#e7effa",
+        "tonalRamp": [
+          "#16233d",
+          "#2c4f84",
+          "#4f7fbf",
+          "#8fb4e6",
+          "#c6d3ea",
+          "#d7e2f4",
+          "#e7effa",
+          "#f4f8fd"
+        ]
+      },
+      "blue-haze": {
+        "role": "primary",
+        "displayName": "Blue Haze",
+        "canonical": "#f4f8fd",
+        "tonalRamp": [
+          "#0f1830",
+          "#2c4f84",
+          "#4f7fbf",
+          "#8fb4e6",
+          "#c6d3ea",
+          "#d7e2f4",
+          "#e7effa",
+          "#f4f8fd"
+        ]
+      },
+      "midnight-navy": {
+        "role": "secondary",
+        "displayName": "Midnight Navy",
+        "canonical": "#0b1730",
+        "tonalRamp": [
+          "#0b1730",
+          "#0f1e3c",
+          "#142a4f",
+          "#1f3a66",
+          "#2c4f84",
+          "#3f6bb0",
+          "#6f9bd4",
+          "#a9c4e8"
+        ]
+      },
+      "deep-navy": {
+        "role": "secondary",
+        "displayName": "Deep Navy",
+        "canonical": "#0f1e3c",
+        "tonalRamp": [
+          "#0b1730",
+          "#0f1e3c",
+          "#142a4f",
+          "#1f3a66",
+          "#2c4f84",
+          "#3f6bb0",
+          "#6f9bd4",
+          "#a9c4e8"
+        ]
+      },
+      "slate-navy": {
+        "role": "secondary",
+        "displayName": "Slate Navy",
+        "canonical": "#142a4f",
+        "tonalRamp": [
+          "#0b1730",
+          "#0f1e3c",
+          "#142a4f",
+          "#1f3a66",
+          "#2c4f84",
+          "#3f6bb0",
+          "#6f9bd4",
+          "#a9c4e8"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#182437",
+        "tonalRamp": [
+          "#182437",
+          "#2b3a52",
+          "#3f4f6a",
+          "#55637a",
+          "#7a879c",
+          "#a3adbf",
+          "#d0d7e3",
+          "#e4e9f1"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Ink Soft",
+        "canonical": "#55637a",
+        "tonalRamp": [
+          "#182437",
+          "#2b3a52",
+          "#3f4f6a",
+          "#55637a",
+          "#7a879c",
+          "#a3adbf",
+          "#d0d7e3",
+          "#e4e9f1"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b1220",
+          "#101a30",
+          "#223251",
+          "#55637a",
+          "#a3adbf",
+          "#e4e9f1",
+          "#f4f8fd",
+          "#ffffff"
+        ]
+      },
+      "surface-alt": {
+        "role": "neutral",
+        "displayName": "Surface Alt",
+        "canonical": "#f4f8fd",
+        "tonalRamp": [
+          "#0e1729",
+          "#101a30",
+          "#223251",
+          "#55637a",
+          "#a3adbf",
+          "#e4e9f1",
+          "#f4f8fd",
+          "#ffffff"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e4e9f1",
+        "tonalRamp": [
+          "#223251",
+          "#3f4f6a",
+          "#55637a",
+          "#7a879c",
+          "#a3adbf",
+          "#d0d7e3",
+          "#e4e9f1",
+          "#f4f8fd"
+        ]
+      },
+      "night-ground": {
+        "role": "neutral",
+        "displayName": "Night Ground (dark mode)",
+        "canonical": "#0b1220",
+        "tonalRamp": [
+          "#0b1220",
+          "#0e1729",
+          "#101a30",
+          "#16233d",
+          "#223251",
+          "#3f4f6a",
+          "#93a1bd",
+          "#e6ecf7"
+        ]
+      },
+      "night-surface": {
+        "role": "neutral",
+        "displayName": "Night Surface (dark mode)",
+        "canonical": "#101a30",
+        "tonalRamp": [
+          "#0b1220",
+          "#0e1729",
+          "#101a30",
+          "#16233d",
+          "#223251",
+          "#3f4f6a",
+          "#93a1bd",
+          "#e6ecf7"
+        ]
+      },
+      "night-surface-alt": {
+        "role": "neutral",
+        "displayName": "Night Surface Alt (dark mode)",
+        "canonical": "#0e1729",
+        "tonalRamp": [
+          "#0b1220",
+          "#0e1729",
+          "#101a30",
+          "#16233d",
+          "#223251",
+          "#3f4f6a",
+          "#93a1bd",
+          "#e6ecf7"
+        ]
+      },
+      "night-hairline": {
+        "role": "neutral",
+        "displayName": "Night Hairline (dark mode)",
+        "canonical": "#223251",
+        "tonalRamp": [
+          "#0b1220",
+          "#0e1729",
+          "#101a30",
+          "#16233d",
+          "#223251",
+          "#3f4f6a",
+          "#93a1bd",
+          "#e6ecf7"
+        ]
+      },
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Night Ink (dark mode)",
+        "canonical": "#e6ecf7",
+        "tonalRamp": [
+          "#0b1220",
+          "#223251",
+          "#3f4f6a",
+          "#55637a",
+          "#93a1bd",
+          "#c6d3ea",
+          "#e6ecf7",
+          "#ffffff"
+        ]
+      },
+      "night-ink-soft": {
+        "role": "neutral",
+        "displayName": "Night Ink Soft (dark mode)",
+        "canonical": "#93a1bd",
+        "tonalRamp": [
+          "#0b1220",
+          "#223251",
+          "#3f4f6a",
+          "#55637a",
+          "#93a1bd",
+          "#c6d3ea",
+          "#e6ecf7",
+          "#ffffff"
+        ]
+      }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Hero headline only; one accent word in Signal Blue Light." },
-      "headline": { "displayName": "Headline", "purpose": "Section titles, always under an eyebrow chip." },
-      "title": { "displayName": "Title", "purpose": "Card, post and profile titles." },
-      "body": { "displayName": "Body", "purpose": "Running text; 17px for section lead paragraphs." },
-      "label": { "displayName": "Label", "purpose": "Eyebrow chips, legends and tiny status pills; uppercase with tracking." },
-      "arabic": { "displayName": "Arabic", "purpose": "Replaces both display and body when lang=ar; line-height 1.7." }
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero headline only; one accent word in Signal Blue Light."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section titles, always under an eyebrow chip."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card, post and profile titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text; 17px for section lead paragraphs."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Eyebrow chips, legends and tiny status pills; uppercase with tracking."
+      },
+      "arabic": {
+        "displayName": "Arabic",
+        "purpose": "Replaces both display and body when lang=ar; line-height 1.7."
+      },
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "The one paragraph under a section headline and the course description."
+      },
+      "metric": {
+        "displayName": "Metric",
+        "purpose": "Stats band numbers and the experience badge; paired with a 13px label."
+      }
     },
     "shadows": [
-      { "name": "pressable", "value": "0 1px 2px rgba(0,0,0,0.05)", "purpose": "Primary CTA buttons at rest." },
-      { "name": "lifted", "value": "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)", "purpose": "Link cards on hover, with translateY(-6px)." },
-      { "name": "floating", "value": "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)", "purpose": "Small overlapping badge or stat card." }
+      {
+        "name": "pressable",
+        "value": "0 1px 2px rgba(0,0,0,0.05)",
+        "purpose": "Primary CTA buttons at rest."
+      },
+      {
+        "name": "lifted",
+        "value": "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",
+        "purpose": "Link cards on hover, with translateY(-6px)."
+      },
+      {
+        "name": "floating",
+        "value": "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)",
+        "purpose": "Small overlapping badge or stat card."
+      }
     ],
     "motion": [
-      { "name": "ease-standard", "value": "ease", "purpose": "Default for colour, transform and border transitions (300ms)." },
-      { "name": "lift", "value": "translateY(-2px) on buttons, translateY(-6px) on cards, 300ms", "purpose": "Hover response for pressable things." },
-      { "name": "press", "value": "scale(0.98), instant", "purpose": "Active state on primary actions." },
-      { "name": "fade-up", "value": "opacity 0→1 + translateY(24px→0), 700ms ease", "purpose": "Section reveal on scroll." },
-      { "name": "fade-in", "value": "opacity 0→1, 600ms ease", "purpose": "Slider crossfades (hero, testimonials); no translate so the page never jumps." },
-      { "name": "float", "value": "translate(-30px,30px) scale(1.08) at 50%, 14s ease-in-out infinite", "purpose": "Blurred blue orbs behind navy bands." }
+      {
+        "name": "ease-standard",
+        "value": "ease",
+        "purpose": "Default for colour, transform and border transitions (300ms)."
+      },
+      {
+        "name": "lift",
+        "value": "translateY(-2px) on buttons, translateY(-6px) on cards, 300ms",
+        "purpose": "Hover response for pressable things."
+      },
+      {
+        "name": "press",
+        "value": "scale(0.98), instant",
+        "purpose": "Active state on primary actions."
+      },
+      {
+        "name": "fade-up",
+        "value": "opacity 0\u21921 + translateY(24px\u21920), 700ms ease",
+        "purpose": "Section reveal on scroll."
+      },
+      {
+        "name": "fade-in",
+        "value": "opacity 0\u21921, 600ms ease",
+        "purpose": "Slider crossfades (hero, testimonials); no translate so the page never jumps."
+      },
+      {
+        "name": "float",
+        "value": "translate(-30px,30px) scale(1.08) at 50%, 14s ease-in-out infinite",
+        "purpose": "Blurred blue orbs behind navy bands."
+      }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "md", "value": "768px" },
-      { "name": "lg", "value": "1024px" },
-      { "name": "container", "value": "1180px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "container",
+        "value": "1180px"
+      }
     ]
   },
   "components": [
@@ -98,7 +438,7 @@
       "kind": "card",
       "refersTo": "card",
       "description": "22px card with a square image, level and price pills, meta row, title, summary and a two-button footer. Flat at rest, lifts on hover.",
-      "html": "<article class=\"ds-card\"><div class=\"ds-card__media\"><span class=\"ds-card__level\">Beginner</span><span class=\"ds-card__price\">180.000 KWD</span></div><div class=\"ds-card__body\"><div class=\"ds-card__meta\"><span>3 days · 9 hours</span><span>12 Nov</span><span>6 of 10 seats</span></div><h3 class=\"ds-card__title\">Prompt Engineering for Developers</h3><p class=\"ds-card__text\">Write prompts that behave like code: structured, testable, reusable.</p><div class=\"ds-card__actions\"><button class=\"ds-card__ghost\">Details</button><button class=\"ds-card__primary\">Register</button></div></div></article>",
+      "html": "<article class=\"ds-card\"><div class=\"ds-card__media\"><span class=\"ds-card__level\">Beginner</span><span class=\"ds-card__price\">180.000 KWD</span></div><div class=\"ds-card__body\"><div class=\"ds-card__meta\"><span>3 days \u00b7 9 hours</span><span>12 Nov</span><span>6 of 10 seats</span></div><h3 class=\"ds-card__title\">Prompt Engineering for Developers</h3><p class=\"ds-card__text\">Write prompts that behave like code: structured, testable, reusable.</p><div class=\"ds-card__actions\"><button class=\"ds-card__ghost\">Details</button><button class=\"ds-card__primary\">Register</button></div></div></article>",
       "css": ".ds-card { display:flex; flex-direction:column; width:320px; overflow:hidden; border-radius:22px; border:1px solid var(--border-c, #e4e9f1); background:var(--surface, #fff); color:var(--foreground, #182437); font-family:Inter, Arial, sans-serif; transition:all .3s ease; } .ds-card:hover { transform:translateY(-6px); box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); } .ds-card__media { position:relative; aspect-ratio:1/1; background:linear-gradient(135deg, #0b1730, #0f1e3c 50%, #3f6bb0); } .ds-card__level { position:absolute; left:14px; top:14px; padding:4px 12px; border-radius:9999px; background:#fff; color:#3f6bb0; font:700 12px/1.4 Inter, sans-serif; box-shadow:0 1px 2px rgba(0,0,0,0.05); } .ds-card__price { position:absolute; right:14px; top:14px; padding:6px 14px; border-radius:9999px; background:#0f1e3c; color:#fff; font:700 13px/1.4 Inter, sans-serif; } .ds-card__body { display:flex; flex-direction:column; gap:10px; padding:22px; } .ds-card__meta { display:flex; flex-wrap:wrap; gap:14px; color:var(--ink-soft, #55637a); font:600 12.5px/1.4 Inter, sans-serif; } .ds-card__title { margin:0; font:700 19px/1.3 Poppins, Inter, sans-serif; } .ds-card__text { margin:0; color:var(--ink-soft, #55637a); font:400 14px/1.6 Inter, sans-serif; } .ds-card__actions { display:flex; gap:10px; margin-top:8px; } .ds-card__ghost, .ds-card__primary { flex:1; min-height:44px; border-radius:9999px; border:2px solid var(--border-c, #e4e9f1); background:transparent; color:inherit; font:600 14px/1 Inter, sans-serif; cursor:pointer; transition:all .3s ease; } .ds-card__ghost:hover { border-color:#6f9bd4; color:#3f6bb0; } .ds-card__primary { border-color:transparent; background:#4f7fbf; color:#fff; } .ds-card__primary:hover { background:#0f1e3c; }"
     },
     {
@@ -138,11 +478,31 @@
       "Dark mode is a re-skin of the same tokens, not a second design."
     ],
     "rules": [
-      { "name": "The One Signal Rule", "body": "Signal Blue is the only colour that means \"act\". It never decorates: no blue section backgrounds on light pages, no blue body text, no blue icons at rest.", "section": "colors" },
-      { "name": "The Navy Ground Rule", "body": "Navy is a surface, not a text colour. Dark panels (hero, CTA band, footer, link covers) carry white text and blue accents; light panels carry Ink.", "section": "colors" },
-      { "name": "The Eyebrow Rule", "body": "Every section headline on a marketing page is announced by an uppercase label chip (Blue Tint background, Signal Blue Deep text) above it. The chip, not a rule line or icon, is the section marker.", "section": "typography" },
-      { "name": "The 16px Input Rule", "body": "Inputs render at 16px on phones so iOS never zooms the viewport; visual sizes below that are allowed only above 640px.", "section": "typography" },
-      { "name": "The Flat-By-Default Rule", "body": "No card, panel or input has a shadow at rest. Depth is earned by hover, focus or overlap.", "section": "elevation" }
+      {
+        "name": "The One Signal Rule",
+        "body": "Signal Blue is the only colour that means \"act\". It never decorates: no blue section backgrounds on light pages, no blue body text, no blue icons at rest.",
+        "section": "colors"
+      },
+      {
+        "name": "The Navy Ground Rule",
+        "body": "Navy is a surface, not a text colour. Dark panels (hero, CTA band, footer, link covers) carry white text and blue accents; light panels carry Ink.",
+        "section": "colors"
+      },
+      {
+        "name": "The Eyebrow Rule",
+        "body": "Every section headline on a marketing page is announced by an uppercase label chip (Blue Tint background, Signal Blue Deep text) above it. The chip, not a rule line or icon, is the section marker.",
+        "section": "typography"
+      },
+      {
+        "name": "The 16px Input Rule",
+        "body": "Inputs render at 16px on phones so iOS never zooms the viewport; visual sizes below that are allowed only above 640px.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "No card, panel or input has a shadow at rest. Depth is earned by hover, focus or overlap.",
+        "section": "elevation"
+      }
     ],
     "dos": [
       "Do use Signal Blue for exactly one action per view; everything else is Ghost or Navy.",

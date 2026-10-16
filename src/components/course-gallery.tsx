@@ -14,7 +14,7 @@ export function CourseGallery({ images, alt }: { images: string[]; alt: string }
 
   return (
     <div className="mb-7.5">
-      <div className="relative aspect-square overflow-hidden rounded-[22px] shadow-lg">
+      <div className="relative aspect-square overflow-hidden rounded-[22px] border border-border-c">
         <Image src={current} alt={alt} fill priority sizes="(max-width: 1024px) 100vw, 60vw" className="object-cover" />
       </div>
       {safeImages.length > 1 && (

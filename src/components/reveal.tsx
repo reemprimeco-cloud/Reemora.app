@@ -18,7 +18,10 @@ export function Reveal({
   React.useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (!("IntersectionObserver" in window)) {
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const rect = el.getBoundingClientRect();
+    const alreadyInView = rect.top < window.innerHeight * 0.9 && rect.bottom > 0;
+    if (!("IntersectionObserver" in window) || reduced || alreadyInView) {
       setVisible(true);
       return;
     }
@@ -29,7 +32,9 @@ export function Reveal({
           observer.unobserve(el);
         }
       },
-      { threshold: 0.15 }
+      // Fire as soon as any part enters the viewport: a tall section with a
+      // 15% threshold could stay invisible on short phone screens.
+      { threshold: 0.01, rootMargin: "0px 0px -8% 0px" }
     );
     observer.observe(el);
     return () => observer.disconnect();
