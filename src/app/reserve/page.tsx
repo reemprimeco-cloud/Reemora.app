@@ -25,8 +25,8 @@ export default async function ReservePage() {
       <SiteHeader />
       <main className="pb-20 pt-[130px]">
         <div className="mx-auto max-w-[720px] px-6">
-          <Link href="/" className="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600">
-            <ArrowLeft size={15} /> {dict.reservePage.back}
+          <Link href="/" className="-my-2.5 mb-2.5 inline-flex min-h-[40px] items-center gap-1.5 py-2.5 text-sm font-semibold text-blue-600 hover:underline">
+            <ArrowLeft size={15} className="rtl:rotate-180" aria-hidden="true" /> {dict.reservePage.back}
           </Link>
           <div className="mb-8 text-center">
             <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.reservePage.eyebrow}</span>

@@ -41,9 +41,9 @@ export default async function RegisterPage({ params }: Props) {
         <div className="mx-auto max-w-[1180px] px-6">
           <Link
             href={course.registration_open ? "/courses" : `/courses/${course.slug}`}
-            className="mb-5 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600"
+            className="-my-2.5 mb-2.5 inline-flex min-h-[40px] items-center gap-1.5 py-2.5 text-sm font-semibold text-blue-600 hover:underline"
           >
-            <ArrowLeft size={15} /> {course.registration_open ? dict.registerPage.back : dict.registerPage.lockedBack}
+            <ArrowLeft size={15} className="rtl:rotate-180" aria-hidden="true" /> {course.registration_open ? dict.registerPage.back : dict.registerPage.lockedBack}
           </Link>
           {!course.registration_open ? (
             <div className="mx-auto max-w-xl rounded-[22px] border border-border-c bg-surface p-7.5 text-center">

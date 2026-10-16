@@ -89,12 +89,12 @@ export function ContactForm() {
         </div>
         <div>
           <label htmlFor="contact-email" className="mb-1.5 block text-[13.5px] font-semibold">{t.email}</label>
-          <input id="contact-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass(errors.email)} placeholder={t.emailPlaceholder} autoComplete="email" aria-invalid={errors.email || undefined} aria-describedby={errors.email ? "contact-email-error" : undefined} />
+          <input id="contact-email" type="email" inputMode="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass(errors.email)} placeholder={t.emailPlaceholder} autoComplete="email" aria-invalid={errors.email || undefined} aria-describedby={errors.email ? "contact-email-error" : undefined} />
           {errors.email && <p id="contact-email-error" className="mt-1 text-xs text-red-500">{t.emailError}</p>}
         </div>
         <div>
           <label htmlFor="contact-phone" className="mb-1.5 block text-[13.5px] font-semibold">{t.phone} <span className="font-normal text-ink-soft">{t.optional}</span></label>
-          <input id="contact-phone" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass(false)} placeholder={t.phonePlaceholder} autoComplete="tel" />
+          <input id="contact-phone" type="tel" inputMode="tel" dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass(false)} placeholder={t.phonePlaceholder} autoComplete="tel" />
         </div>
         <div>
           <label htmlFor="contact-subject" className="mb-1.5 block text-[13.5px] font-semibold">{t.subject} <span className="font-normal text-ink-soft">{t.optional}</span></label>

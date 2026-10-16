@@ -4,8 +4,10 @@ export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
 
+/** Kuwaiti dinar is quoted to the fils (3 decimals); everything else to 2. */
 export function formatMoney(amount: number, currency = "KWD") {
-  return `${Number(amount).toFixed(2)} ${currency}`;
+  const decimals = currency.toUpperCase() === "KWD" ? 3 : 2;
+  return `${Number(amount).toFixed(decimals)} ${currency}`;
 }
 
 export function formatDate(dateStr: string | null | undefined, lang: "en" | "ar" = "en") {

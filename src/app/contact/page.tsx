@@ -4,7 +4,6 @@ import { SiteFooter } from "@/components/site-footer";
 import { ContactForm } from "@/components/contact-form";
 import { getWebsiteSettings } from "@/lib/data/settings";
 import { getLang, getDict } from "@/lib/i18n/get-lang";
-import { interpolate } from "@/lib/i18n/dictionaries";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -25,7 +24,16 @@ export default async function ContactPage() {
             <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.contactPage.eyebrow}</span>
             <h1 className="mb-3 text-[28px] font-bold sm:text-4xl">{dict.contactPage.title}</h1>
             <p className="text-ink-soft">
-              {interpolate(dict.contactPage.subtitleTemplate, { email: settings.contact_email })}
+              {dict.contactPage.subtitleTemplate.split("{email}").map((part, i, arr) => (
+                <span key={i}>
+                  {part}
+                  {i < arr.length - 1 && (
+                    <a href={`mailto:${settings.contact_email}`} className="font-semibold text-blue-600 hover:underline" dir="ltr">
+                      {settings.contact_email}
+                    </a>
+                  )}
+                </span>
+              ))}
             </p>
           </div>
           <ContactForm />

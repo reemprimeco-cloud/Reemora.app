@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { Plus, Trash2, Tag } from "lucide-react";
+import { Plus, Trash2, Tag, Lock, CreditCard, MessageCircle } from "lucide-react";
 import type { CourseWithRelations, CourseSchedule } from "@/lib/types";
 import { formatDate, formatMoney } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -176,13 +176,11 @@ export function RegisterForm({
 
         <form onSubmit={handleSubmit} noValidate aria-label={t.formLabel}>
           <div className="mb-5">
-            <label htmlFor="reg-course" className="mb-1.5 block text-[13.5px] font-semibold">{t.course}</label>
-            <input
-              id="reg-course"
-              disabled
-              value={`${course.title} — ${formatMoney(course.price, course.currency)}`}
-              className="w-full rounded-xl border border-border-c bg-surface-alt px-4 py-3.5 text-[15px]"
-            />
+            <p className="mb-1.5 text-[13.5px] font-semibold">{t.course}</p>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-xl border border-border-c bg-surface-alt px-4 py-3.5">
+              <span className="text-[15px] font-semibold">{course.title}</span>
+              <span className="text-[15px] font-bold text-blue-600" dir="ltr">{formatMoney(course.price, course.currency)}</span>
+            </div>
             <p className="mt-1 text-xs text-ink-soft">{seatsLeftText}</p>
           </div>
 
@@ -199,10 +197,10 @@ export function RegisterForm({
                   <input id="reg-full-name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={t.fullNamePlaceholder} autoComplete="name" aria-invalid={errors.fullName || undefined} aria-describedby={errors.fullName ? "reg-full-name-error" : undefined} className={inputClass(errors.fullName)} />
                 </Field>
                 <Field id="reg-email" label={t.email} error={errors.email} errorText={t.emailError}>
-                  <input id="reg-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPlaceholder} autoComplete="email" aria-invalid={errors.email || undefined} aria-describedby={errors.email ? "reg-email-error" : undefined} className={inputClass(errors.email)} />
+                  <input id="reg-email" type="email" inputMode="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPlaceholder} autoComplete="email" aria-invalid={errors.email || undefined} aria-describedby={errors.email ? "reg-email-error" : undefined} className={inputClass(errors.email)} />
                 </Field>
                 <Field id="reg-phone" label={t.phone} error={errors.phone} errorText={t.phoneError}>
-                  <input id="reg-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t.phonePlaceholder} autoComplete="tel" aria-invalid={errors.phone || undefined} aria-describedby={errors.phone ? "reg-phone-error" : undefined} className={inputClass(errors.phone)} />
+                  <input id="reg-phone" type="tel" inputMode="tel" dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t.phonePlaceholder} autoComplete="tel" aria-invalid={errors.phone || undefined} aria-describedby={errors.phone ? "reg-phone-error" : undefined} className={inputClass(errors.phone)} />
                 </Field>
               </div>
             </fieldset>
@@ -241,6 +239,8 @@ export function RegisterForm({
                       <input
                         id={`${key}-email`}
                         type="email"
+                        inputMode="email"
+                        dir="ltr"
                         value={a.email}
                         onChange={(e) => updateAttendee(idx, { email: e.target.value })}
                         placeholder={t.emailPlaceholder}
@@ -252,6 +252,9 @@ export function RegisterForm({
                     <Field id={`${key}-phone`} label={t.phone} error={errors[`${key}_phone`]} errorText={t.phoneError}>
                       <input
                         id={`${key}-phone`}
+                        type="tel"
+                        inputMode="tel"
+                        dir="ltr"
                         value={a.phone}
                         onChange={(e) => updateAttendee(idx, { phone: e.target.value })}
                         placeholder={t.phonePlaceholder}
@@ -321,12 +324,16 @@ export function RegisterForm({
 
           <div className="mb-6">
             <label className="flex items-start gap-2.5 text-[13.5px] text-ink-soft">
-              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} aria-invalid={errors.terms || undefined} aria-describedby={errors.terms ? "reg-terms-error" : undefined} className="mt-0.5" />
+              <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} aria-invalid={errors.terms || undefined} aria-describedby={errors.terms ? "reg-terms-error" : undefined} className="mt-0.5 h-5 w-5 shrink-0 rounded accent-blue-500" />
               {t.terms}
             </label>
             {errors.terms && <p id="reg-terms-error" className="mt-1 text-xs text-red-500">{t.termsError}</p>}
           </div>
 
+          <div className="mb-3 flex items-baseline justify-between rounded-xl bg-surface-alt px-4 py-3 lg:hidden" aria-live="polite">
+            <span className="text-sm font-semibold">{isSplit ? t.dueNow : t.totalDueShort}</span>
+            <span className="text-[17px] font-bold" dir="ltr">{formatMoney(isSplit ? dueNow : total, course.currency)}</span>
+          </div>
           <button
             type="submit"
             disabled={submitting}
@@ -345,9 +352,9 @@ export function RegisterForm({
           [t.pricePerSeat, formatMoney(course.price, course.currency)],
           [t.seatsLabel, String(seats)],
         ].map(([label, value]) => (
-          <div key={label} className="flex justify-between border-b border-border-c py-2.5 text-sm">
-            <span>{label}</span>
-            <span>{value}</span>
+          <div key={label} className="flex justify-between gap-4 border-b border-border-c py-2.5 text-sm">
+            <span className="text-ink-soft">{label}</span>
+            <span className="text-end font-semibold">{value}</span>
           </div>
         ))}
         <div className="flex justify-between py-2.5 text-sm">
@@ -377,11 +384,22 @@ export function RegisterForm({
             <span>{formatMoney(total, course.currency)}</span>
           </div>
         )}
-        <div className="mt-4.5 flex flex-wrap gap-2.5">
-          {[t.badgeSecure, t.badgeMf, t.badgeCards].map((b) => (
-            <span key={b} className="rounded-lg border border-border-c bg-surface px-3 py-2 text-xs font-semibold text-ink-soft">{b}</span>
-          ))}
-        </div>
+        {paymentMode === "upayment" ? (
+          <div className="mt-4.5 flex flex-wrap gap-2.5">
+            {[
+              { icon: Lock, label: t.badgeSecure },
+              { icon: CreditCard, label: t.badgeCards },
+            ].map((b) => (
+              <span key={b.label} className="inline-flex items-center gap-1.5 rounded-lg border border-border-c bg-surface px-3 py-2 text-xs font-semibold text-ink-soft">
+                <b.icon size={13} aria-hidden="true" /> {b.label}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4.5 flex items-start gap-2 rounded-lg border border-border-c bg-surface px-3 py-2.5 text-xs text-ink-soft">
+            <MessageCircle size={14} className="mt-0.5 shrink-0 text-green-600" aria-hidden="true" /> {t.whatsappNote}
+          </p>
+        )}
       </div>
     </div>
   );

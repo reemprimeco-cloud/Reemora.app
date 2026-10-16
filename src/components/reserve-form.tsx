@@ -116,6 +116,9 @@ export function ReserveForm({ courses }: { courses: CourseOption[] }) {
           <label htmlFor="res-phone" className="mb-1.5 block text-[13.5px] font-semibold">{t.phone}</label>
           <input
             id="res-phone"
+            type="tel"
+            inputMode="tel"
+            dir="ltr"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             autoComplete="tel"
@@ -131,6 +134,8 @@ export function ReserveForm({ courses }: { courses: CourseOption[] }) {
           <input
             id="res-email"
             type="email"
+            inputMode="email"
+            dir="ltr"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
