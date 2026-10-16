@@ -9,6 +9,7 @@ import { CourseCard } from "@/components/course-card";
 import { Reveal } from "@/components/reveal";
 import { CountUp } from "@/components/count-up";
 import { ShowcaseBuilder } from "@/components/showcase-builder";
+import { CodeVsPrompt } from "@/components/code-vs-prompt";
 import { getCourses } from "@/lib/data/courses";
 import { getLeadInstructor } from "@/lib/data/instructors";
 import { getTestimonials } from "@/lib/data/testimonials";
@@ -81,7 +82,21 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* What you'll build: the page's one authored motion moment */}
+        {/* Two ways to build: code by hand vs one good prompt, side by side */}
+        <section id="compare" className="overflow-hidden bg-surface-alt py-16 sm:py-24">
+          <div className="mx-auto max-w-[1180px] px-5 sm:px-6">
+            <Reveal variant="soft" className="mx-auto mb-10 max-w-2xl text-center sm:mb-14">
+              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.compare.eyebrow}</span>
+              <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.compare.title}</h2>
+              <p className="text-[15px] text-ink-soft sm:text-[17px]">{dict.compare.subtitle}</p>
+            </Reveal>
+            <Reveal variant="soft" delay={120}>
+              <CodeVsPrompt />
+            </Reveal>
+          </div>
+        </section>
+
+        {/* Try it yourself: pick a business, watch the mockup assemble */}
         <section id="showcase" className="overflow-hidden py-16 sm:py-24">
           <div className="mx-auto max-w-[1180px] px-5 sm:px-6">
             <Reveal variant="soft" className="mx-auto mb-10 max-w-2xl text-center sm:mb-14">
