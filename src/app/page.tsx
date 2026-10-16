@@ -10,6 +10,7 @@ import { Reveal } from "@/components/reveal";
 import { CountUp } from "@/components/count-up";
 import { ShowcaseBuilder } from "@/components/showcase-builder";
 import { CodeVsPrompt } from "@/components/code-vs-prompt";
+import { FilmVsPrompt } from "@/components/film-vs-prompt";
 import { getCourses } from "@/lib/data/courses";
 import { getLeadInstructor } from "@/lib/data/instructors";
 import { getTestimonials } from "@/lib/data/testimonials";
@@ -92,6 +93,20 @@ export default async function HomePage() {
             </Reveal>
             <Reveal variant="soft" delay={120}>
               <CodeVsPrompt />
+            </Reveal>
+          </div>
+        </section>
+
+        {/* Content: an animated short the studio way vs with a prompt */}
+        <section id="film" className="overflow-hidden bg-navy-900 py-16 text-white sm:py-24">
+          <div className="mx-auto max-w-[1180px] px-5 sm:px-6">
+            <Reveal variant="soft" className="mx-auto mb-10 max-w-2xl text-center sm:mb-14">
+              <span className="mb-4.5 inline-flex rounded-full bg-white/10 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-400">{dict.film.eyebrow}</span>
+              <h2 className="mb-3.5 text-[24px] font-bold leading-tight text-white sm:text-3xl md:text-4xl">{dict.film.title}</h2>
+              <p className="text-[15px] text-[#b7c5e0] sm:text-[17px]">{dict.film.subtitle}</p>
+            </Reveal>
+            <Reveal variant="soft" delay={120}>
+              <FilmVsPrompt />
             </Reveal>
           </div>
         </section>
