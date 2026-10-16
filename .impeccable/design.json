@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-16T21:00:00Z",
+  "title": "Design System: Reemora",
+  "extensions": {
+    "colorMeta": {
+      "signal-blue": { "role": "primary", "displayName": "Signal Blue", "canonical": "#4f7fbf", "tonalRamp": ["#0b1730", "#142a4f", "#2c4f84", "#3f6bb0", "#4f7fbf", "#6f9bd4", "#a9c4e8", "#e7effa"] },
+      "signal-blue-deep": { "role": "primary", "displayName": "Signal Blue Deep", "canonical": "#3f6bb0", "tonalRamp": ["#0b1730", "#142a4f", "#2c4f84", "#3f6bb0", "#4f7fbf", "#6f9bd4", "#a9c4e8", "#e7effa"] },
+      "signal-blue-light": { "role": "primary", "displayName": "Signal Blue Light", "canonical": "#6f9bd4", "tonalRamp": ["#0b1730", "#142a4f", "#2c4f84", "#3f6bb0", "#4f7fbf", "#6f9bd4", "#a9c4e8", "#e7effa"] },
+      "blue-tint": { "role": "primary", "displayName": "Blue Tint", "canonical": "#e7effa", "tonalRamp": ["#16233d", "#2c4f84", "#4f7fbf", "#8fb4e6", "#c6d3ea", "#d7e2f4", "#e7effa", "#f4f8fd"] },
+      "blue-haze": { "role": "primary", "displayName": "Blue Haze", "canonical": "#f4f8fd", "tonalRamp": ["#0f1830", "#2c4f84", "#4f7fbf", "#8fb4e6", "#c6d3ea", "#d7e2f4", "#e7effa", "#f4f8fd"] },
+      "midnight-navy": { "role": "secondary", "displayName": "Midnight Navy", "canonical": "#0b1730", "tonalRamp": ["#0b1730", "#0f1e3c", "#142a4f", "#1f3a66", "#2c4f84", "#3f6bb0", "#6f9bd4", "#a9c4e8"] },
+      "deep-navy": { "role": "secondary", "displayName": "Deep Navy", "canonical": "#0f1e3c", "tonalRamp": ["#0b1730", "#0f1e3c", "#142a4f", "#1f3a66", "#2c4f84", "#3f6bb0", "#6f9bd4", "#a9c4e8"] },
+      "slate-navy": { "role": "secondary", "displayName": "Slate Navy", "canonical": "#142a4f", "tonalRamp": ["#0b1730", "#0f1e3c", "#142a4f", "#1f3a66", "#2c4f84", "#3f6bb0", "#6f9bd4", "#a9c4e8"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#182437", "tonalRamp": ["#182437", "#2b3a52", "#3f4f6a", "#55637a", "#7a879c", "#a3adbf", "#d0d7e3", "#e4e9f1"] },
+      "ink-soft": { "role": "neutral", "displayName": "Ink Soft", "canonical": "#55637a", "tonalRamp": ["#182437", "#2b3a52", "#3f4f6a", "#55637a", "#7a879c", "#a3adbf", "#d0d7e3", "#e4e9f1"] },
+      "surface": { "role": "neutral", "displayName": "Surface", "canonical": "#ffffff", "tonalRamp": ["#0b1220", "#101a30", "#223251", "#55637a", "#a3adbf", "#e4e9f1", "#f4f8fd", "#ffffff"] },
+      "surface-alt": { "role": "neutral", "displayName": "Surface Alt", "canonical": "#f4f8fd", "tonalRamp": ["#0e1729", "#101a30", "#223251", "#55637a", "#a3adbf", "#e4e9f1", "#f4f8fd", "#ffffff"] },
+      "hairline": { "role": "neutral", "displayName": "Hairline", "canonical": "#e4e9f1", "tonalRamp": ["#223251", "#3f4f6a", "#55637a", "#7a879c", "#a3adbf", "#d0d7e3", "#e4e9f1", "#f4f8fd"] },
+      "night-ground": { "role": "neutral", "displayName": "Night Ground (dark mode)", "canonical": "#0b1220", "tonalRamp": ["#0b1220", "#0e1729", "#101a30", "#16233d", "#223251", "#3f4f6a", "#93a1bd", "#e6ecf7"] },
+      "night-surface": { "role": "neutral", "displayName": "Night Surface (dark mode)", "canonical": "#101a30", "tonalRamp": ["#0b1220", "#0e1729", "#101a30", "#16233d", "#223251", "#3f4f6a", "#93a1bd", "#e6ecf7"] },
+      "night-surface-alt": { "role": "neutral", "displayName": "Night Surface Alt (dark mode)", "canonical": "#0e1729", "tonalRamp": ["#0b1220", "#0e1729", "#101a30", "#16233d", "#223251", "#3f4f6a", "#93a1bd", "#e6ecf7"] },
+      "night-hairline": { "role": "neutral", "displayName": "Night Hairline (dark mode)", "canonical": "#223251", "tonalRamp": ["#0b1220", "#0e1729", "#101a30", "#16233d", "#223251", "#3f4f6a", "#93a1bd", "#e6ecf7"] },
+      "night-ink": { "role": "neutral", "displayName": "Night Ink (dark mode)", "canonical": "#e6ecf7", "tonalRamp": ["#0b1220", "#223251", "#3f4f6a", "#55637a", "#93a1bd", "#c6d3ea", "#e6ecf7", "#ffffff"] },
+      "night-ink-soft": { "role": "neutral", "displayName": "Night Ink Soft (dark mode)", "canonical": "#93a1bd", "tonalRamp": ["#0b1220", "#223251", "#3f4f6a", "#55637a", "#93a1bd", "#c6d3ea", "#e6ecf7", "#ffffff"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero headline only; one accent word in Signal Blue Light." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles, always under an eyebrow chip." },
+      "title": { "displayName": "Title", "purpose": "Card, post and profile titles." },
+      "body": { "displayName": "Body", "purpose": "Running text; 17px for section lead paragraphs." },
+      "label": { "displayName": "Label", "purpose": "Eyebrow chips, legends and tiny status pills; uppercase with tracking." },
+      "arabic": { "displayName": "Arabic", "purpose": "Replaces both display and body when lang=ar; line-height 1.7." }
+    },
+    "shadows": [
+      { "name": "pressable", "value": "0 1px 2px rgba(0,0,0,0.05)", "purpose": "Primary CTA buttons at rest." },
+      { "name": "lifted", "value": "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)", "purpose": "Link cards on hover, with translateY(-6px)." },
+      { "name": "floating", "value": "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)", "purpose": "Small overlapping badge or stat card." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "ease", "purpose": "Default for colour, transform and border transitions (300ms)." },
+      { "name": "lift", "value": "translateY(-2px) on buttons, translateY(-6px) on cards, 300ms", "purpose": "Hover response for pressable things." },
+      { "name": "press", "value": "scale(0.98), instant", "purpose": "Active state on primary actions." },
+      { "name": "fade-up", "value": "opacity 0→1 + translateY(24px→0), 700ms ease", "purpose": "Section reveal on scroll." },
+      { "name": "fade-in", "value": "opacity 0→1, 600ms ease", "purpose": "Slider crossfades (hero, testimonials); no translate so the page never jumps." },
+      { "name": "float", "value": "translate(-30px,30px) scale(1.08) at 50%, 14s ease-in-out infinite", "purpose": "Blurred blue orbs behind navy bands." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "container", "value": "1180px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one action per view. Signal Blue pill that lifts and turns navy on hover.",
+      "html": "<button class=\"ds-btn-primary\">Reserve your seat</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:52px; padding:14px 28px; border-radius:9999px; border:2px solid transparent; background:var(--blue-500, #4f7fbf); color:#fff; font:600 15px/1 Inter, Arial, sans-serif; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition:all .3s ease; cursor:pointer; } .ds-btn-primary:hover { background:var(--navy-800, #0f1e3c); transform:translateY(-2px); } .ds-btn-primary:focus-visible { outline:none; box-shadow:0 0 0 4px rgba(111,155,212,0.35); } .ds-btn-primary:active { transform:scale(0.98); }"
+    },
+    {
+      "name": "Navy Button",
+      "kind": "button",
+      "refersTo": "button-navy",
+      "description": "Secondary marketing action and the header CTA.",
+      "html": "<button class=\"ds-btn-navy\">Browse courses</button>",
+      "css": ".ds-btn-navy { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:14px 28px; border-radius:9999px; border:2px solid transparent; background:var(--navy-800, #0f1e3c); color:#fff; font:600 15px/1 Inter, Arial, sans-serif; transition:all .3s ease; cursor:pointer; } .ds-btn-navy:hover { background:var(--blue-600, #3f6bb0); transform:translateY(-2px); } .ds-btn-navy:focus-visible { outline:none; box-shadow:0 0 0 4px rgba(111,155,212,0.35); }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Default for secondary and tertiary actions: white pill with a hairline border that turns blue on hover.",
+      "html": "<button class=\"ds-btn-ghost\">View details</button>",
+      "css": ".ds-btn-ghost { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:10px 20px; border-radius:9999px; border:2px solid var(--border-c, #e4e9f1); background:var(--surface, #fff); color:var(--foreground, #182437); font:600 14px/1 Inter, Arial, sans-serif; transition:all .3s ease; cursor:pointer; } .ds-btn-ghost:hover { border-color:var(--blue-400, #6f9bd4); color:var(--blue-600, #3f6bb0); } .ds-btn-ghost:focus-visible { outline:none; box-shadow:0 0 0 4px rgba(111,155,212,0.35); }"
+    },
+    {
+      "name": "Eyebrow Chip",
+      "kind": "chip",
+      "refersTo": "chip-eyebrow",
+      "description": "Uppercase label that opens every marketing section.",
+      "html": "<span class=\"ds-chip-eyebrow\">Why Reemora</span>",
+      "css": ".ds-chip-eyebrow { display:inline-flex; align-items:center; padding:6px 14px; border-radius:9999px; background:var(--blue-100, #e7effa); color:var(--blue-600, #3f6bb0); font:700 13px/1.3 Inter, Arial, sans-serif; letter-spacing:.05em; text-transform:uppercase; }"
+    },
+    {
+      "name": "Status Chip",
+      "kind": "chip",
+      "refersTo": "chip-eyebrow",
+      "description": "Small semantic pill for states: approved, pending, project, suspended.",
+      "html": "<span class=\"ds-chip-status ds-chip-status--ok\">Approved</span> <span class=\"ds-chip-status ds-chip-status--warn\">Pending</span> <span class=\"ds-chip-status ds-chip-status--bad\">Suspended</span>",
+      "css": ".ds-chip-status { display:inline-flex; align-items:center; padding:3px 10px; margin-right:6px; border-radius:9999px; font:700 11px/1.4 Inter, Arial, sans-serif; } .ds-chip-status--ok { background:#dcfce7; color:#15803d; } .ds-chip-status--warn { background:#fef3c7; color:#b45309; } .ds-chip-status--bad { background:#fee2e2; color:#dc2626; }"
+    },
+    {
+      "name": "Course Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "22px card with a square image, level and price pills, meta row, title, summary and a two-button footer. Flat at rest, lifts on hover.",
+      "html": "<article class=\"ds-card\"><div class=\"ds-card__media\"><span class=\"ds-card__level\">Beginner</span><span class=\"ds-card__price\">180.000 KWD</span></div><div class=\"ds-card__body\"><div class=\"ds-card__meta\"><span>3 days · 9 hours</span><span>12 Nov</span><span>6 of 10 seats</span></div><h3 class=\"ds-card__title\">Prompt Engineering for Developers</h3><p class=\"ds-card__text\">Write prompts that behave like code: structured, testable, reusable.</p><div class=\"ds-card__actions\"><button class=\"ds-card__ghost\">Details</button><button class=\"ds-card__primary\">Register</button></div></div></article>",
+      "css": ".ds-card { display:flex; flex-direction:column; width:320px; overflow:hidden; border-radius:22px; border:1px solid var(--border-c, #e4e9f1); background:var(--surface, #fff); color:var(--foreground, #182437); font-family:Inter, Arial, sans-serif; transition:all .3s ease; } .ds-card:hover { transform:translateY(-6px); box-shadow:0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); } .ds-card__media { position:relative; aspect-ratio:1/1; background:linear-gradient(135deg, #0b1730, #0f1e3c 50%, #3f6bb0); } .ds-card__level { position:absolute; left:14px; top:14px; padding:4px 12px; border-radius:9999px; background:#fff; color:#3f6bb0; font:700 12px/1.4 Inter, sans-serif; box-shadow:0 1px 2px rgba(0,0,0,0.05); } .ds-card__price { position:absolute; right:14px; top:14px; padding:6px 14px; border-radius:9999px; background:#0f1e3c; color:#fff; font:700 13px/1.4 Inter, sans-serif; } .ds-card__body { display:flex; flex-direction:column; gap:10px; padding:22px; } .ds-card__meta { display:flex; flex-wrap:wrap; gap:14px; color:var(--ink-soft, #55637a); font:600 12.5px/1.4 Inter, sans-serif; } .ds-card__title { margin:0; font:700 19px/1.3 Poppins, Inter, sans-serif; } .ds-card__text { margin:0; color:var(--ink-soft, #55637a); font:400 14px/1.6 Inter, sans-serif; } .ds-card__actions { display:flex; gap:10px; margin-top:8px; } .ds-card__ghost, .ds-card__primary { flex:1; min-height:44px; border-radius:9999px; border:2px solid var(--border-c, #e4e9f1); background:transparent; color:inherit; font:600 14px/1 Inter, sans-serif; cursor:pointer; transition:all .3s ease; } .ds-card__ghost:hover { border-color:#6f9bd4; color:#3f6bb0; } .ds-card__primary { border-color:transparent; background:#4f7fbf; color:#fff; } .ds-card__primary:hover { background:#0f1e3c; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Haze-filled field with a hairline stroke; turns white with a blue ring on focus.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field__label\">Display name</span><input class=\"ds-input\" placeholder=\"Reem Al Faraj\" /><span class=\"ds-field__hint\">This is what other members see.</span></label>",
+      "css": ".ds-field { display:block; width:320px; font-family:Inter, Arial, sans-serif; color:var(--foreground, #182437); } .ds-field__label { display:block; margin-bottom:6px; font:600 13.5px/1.4 Inter, sans-serif; } .ds-input { display:block; width:100%; box-sizing:border-box; padding:14px 16px; border-radius:12px; border:1px solid var(--border-c, #e4e9f1); background:var(--surface-alt, #f4f8fd); color:inherit; font:400 15px/1.4 Inter, sans-serif; outline:none; transition:all .2s ease; } .ds-input::placeholder { color:#8a95a8; } .ds-input:focus { background:var(--surface, #fff); border-color:#6f9bd4; box-shadow:0 0 0 4px rgba(111,155,212,0.15); } .ds-field__hint { display:block; margin-top:4px; color:var(--ink-soft, #55637a); font:400 12px/1.4 Inter, sans-serif; }"
+    },
+    {
+      "name": "Site Navigation",
+      "kind": "nav",
+      "refersTo": "button-navy",
+      "description": "Header links with a blue-tint pill on the active route and a navy pill CTA.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav__link ds-nav__link--active\" href=\"#\">Home</a><a class=\"ds-nav__link\" href=\"#\">Courses</a><a class=\"ds-nav__link\" href=\"#\">Lounge</a><a class=\"ds-nav__link\" href=\"#\">Contact</a><a class=\"ds-nav__cta\" href=\"#\">Reserve a seat</a></nav>",
+      "css": ".ds-nav { display:flex; align-items:center; gap:4px; padding:10px 16px; border-radius:16px; background:var(--surface, #fff); border:1px solid var(--border-c, #e4e9f1); font-family:Inter, Arial, sans-serif; } .ds-nav__link { padding:8px 14px; border-radius:9999px; color:var(--foreground, #182437); font:600 15px/1 Inter, sans-serif; text-decoration:none; transition:all .2s ease; } .ds-nav__link:hover { color:#3f6bb0; background:var(--surface-alt, #f4f8fd); } .ds-nav__link--active { background:var(--blue-100, #e7effa); color:#3f6bb0; } .ds-nav__cta { margin-left:12px; padding:10px 20px; border-radius:9999px; background:#0f1e3c; color:#fff; font:600 14px/1 Inter, sans-serif; text-decoration:none; transition:all .3s ease; } .ds-nav__cta:hover { background:#3f6bb0; }"
+    },
+    {
+      "name": "Navy Band",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "The signature gradient panel with drifting blue orbs: hero, final CTA, profile headers and link covers.",
+      "html": "<section class=\"ds-band\"><span class=\"ds-band__orb ds-band__orb--a\"></span><span class=\"ds-band__orb ds-band__orb--b\"></span><div class=\"ds-band__content\"><span class=\"ds-band__eyebrow\">Reemora Training</span><h2 class=\"ds-band__title\">Build apps with <em>AI</em>, not slides.</h2><p class=\"ds-band__text\">Hands-on cohorts in Kuwait. Leave with a working product.</p><div class=\"ds-band__actions\"><button class=\"ds-band__primary\">Browse courses</button><button class=\"ds-band__outline\">Meet your trainer</button></div></div></section>",
+      "css": ".ds-band { position:relative; overflow:hidden; width:560px; padding:48px 40px; border-radius:22px; background:linear-gradient(135deg, #0b1730, #0f1e3c 55%, #3f6bb0); color:#fff; font-family:Inter, Arial, sans-serif; } .ds-band__orb { position:absolute; border-radius:9999px; filter:blur(60px); background:rgba(111,155,212,0.35); animation:ds-float 14s ease-in-out infinite; } .ds-band__orb--a { right:-80px; top:-100px; width:320px; height:320px; } .ds-band__orb--b { left:-60px; bottom:-80px; width:240px; height:240px; animation-delay:-6s; } @keyframes ds-float { 0%,100% { transform:translate(0,0) scale(1); } 50% { transform:translate(-30px,30px) scale(1.08); } } .ds-band__content { position:relative; z-index:1; } .ds-band__eyebrow { display:inline-flex; padding:6px 14px; margin-bottom:18px; border-radius:9999px; background:rgba(255,255,255,0.1); color:#cfe0f8; font:700 13px/1.3 Inter, sans-serif; letter-spacing:.05em; text-transform:uppercase; } .ds-band__title { margin:0 0 14px; font:700 38px/1.15 Poppins, Inter, sans-serif; } .ds-band__title em { font-style:normal; color:#6f9bd4; } .ds-band__text { margin:0 0 28px; max-width:420px; color:#c6d3ea; font:400 17px/1.6 Inter, sans-serif; } .ds-band__actions { display:flex; gap:14px; flex-wrap:wrap; } .ds-band__primary, .ds-band__outline { min-height:52px; padding:14px 28px; border-radius:9999px; border:2px solid transparent; font:600 15px/1 Inter, sans-serif; cursor:pointer; transition:all .3s ease; } .ds-band__primary { background:#4f7fbf; color:#fff; box-shadow:0 1px 2px rgba(0,0,0,0.05); } .ds-band__primary:hover { background:#0f1e3c; transform:translateY(-2px); } .ds-band__outline { background:transparent; border-color:#fff; color:#fff; } .ds-band__outline:hover { background:#fff; color:#0f1e3c; transform:translateY(-2px); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Builder's Studio",
+    "overview": "Reemora looks like a well-lit workshop run by someone who ships. Deep navy is the ground the studio stands on: it carries the hero, the footer, the admin frame and every dark-mode surface, and it signals seriousness without coldness. One blue does all the pointing. It is the only colour that asks for a click, so when it appears the eye already knows what to do. Everything else is white, haze-blue panels and hairline borders, which keeps the member's own work (screenshots, projects, chat) as the brightest thing on the page.\n\nThe system is tactile and confident. Controls are pills with real weight that lift a few pixels on hover; cards sit flat on the page and rise with a soft shadow only when touched. Density is comfortable rather than tight: sections breathe at 64 to 96 pixels, content maxes out at 1180 pixels, and body copy never drops below 15 pixels. Arabic is a first-class rendering, not a translation layer: the whole page switches to Tajawal with extra line height and mirrors through logical properties.",
+    "keyCharacteristics": [
+      "Midnight navy ground, one Signal Blue for action, white and haze panels for content.",
+      "Pill-shaped controls everywhere; 22px radius for cards, 12px for inputs and small panels.",
+      "Flat at rest, lifted on interaction: shadows are a response, never a default.",
+      "Poppins headings, Inter body, Tajawal for Arabic, with RTL handled by logical properties.",
+      "Comfortable rhythm: 1180px container, 64/96px section padding, 44px minimum touch targets.",
+      "Dark mode is a re-skin of the same tokens, not a second design."
+    ],
+    "rules": [
+      { "name": "The One Signal Rule", "body": "Signal Blue is the only colour that means \"act\". It never decorates: no blue section backgrounds on light pages, no blue body text, no blue icons at rest.", "section": "colors" },
+      { "name": "The Navy Ground Rule", "body": "Navy is a surface, not a text colour. Dark panels (hero, CTA band, footer, link covers) carry white text and blue accents; light panels carry Ink.", "section": "colors" },
+      { "name": "The Eyebrow Rule", "body": "Every section headline on a marketing page is announced by an uppercase label chip (Blue Tint background, Signal Blue Deep text) above it. The chip, not a rule line or icon, is the section marker.", "section": "typography" },
+      { "name": "The 16px Input Rule", "body": "Inputs render at 16px on phones so iOS never zooms the viewport; visual sizes below that are allowed only above 640px.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "No card, panel or input has a shadow at rest. Depth is earned by hover, focus or overlap.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Signal Blue for exactly one action per view; everything else is Ghost or Navy.",
+      "Do keep every interactive element a pill, 44px tall on marketing pages and 40px in app UI.",
+      "Do start marketing sections with an eyebrow chip, then a Headline, then a 17px lead paragraph capped near 65 characters.",
+      "Do separate surfaces by tone and a 1px Hairline, and reserve shadows for hover and overlap.",
+      "Do write layout with logical properties so Arabic mirrors correctly, and test every surface in both languages and both themes.",
+      "Do let member work be the brightest thing on the page: full-bleed screenshots, white cards, muted chrome."
+    ],
+    "donts": [
+      "Don't add a blue section background, blue body text or blue icons at rest on light pages.",
+      "Don't put a shadow on a card, panel or input at rest.",
+      "Don't introduce a third brand colour or a new accent for emphasis; use weight, size and Signal Blue.",
+      "Don't mix corner radii inside one component; images take the container's clip, never their own radius.",
+      "Don't drop body copy below 15px or inputs below 16px on phones.",
+      "Don't use a second display face or decorative type; Poppins and Inter (Tajawal in Arabic) are the full set."
+    ]
+  }
+}
