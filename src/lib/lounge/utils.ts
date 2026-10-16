@@ -56,14 +56,7 @@ export function socialLinksOf(value: unknown): LoungeSocialLinks {
   return out;
 }
 
-/** Host name for a safe external link label, e.g. "github.com". */
-export function hostOf(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
-}
+export { hostOf } from "@/lib/lounge/social";
 
 /** A profile counts as complete when it has a picture, a bio, at least one
  *  skill and at least one link. Mirrors lounge_evaluate_achievements(). */

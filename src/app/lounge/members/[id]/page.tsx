@@ -14,6 +14,7 @@ import { TrophyCase } from "@/components/lounge/trophy-case";
 import { PostCard } from "@/components/lounge/post-card";
 import { ReportButton } from "@/components/lounge/report-button";
 import { socialLinksOf, hostOf, formatDateTime } from "@/lib/lounge/utils";
+import { linkLabel } from "@/lib/lounge/social";
 import { loadPostsByAuthor } from "@/lib/lounge/feed";
 import { formatDate } from "@/lib/utils";
 
@@ -57,12 +58,12 @@ export default async function MemberProfilePage({ params }: Props) {
   const isSelf = member.user_id === viewer.user!.id;
   const contact = contactRows?.[0] ?? { email: null, phone: null };
   const links = socialLinksOf(member.social_links);
-  const linkRows: { icon: typeof Globe; label: string; href: string }[] = [];
-  if (member.website_url) linkRows.push({ icon: Globe, label: hostOf(member.website_url), href: member.website_url });
+  const linkRows: { icon: typeof Globe; label: string; title: string; href: string }[] = [];
+  if (member.website_url) linkRows.push({ icon: Globe, label: hostOf(member.website_url), title: t.website, href: member.website_url });
   const iconFor = { instagram: Camera, linkedin: Briefcase, x: AtSign, youtube: Play, github: Code2, other: Link2 } as const;
   for (const key of ["instagram", "linkedin", "x", "youtube", "github", "other"] as const) {
     const href = links[key];
-    if (href) linkRows.push({ icon: iconFor[key], label: t[key], href });
+    if (href) linkRows.push({ icon: iconFor[key], label: linkLabel(key, href), title: t[key], href });
   }
 
   type AwardRow = NonNullable<typeof awards>[number] & { challenge: { id: string; title: string } | { id: string; title: string }[] | null };
@@ -136,7 +137,7 @@ export default async function MemberProfilePage({ params }: Props) {
           {(linkRows.length > 0 || contact.email || contact.phone) && (
             <div className="mt-5 flex flex-wrap gap-2">
               {linkRows.map((l) => (
-                <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 rounded-full border border-border-c bg-surface px-3.5 py-1.5 text-xs font-semibold transition hover:border-blue-400 hover:text-blue-600">
+                <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer nofollow" title={l.title} aria-label={`${l.title}: ${l.label}`} dir="ltr" className="inline-flex items-center gap-1.5 rounded-full border border-border-c bg-surface px-3.5 py-1.5 text-xs font-semibold transition hover:border-blue-400 hover:text-blue-600">
                   <l.icon size={13} aria-hidden="true" /> {l.label}
                 </a>
               ))}

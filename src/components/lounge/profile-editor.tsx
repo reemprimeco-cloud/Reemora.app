@@ -10,7 +10,9 @@ import { useToast } from "@/components/toast-provider";
 import { Avatar } from "@/components/lounge/avatar";
 import { Field, Banner, inputClass } from "@/components/lounge/form-field";
 import { socialLinksOf, isProfileComplete } from "@/lib/lounge/utils";
-import { isSafeHttpUrl, SOCIAL_KEYS, type SocialKey } from "@/lib/lounge/validation";
+import { SOCIAL_KEYS, type SocialKey } from "@/lib/lounge/validation";
+import { normalizeLink, editableValue, socialPrefix } from "@/lib/lounge/social";
+import { cn } from "@/lib/utils";
 import type { LoungeMemberRow } from "@/lib/supabase/lounge.types";
 
 export function ProfileEditor({ member, email, phone }: { member: LoungeMemberRow; email: string | null; phone: string | null }) {
@@ -22,10 +24,12 @@ export function ProfileEditor({ member, email, phone }: { member: LoungeMemberRo
   const [displayName, setDisplayName] = React.useState(member.display_name);
   const [bio, setBio] = React.useState(member.bio ?? "");
   const [skills, setSkills] = React.useState(member.skills.join(", "));
-  const [websiteUrl, setWebsiteUrl] = React.useState(member.website_url ?? "");
+  // Inputs hold what the member types (a handle or bare domain); the
+  // canonical https URL is derived on validate/submit via normalizeLink().
+  const [websiteUrl, setWebsiteUrl] = React.useState(() => editableValue("website", member.website_url));
   const [social, setSocial] = React.useState<Record<SocialKey, string>>(() => {
     const links = socialLinksOf(member.social_links);
-    return Object.fromEntries(SOCIAL_KEYS.map((k) => [k, links[k] ?? ""])) as Record<SocialKey, string>;
+    return Object.fromEntries(SOCIAL_KEYS.map((k) => [k, editableValue(k, links[k])])) as Record<SocialKey, string>;
   });
   const [showEmail, setShowEmail] = React.useState(member.show_email);
   const [showPhone, setShowPhone] = React.useState(member.show_phone);
@@ -58,9 +62,9 @@ export function ProfileEditor({ member, email, phone }: { member: LoungeMemberRo
   function validate() {
     const next: Record<string, string> = {};
     if (displayName.trim().length < 2 || displayName.trim().length > 80) next.displayName = t.displayNameError;
-    if (websiteUrl.trim() && !isSafeHttpUrl(websiteUrl.trim())) next.websiteUrl = t.urlError;
+    if (normalizeLink("website", websiteUrl) === null) next.websiteUrl = t.urlError;
     for (const k of SOCIAL_KEYS) {
-      if (social[k].trim() && !isSafeHttpUrl(social[k].trim())) next[`socialLinks.${k}`] = t.urlError;
+      if (normalizeLink(k, social[k]) === null) next[`socialLinks.${k}`] = t.urlError;
     }
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -79,8 +83,8 @@ export function ProfileEditor({ member, email, phone }: { member: LoungeMemberRo
           displayName: displayName.trim(),
           bio,
           skills,
-          websiteUrl: websiteUrl.trim(),
-          socialLinks: Object.fromEntries(SOCIAL_KEYS.map((k) => [k, social[k].trim()])),
+          websiteUrl: normalizeLink("website", websiteUrl) ?? "",
+          socialLinks: Object.fromEntries(SOCIAL_KEYS.map((k) => [k, normalizeLink(k, social[k]) ?? ""])),
           showEmail,
           showPhone,
           avatarUrl: avatarUrl ?? "",
@@ -101,7 +105,8 @@ export function ProfileEditor({ member, email, phone }: { member: LoungeMemberRo
     }
   }
 
-  const complete = isProfileComplete({ avatar_url: avatarUrl, bio, skills: skills.split(",").map((s) => s.trim()).filter(Boolean), website_url: websiteUrl || null, social_links: social });
+  const normalizedSocial = Object.fromEntries(SOCIAL_KEYS.map((k) => [k, normalizeLink(k, social[k]) || ""]));
+  const complete = isProfileComplete({ avatar_url: avatarUrl, bio, skills: skills.split(",").map((s) => s.trim()).filter(Boolean), website_url: normalizeLink("website", websiteUrl) || null, social_links: normalizedSocial });
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
@@ -129,8 +134,8 @@ export function ProfileEditor({ member, email, phone }: { member: LoungeMemberRo
           <Field id="p-skills" label={t.skills} hint={t.skillsHint}>
             <input id="p-skills" value={skills} onChange={(e) => setSkills(e.target.value)} className={inputClass()} />
           </Field>
-          <Field id="p-web" label={t.website} error={errors.websiteUrl}>
-            <input id="p-web" type="url" dir="ltr" value={websiteUrl} onChange={(e) => setWebsiteUrl(e.target.value)} placeholder="https://" className={inputClass(Boolean(errors.websiteUrl))} />
+          <Field id="p-web" label={t.website} hint={t.websiteHint} error={errors.websiteUrl}>
+            <PrefixedInput id="p-web" prefix={socialPrefix("website")} value={websiteUrl} onChange={setWebsiteUrl} placeholder="reemora.app" error={Boolean(errors.websiteUrl)} />
           </Field>
 
           <fieldset className="rounded-xl border border-border-c bg-surface-alt p-4">
@@ -139,7 +144,7 @@ export function ProfileEditor({ member, email, phone }: { member: LoungeMemberRo
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {SOCIAL_KEYS.map((k) => (
                 <Field key={k} id={`p-${k}`} label={t[k]} error={errors[`socialLinks.${k}`]}>
-                  <input id={`p-${k}`} type="url" dir="ltr" value={social[k]} onChange={(e) => setSocial((s) => ({ ...s, [k]: e.target.value }))} placeholder="https://" className={inputClass(Boolean(errors[`socialLinks.${k}`]), "bg-surface")} />
+                  <PrefixedInput id={`p-${k}`} prefix={socialPrefix(k)} value={social[k]} onChange={(v) => setSocial((s) => ({ ...s, [k]: v }))} placeholder={k === "other" ? "example.com/you" : "username"} error={Boolean(errors[`socialLinks.${k}`])} className="bg-surface" />
                 </Field>
               ))}
             </div>
@@ -183,5 +188,54 @@ export function ProfileEditor({ member, email, phone }: { member: LoungeMemberRo
         </ul>
       </aside>
     </form>
+  );
+}
+
+/** Text input with a fixed, non-editable prefix such as "instagram.com/",
+ *  so members type only their handle. A pasted full URL still works: the
+ *  prefix fades out once the value carries its own scheme. */
+function PrefixedInput({
+  id,
+  prefix,
+  value,
+  onChange,
+  placeholder,
+  error,
+  className,
+}: {
+  id: string;
+  prefix: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  error?: boolean;
+  className?: string;
+}) {
+  const hasScheme = /^https?:\/\//i.test(value.trim());
+  return (
+    <div
+      dir="ltr"
+      className={cn(
+        "flex w-full items-center gap-1 rounded-xl border bg-surface-alt text-[15px] transition focus-within:bg-surface focus-within:ring-4 focus-within:ring-blue-400/15",
+        error ? "border-red-400" : "border-border-c focus-within:border-blue-400",
+        className
+      )}
+    >
+      <span aria-hidden="true" className={cn("select-none whitespace-nowrap ps-4 text-[15px] text-ink-soft transition-opacity", hasScheme && "hidden")}>
+        {prefix}
+      </span>
+      <input
+        id={id}
+        type="text"
+        inputMode="url"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={cn("min-w-0 flex-1 bg-transparent py-3 pe-4 text-[15px] outline-none", hasScheme && "ps-4")}
+      />
+    </div>
   );
 }

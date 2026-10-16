@@ -1,16 +1,11 @@
 import { z } from "zod";
 
+import { isSafeHttpUrl, normalizeLink, SOCIAL_KEYS, type SocialKey } from "@/lib/lounge/social";
+
 /** Only absolute http(s) links are accepted anywhere a member can paste a
  *  URL — this rules out javascript:, data: and protocol-relative values
- *  before they ever reach an <a href>. */
-export function isSafeHttpUrl(value: string): boolean {
-  try {
-    const u = new URL(value);
-    return (u.protocol === "https:" || u.protocol === "http:") && Boolean(u.hostname) && value.length <= 300;
-  } catch {
-    return false;
-  }
-}
+ *  before they ever reach an <a href>. Re-exported from social.ts. */
+export { isSafeHttpUrl, SOCIAL_KEYS, type SocialKey };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
@@ -52,22 +47,35 @@ export const joinSchema = z.object({
   agreed: z.literal(true),
 });
 
-export const SOCIAL_KEYS = ["instagram", "linkedin", "x", "youtube", "github", "other"] as const;
-export type SocialKey = (typeof SOCIAL_KEYS)[number];
+/** Profile links: a bare username ("prime_kw"), a bare domain
+ *  ("reemora.app") or a full URL. Stored as a canonical https URL. */
+const profileLink = (key: SocialKey | "website") =>
+  z
+    .string()
+    .trim()
+    .max(300)
+    .transform((v, ctx) => {
+      const out = normalizeLink(key, v);
+      if (out === null) {
+        ctx.addIssue({ code: "custom", message: "Invalid URL" });
+        return z.NEVER;
+      }
+      return out === "" ? null : out;
+    });
 
 export const profileSchema = z.object({
   displayName: trimmed(80, 2),
   bio: trimmed(600).transform((v) => v || null),
   skills: csvList(15),
-  websiteUrl: optionalUrl,
+  websiteUrl: profileLink("website"),
   socialLinks: z
     .object({
-      instagram: optionalUrl.optional(),
-      linkedin: optionalUrl.optional(),
-      x: optionalUrl.optional(),
-      youtube: optionalUrl.optional(),
-      github: optionalUrl.optional(),
-      other: optionalUrl.optional(),
+      instagram: profileLink("instagram").optional(),
+      linkedin: profileLink("linkedin").optional(),
+      x: profileLink("x").optional(),
+      youtube: profileLink("youtube").optional(),
+      github: profileLink("github").optional(),
+      other: profileLink("other").optional(),
     })
     .transform((links) => {
       const out: Record<string, string> = {};
