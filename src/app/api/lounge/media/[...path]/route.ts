@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser, jsonError } from "@/lib/lounge/api";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { rateLimit } from "@/lib/rate-limit";
 
 type Params = { params: Promise<{ path: string[] }> };
 const BUCKETS = new Set(["lounge-media", "lounge-files"]);
@@ -22,6 +23,11 @@ export async function GET(request: Request, { params }: Params) {
 
   const ctx = await requireUser();
   if (ctx instanceof NextResponse) return ctx;
+
+  // A feed page loads a few dozen images; 300/min per account is generous
+  // for a person and tight for a scraper.
+  const limit = rateLimit(`media:${ctx.user.id}`, 300, 60_000);
+  if (!limit.ok) return new NextResponse("Too many requests", { status: 429, headers: { "Retry-After": String(limit.retryAfterSec) } });
 
   const isOwner = rest[0] === ctx.user.id;
   if (!isOwner) {

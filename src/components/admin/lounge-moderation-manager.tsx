@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { EyeOff, Eye, Trash2, Check, X, ExternalLink } from "lucide-react";
+import { EyeOff, Eye, Trash2, Check, X, ExternalLink, UserX } from "lucide-react";
 import { useToast } from "@/components/toast-provider";
 import { useConfirm } from "@/components/confirm-dialog";
 import { cn } from "@/lib/utils";
@@ -49,19 +49,42 @@ export function LoungeModerationManager({ reports: initialReports, posts, commen
     return data;
   }
 
-  async function moderate(kind: "post" | "comment" | "chat_message", id: string, action: "hide" | "unhide" | "delete") {
+  async function suspendMember(userId: string, reportId?: string) {
+    if (!(await confirm("Suspend this member? They lose Lounge access immediately and are notified.", "Suspend member"))) return;
+    const note = window.prompt("Reason shown to the member (optional):")?.trim() || undefined;
+    setBusy(userId);
+    try {
+      await call({ targetType: "member", targetId: userId, action: "suspend", note });
+      if (reportId) {
+        await call({ targetType: "report", targetId: reportId, action: "resolve", note: "Member suspended" });
+        setReports((prev) => prev.map((r) => (r.id === reportId ? { ...r, status: "resolved" } : r)));
+      }
+      showToast("success", "Member suspended.");
+    } catch (err) {
+      showToast("error", err instanceof Error ? err.message : "Request failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function moderate(kind: "post" | "comment" | "chat_message", id: string, action: "hide" | "unhide" | "delete" | "hide_and_suspend") {
     if (action === "delete" && !(await confirm("Permanently delete this content? This cannot be undone.", "Delete content"))) return;
-    const note = action === "hide" ? window.prompt("Reason shown to the member (optional):")?.trim() : undefined;
+    if (action === "hide_and_suspend" && !(await confirm("Hide this content and suspend its author? They lose Lounge access immediately and are notified.", "Hide and suspend"))) return;
+    const note = action === "hide" || action === "hide_and_suspend" ? window.prompt("Reason shown to the member (optional):")?.trim() : undefined;
     setBusy(id);
     try {
       await call({ targetType: kind, targetId: id, action, note });
       const listKey = kind === "post" ? "posts" : kind === "comment" ? "comments" : "chat";
       setContent((prev) => ({
         ...prev,
-        [listKey]: action === "delete" ? prev[listKey].filter((c) => c.id !== id) : prev[listKey].map((c) => (c.id === id ? { ...c, is_hidden: action === "hide" } : c)),
+        [listKey]: action === "delete" ? prev[listKey].filter((c) => c.id !== id) : prev[listKey].map((c) => (c.id === id ? { ...c, is_hidden: action !== "unhide" } : c)),
       }));
-      setReports((prev) => prev.map((r) => (r.target_id === id ? { ...r, target_hidden: action === "delete" ? null : action === "hide", preview: action === "delete" ? null : r.preview } : r)));
-      showToast("success", `Content ${action === "delete" ? "deleted" : action === "hide" ? "hidden" : "restored"}.`);
+      setReports((prev) => prev.map((r) => (r.target_id === id ? { ...r, target_hidden: action === "delete" ? null : action !== "unhide", preview: action === "delete" ? null : r.preview, status: action === "hide_and_suspend" && r.status === "open" ? "resolved" : r.status } : r)));
+      if (action === "hide_and_suspend") {
+        const open = reports.filter((r) => r.target_id === id && r.status === "open");
+        await Promise.all(open.map((r) => call({ targetType: "report", targetId: r.id, action: "resolve", note: "Hidden and author suspended" }).catch(() => undefined)));
+      }
+      showToast("success", action === "delete" ? "Content deleted." : action === "hide" ? "Content hidden." : action === "hide_and_suspend" ? "Content hidden and author suspended." : "Content restored.");
     } catch (err) {
       showToast("error", err instanceof Error ? err.message : "Request failed");
     } finally {
@@ -156,12 +179,24 @@ export function LoungeModerationManager({ reports: initialReports, posts, commen
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {r.target_type === "member" && (
-                    <a href={`/lounge/members/${r.target_id}`} target="_blank" rel="noopener" className={cn(btn, "border-border-c hover:border-blue-400 hover:text-blue-600")}>
-                      <ExternalLink size={13} /> Profile
-                    </a>
+                    <>
+                      <a href={`/lounge/members/${r.target_id}`} target="_blank" rel="noopener" className={cn(btn, "border-border-c hover:border-blue-400 hover:text-blue-600")}>
+                        <ExternalLink size={13} /> Profile
+                      </a>
+                      {r.status === "open" && (
+                        <button disabled={busy === r.target_id} onClick={() => suspendMember(r.target_id, r.id)} className={cn(btn, "border-red-300 bg-red-50 text-red-600 hover:border-red-500 dark:border-red-900 dark:bg-red-950 dark:text-red-300")} title="Suspend this member and resolve the report">
+                          <UserX size={13} /> Suspend member
+                        </button>
+                      )}
+                    </>
                   )}
                   {r.target_type !== "member" && r.preview !== null && (
                     <>
+                      {r.status === "open" && !r.target_hidden && (
+                        <button disabled={busy === r.target_id} onClick={() => moderate(r.target_type as "post" | "comment" | "chat_message", r.target_id, "hide_and_suspend")} className={cn(btn, "border-red-300 bg-red-50 text-red-600 hover:border-red-500 dark:border-red-900 dark:bg-red-950 dark:text-red-300")} title="Hide the content, suspend its author and resolve the report in one tap">
+                          <UserX size={13} /> Hide + suspend author
+                        </button>
+                      )}
                       <button disabled={busy === r.target_id} onClick={() => moderate(r.target_type as "post" | "comment" | "chat_message", r.target_id, r.target_hidden ? "unhide" : "hide")} className={cn(btn, "border-border-c hover:border-amber-400 hover:text-amber-600")}>
                         {r.target_hidden ? <Eye size={13} /> : <EyeOff size={13} />} {r.target_hidden ? "Unhide" : "Hide"}
                       </button>

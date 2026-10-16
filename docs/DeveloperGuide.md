@@ -80,3 +80,8 @@ Then manually exercise the change in the browser — for UI changes, check both 
 ## Debugging Supabase connectivity
 
 `isSupabaseConfigured` (`src/lib/data/seed-courses.ts`) is `true` only when both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are set. Every data-fetch function logs a `console.error` with the function name and underlying error before falling back to seed data — check the terminal (dev) or Vercel → Deployments → Logs (production) for these when a page renders seed data unexpectedly.
+
+## Tests
+
+- `npm test` — Vitest unit tests (`src/**/*.test.ts`): social link normalisation, Lounge media proxy paths, every Lounge zod schema, and the payment reconciliation decision table with the gateway and database mocked.
+- `npm run test:db` — runs `supabase/tests/lounge_rls.sql` against `$DATABASE_URL` (needs a postgres-level connection). It creates throw-away users, acts as them through the `authenticated` and `anon` roles, asserts the Lounge authorization rules, and always rolls back; the result is reported in the final `LOUNGE_RLS_OK` / `LOUNGE_RLS_FAIL` exception message. The same file can be pasted into the Supabase SQL editor.
