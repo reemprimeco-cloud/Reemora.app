@@ -11,7 +11,7 @@ Phase 1 output: what exists today, what the Lounge adds, and how it is wired in.
 | Authorization | Single helper `public.is_admin()` used by every RLS policy. There is no narrower admin role model to reuse. |
 | Data access | Public pages read through `src/lib/data/*` with the cookie-free client. Admin pages are server shells passing initial data to `"use client"` managers that write to Supabase directly under RLS. Trusted writes (payments, contact) use the service-role client inside `/api/**` route handlers. |
 | Live database | Supabase project `Reemora-Buildapps` (`syrjxgskzvximkwosdna`). 18 tables live. Migrations `0024_course_archive` and `0025_relax_duration_weeks` from this branch are **not applied live yet** (the `course_archive` table does not exist). Realtime publication `supabase_realtime` exists with no tables in it. Buckets: `course-images`, `site-assets`. |
-| Push / PWA | `push_subscriptions` table (admin-only RLS), `src/lib/webpush.ts` (`sendWebPushToAdmins` sends to **every** row), `/api/push/subscribe|unsubscribe`, `public/sw.js` (push only, no caching), `src/app/manifest.ts` (name "Reemora app", SVG + 180px icons). |
+| Push / PWA | `push_subscriptions` table (admin-only RLS), `src/lib/webpush.ts` (`sendWebPushToAdmins` sends to **every** row), `/api/push/subscribe|unsubscribe`, `public/sw.js` (push only, no caching), `src/app/manifest.webmanifest/route.ts` (name "Reemora app", SVG + 180px icons). |
 | i18n | Cookie-based `en`/`ar` with `DIR` → `<html dir>`; dictionaries in `src/lib/i18n/dictionaries.ts`; Tajawal font for Arabic. Admin panel is English only. |
 | Design system | Tokens: `navy-900/800/700`, `blue-600/500/400/100/050`, `surface`, `surface-alt`, `border-c`, `ink-soft`. Rounded-full pills for buttons, `rounded-2xl`/`[22px]` cards, `border-border-c`. Shared primitives: `Button`/`LinkButton`, `useToast`, `useConfirm`, `useCloseOnEscape`, `compressImage`. |
 | Deployment | Vercel, `vercel.json` cron for payment reminders, CSP in `next.config.ts` (`connect-src 'self' https://*.supabase.co` — Realtime uses `wss://*.supabase.co`, which must be added). |
@@ -50,6 +50,7 @@ Phase 1 output: what exists today, what the Lounge adds, and how it is wired in.
 | `0031_lounge_invites.sql` | `lounge_members.invited_at/invited_by`, `invited` membership action |
 | `0032_lounge_verified.sql` | `lounge_members.is_verified`, `lounge_members.badge_label` (admin-only via service role; not in the member update grant) |
 | `0033_lounge_comment_categories_chat_files.sql` | `lounge_comments.category`, chat `attachment_*` columns, body-or-attachment check, `lounge-files` bucket (10 MB) + policies, `lounge-media` limit 5 MB |
+| `0034_lounge_private_media.sql` | `lounge-media` and `lounge-files` buckets set private; public read policies replaced by owner / approved member / admin select; files served via `/api/lounge/media/[...path]` |
 | `0029_lounge_challenges.sql` | `lounge_challenges`, `lounge_challenge_entries`, `lounge_challenge_votes`, `lounge_challenge_awards`, `lounge_cast_vote()`, `lounge_finalize_challenge()` |
 
 Status: all four are **applied to the live project** (recorded in `supabase_migrations.schema_migrations` as versions `20261016120026`–`20261016120029`). They were run as plain SQL in chunks because the Supabase MCP tool stalls on scripts containing `drop`/`revoke` statements; the files in the repo are the source of truth and are idempotent (`if not exists`, `drop ... if exists`).
@@ -60,7 +61,7 @@ Rollback: every object is new, so dropping the `lounge_*` tables (cascade), the 
 
 1. Supabase → Authentication: enable email sign-ups, keep "Confirm email" on, add `https://reemora.app/auth/callback` to Redirect URLs, set Site URL. Configure custom SMTP (e.g. Resend) — the built-in sender is rate-limited to a few emails per hour.
 2. Vercel env: existing vars plus `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (already read by `webpush.ts`).
-3. Migrations `0024_course_archive` and `0025_relax_duration_weeks` from earlier work are still **not applied** live (the admin Course Archive page depends on 0024). Lounge migrations 0026–0033 are applied.
+3. Migrations `0024_course_archive` and `0025_relax_duration_weeks` from earlier work are still **not applied** live (the admin Course Archive page depends on 0024). Lounge migrations 0026–0034 are applied.
 
 ## 6. Verification performed (2026-10-16)
 

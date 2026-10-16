@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Mail, MailOpen, Trash2, Phone, MessageCircle, Reply } from "lucide-react";
+import { Mail, MailOpen, Trash2, Phone, MessageCircle, Reply, Copy } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { SeatReservation } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -79,7 +79,29 @@ function buildEmailReply(
   return { subject, body };
 }
 
-function mailtoHref(email: string, subject: string, body: string): string {
+/** Which program opens when an admin taps an email button. "gmail" uses
+ *  Gmail's compose URL, which the Gmail app on iPhone/Android claims as a
+ *  universal link and desktop browsers open in Gmail web; "default" is a
+ *  plain mailto: handled by whatever the device has (Apple Mail on iPhone). */
+type MailClient = "gmail" | "default";
+const MAIL_CLIENT_KEY = "admin.mailClient";
+
+function readMailClient(): MailClient {
+  try {
+    return window.localStorage.getItem(MAIL_CLIENT_KEY) === "gmail" ? "gmail" : "default";
+  } catch {
+    return "default";
+  }
+}
+
+function gmailHref(opts: { to: string; bcc?: string[]; subject: string; body: string }): string {
+  const params = new URLSearchParams({ view: "cm", fs: "1", to: opts.to, su: opts.subject, body: opts.body });
+  if (opts.bcc?.length) params.set("bcc", opts.bcc.join(","));
+  return `https://mail.google.com/mail/?${params.toString().replace(/\+/g, "%20")}`;
+}
+
+function mailtoHref(email: string, subject: string, body: string, client: MailClient = "default"): string {
+  if (client === "gmail") return gmailHref({ to: email, subject, body });
   const params = new URLSearchParams({ subject, body });
   return `mailto:${email}?${params.toString().replace(/\+/g, "%20")}`;
 }
@@ -90,7 +112,8 @@ function mailtoHref(email: string, subject: string, body: string): string {
  *  no "to" at all, so this keeps the button reliably usable. Opens the
  *  admin's own email client with the whole list pre-filled — no email
  *  service or domain setup needed, which is the whole point of this. */
-function mailtoAllHref(to: string, emails: string[], subject: string, body: string): string {
+function mailtoAllHref(to: string, emails: string[], subject: string, body: string, client: MailClient = "default"): string {
+  if (client === "gmail") return gmailHref({ to, bcc: emails, subject, body });
   const params = new URLSearchParams({ bcc: emails.join(","), subject, body });
   return `mailto:${to}?${params.toString().replace(/\+/g, "%20")}`;
 }
@@ -139,6 +162,18 @@ export function ReservationInbox({
     return seed;
   });
   const [announceCourseId, setAnnounceCourseId] = React.useState("");
+  const [mailClient, setMailClient] = React.useState<MailClient>("default");
+  React.useEffect(() => setMailClient(readMailClient()), []);
+  function chooseMailClient(next: MailClient) {
+    setMailClient(next);
+    try {
+      window.localStorage.setItem(MAIL_CLIENT_KEY, next);
+    } catch {
+      /* private mode */
+    }
+  }
+  const mailTarget = mailClient === "gmail" ? "_blank" : undefined;
+  const mailRel = mailClient === "gmail" ? "noopener noreferrer" : undefined;
   const { showToast } = useToast();
   const confirm = useConfirm();
 
@@ -199,8 +234,27 @@ export function ReservationInbox({
             ))}
           </select>
         </div>
+        <div>
+          <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink-soft">Open emails in</span>
+          <div role="radiogroup" aria-label="Email program" className="flex rounded-lg border border-border-c bg-surface p-0.5">
+            {(["gmail", "default"] as MailClient[]).map((c) => (
+              <button
+                key={c}
+                type="button"
+                role="radio"
+                aria-checked={mailClient === c}
+                onClick={() => chooseMailClient(c)}
+                className={cn("min-h-[32px] rounded-md px-3 text-xs font-semibold transition", mailClient === c ? "bg-blue-100 text-blue-600" : "text-ink-soft hover:text-foreground")}
+              >
+                {c === "gmail" ? "Gmail" : "Mail app"}
+              </button>
+            ))}
+          </div>
+        </div>
         <a
-          href={announcement ? mailtoAllHref(adminEmail, announceEmails, announcement.subject, announcement.emailBody) : undefined}
+          href={announcement ? mailtoAllHref(adminEmail, announceEmails, announcement.subject, announcement.emailBody, mailClient) : undefined}
+          target={announcement ? mailTarget : undefined}
+          rel={announcement ? mailRel : undefined}
           aria-disabled={!announcement || announceEmails.length === 0}
           onClick={(e) => {
             if (!announcement || announceEmails.length === 0) e.preventDefault();
@@ -215,10 +269,27 @@ export function ReservationInbox({
           <Mail size={14} aria-hidden="true" />
           Email all {announceEmails.length ? `(${announceEmails.length})` : ""}
         </a>
+        <button
+          type="button"
+          disabled={announceEmails.length === 0}
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(announceEmails.join(", "));
+              showToast("success", `Copied ${announceEmails.length} addresses.`);
+            } catch {
+              showToast("error", "Could not copy. Select the addresses manually.");
+            }
+          }}
+          className="inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-border-c bg-surface px-4 py-2 text-sm font-semibold transition hover:border-blue-400 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+          title="Copy every address to paste into the BCC field yourself"
+        >
+          <Copy size={14} aria-hidden="true" /> Copy addresses
+        </button>
         {announcement && (
           <p className="max-w-sm text-xs text-ink-soft">
-            Opens your email app with everyone BCC&apos;d. For WhatsApp, each row&apos;s WhatsApp button below is now
-            pre-filled with this announcement — tap through them one by one.
+            {mailClient === "gmail" ? "Opens Gmail" : "Opens your Mail app"} with everyone BCC&apos;d. Very long lists can exceed what a link
+            can carry — if some addresses are missing, use Copy addresses and paste them into BCC. For WhatsApp, each row&apos;s
+            WhatsApp button below is pre-filled with this announcement — tap through them one by one.
           </p>
         )}
       </div>
@@ -244,7 +315,7 @@ export function ReservationInbox({
                 const selectedCourse = selectedId ? courseById.get(selectedId) ?? null : null;
                 const waDigits = digitsOnly(m.phone);
                 const { subject, body } = buildEmailReply(m, siteUrl, selectedCourse);
-                const mailto = mailtoHref(m.email, subject, body);
+                const mailto = mailtoHref(m.email, subject, body, mailClient);
                 return (
                   <tr
                     key={m.id}
@@ -330,6 +401,8 @@ export function ReservationInbox({
                         </a>
                         <a
                           href={mailto}
+                          target={mailTarget}
+                          rel={mailRel}
                           aria-label={`Reply to ${m.full_name} by email`}
                           className="flex h-7 w-7 items-center justify-center rounded-lg border border-blue-500 bg-blue-500 text-white hover:bg-navy-800"
                           title={selectedCourse ? `Reply about ${selectedCourse.title}` : "Reply with generic template"}

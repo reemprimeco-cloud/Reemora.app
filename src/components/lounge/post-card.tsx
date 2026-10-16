@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Heart, MessageCircle, Bookmark, Link2, ExternalLink, Trash2, Pencil, EyeOff, Globe, Images } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Link2, ExternalLink, Trash2, Pencil, EyeOff, Globe, Images, Copyright } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/context";
 import { interpolate } from "@/lib/i18n/dictionaries";
 import { useToast } from "@/components/toast-provider";
@@ -13,6 +13,7 @@ import { AwardBadges } from "@/components/lounge/award-badge";
 import { VerifiedBadge } from "@/components/lounge/verified-badge";
 import { ReportButton } from "@/components/lounge/report-button";
 import { memberHref, postHref, timeAgo, hostOf } from "@/lib/lounge/utils";
+import { mediaSrc } from "@/lib/lounge/media";
 import { cn } from "@/lib/utils";
 import type { FeedPost } from "@/lib/lounge/feed";
 
@@ -102,7 +103,8 @@ export function PostCard({ post, viewerId, isAdmin, full, compact }: { post: Fee
 
   if (deleted) return null;
 
-  const images = [post.image_url, ...post.gallery_urls].filter((u): u is string => Boolean(u));
+  const images = [post.image_url, ...post.gallery_urls].filter((u): u is string => Boolean(u)).map((u) => mediaSrc(u) ?? u);
+  const copyright = post.type === "project" ? interpolate(t.copyright, { year: new Date(post.created_at).getFullYear(), name: post.author.display_name }) : null;
   const hasMedia = images.length > 0;
   const showCover = !hasMedia && Boolean(post.project_url);
   const longBody = post.body.length > 220;
@@ -167,6 +169,11 @@ export function PostCard({ post, viewerId, isAdmin, full, compact }: { post: Fee
               </Link>
             ))}
           </div>
+          {copyright && (
+            <span className="pointer-events-none absolute bottom-2 start-2 rounded-md bg-black/45 px-2 py-0.5 text-[10px] font-semibold text-white/90 backdrop-blur-sm" dir="auto">
+              © {post.author.display_name} · Reemora Lounge
+            </span>
+          )}
           {images.length > 1 && (
             <>
               <span className="absolute end-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-bold text-white backdrop-blur">
@@ -249,6 +256,12 @@ export function PostCard({ post, viewerId, isAdmin, full, compact }: { post: Fee
           </div>
         )}
 
+        {copyright && (
+          <p className="mt-3 flex items-start gap-1.5 rounded-lg bg-surface-alt px-3 py-2 text-[11.5px] leading-snug text-ink-soft">
+            <Copyright size={13} className="mt-0.5 shrink-0" aria-hidden="true" />
+            <span>{copyright}</span>
+          </p>
+        )}
         <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[13px] text-ink-soft">
           {!full && post.comment_count > 0 && (
             <Link href={`${postHref(post.id)}#comments`} className="font-semibold hover:text-blue-600">

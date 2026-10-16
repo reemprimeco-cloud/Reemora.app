@@ -12,6 +12,7 @@ import { Avatar } from "@/components/lounge/avatar";
 import { AwardBadges } from "@/components/lounge/award-badge";
 import { VerifiedBadge } from "@/components/lounge/verified-badge";
 import { memberHref, hostOf } from "@/lib/lounge/utils";
+import { mediaSrc } from "@/lib/lounge/media";
 import { cn } from "@/lib/utils";
 import type { EntryWithMember } from "@/lib/lounge/challenges";
 import type { LoungeChallengeAwardRow, LoungeChallengeRow } from "@/lib/supabase/lounge.types";
@@ -90,7 +91,7 @@ export function ChallengeEntries({
           <article key={e.id} className={cn("flex flex-col overflow-hidden rounded-2xl border bg-surface", rank === 1 ? "border-amber-300 shadow-md" : "border-border-c", e.status !== "approved" && "opacity-70")}>
             {e.image_url ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={e.image_url} alt="" className="h-44 w-full object-cover" loading="lazy" />
+              <img src={mediaSrc(e.image_url) ?? e.image_url} alt="" className="h-44 w-full object-cover" loading="lazy" />
             ) : (
               <div className="h-24 bg-gradient-to-br from-navy-900 via-navy-800 to-blue-600" aria-hidden="true" />
             )}

@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     images: ["/images/logo.png"],
   },
   // Explicit icons removed — Next.js file conventions (app/icon.svg,
-  // app/apple-icon.png, app/manifest.ts) pick this up automatically now.
+  // app/apple-icon.png, app/manifest.webmanifest/route.ts) pick this up automatically now.
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     title: "Reemora",

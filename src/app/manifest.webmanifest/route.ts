@@ -1,9 +1,13 @@
+import { NextResponse } from "next/server";
 import type { MetadataRoute } from "next";
 
 // Web App Manifest — makes reemora.app (and the Lounge inside it)
 // installable to a phone/desktop home screen with the Reemora icon and
-// theme colour. One manifest + one service worker serve the whole site.
-export default function manifest(): MetadataRoute.Manifest {
+// theme colour. Served as a route handler (not the manifest.ts file
+// convention) so the root layout declares it through `metadata.manifest`
+// and the admin section can override it with its own "Reemora Admin"
+// manifest. One service worker serves the whole site.
+function manifest(): MetadataRoute.Manifest {
   return {
     name: "Reemora",
     short_name: "Reemora",
@@ -32,4 +36,10 @@ export default function manifest(): MetadataRoute.Manifest {
       { name: "Courses", short_name: "Courses", url: "/courses", icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }] },
     ],
   };
+}
+
+export function GET() {
+  return NextResponse.json(manifest(), {
+    headers: { "Content-Type": "application/manifest+json; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+  });
 }

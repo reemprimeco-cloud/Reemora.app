@@ -13,6 +13,7 @@ import { Avatar } from "@/components/lounge/avatar";
 import { ReportButton } from "@/components/lounge/report-button";
 import { VerifiedBadge } from "@/components/lounge/verified-badge";
 import { memberHref, timeAgo } from "@/lib/lounge/utils";
+import { mediaSrc, mediaDownloadHref } from "@/lib/lounge/media";
 import { CHAT_MAX_LENGTH } from "@/lib/lounge/validation";
 import { cn } from "@/lib/utils";
 import type { LoungeChatMessageRow, LoungeChatAttachmentType } from "@/lib/supabase/lounge.types";
@@ -232,18 +233,17 @@ export function ChatRoom({ initialMessages, viewerId, muted }: { initialMessages
     if (!m.attachment_url) return null;
     if (m.attachment_type === "image") {
       return (
-        <a href={m.attachment_url} target="_blank" rel="noopener noreferrer" className="block">
+        <a href={mediaSrc(m.attachment_url) ?? undefined} target="_blank" rel="noopener noreferrer" className="block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={m.attachment_url} alt={t.imageAlt} loading="lazy" className="max-h-72 w-auto max-w-full rounded-xl border border-black/5 object-cover" />
+          <img src={mediaSrc(m.attachment_url) ?? undefined} alt={t.imageAlt} loading="lazy" className="max-h-72 w-auto max-w-full rounded-xl border border-black/5 object-cover" />
         </a>
       );
     }
     return (
       <a
-        href={m.attachment_url}
+        href={mediaDownloadHref(m.attachment_url, m.attachment_name) ?? undefined}
         target="_blank"
         rel="noopener noreferrer"
-        download={m.attachment_name ?? undefined}
         dir="ltr"
         className={cn("flex items-center gap-2.5 rounded-xl border px-3 py-2 text-start text-xs transition", own ? "border-white/30 bg-white/10 text-white hover:bg-white/20" : "border-border-c bg-surface hover:border-blue-400")}
       >
@@ -332,7 +332,7 @@ export function ChatRoom({ initialMessages, viewerId, muted }: { initialMessages
           <div className="mb-2 flex items-center gap-3 rounded-xl border border-border-c bg-surface-alt p-2 pe-3">
             {pending.type === "image" ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={pending.url} alt="" className="h-12 w-12 rounded-lg object-cover" />
+              <img src={mediaSrc(pending.url) ?? pending.url} alt="" className="h-12 w-12 rounded-lg object-cover" />
             ) : (
               <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
                 <FileText size={20} aria-hidden="true" />

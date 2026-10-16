@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ImagePlus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { compressImage } from "@/lib/compress-image";
+import { mediaSrc } from "@/lib/lounge/media";
 import { useLanguage } from "@/lib/i18n/context";
 import { interpolate } from "@/lib/i18n/dictionaries";
 import { useToast } from "@/components/toast-provider";
@@ -143,6 +144,7 @@ export function PostComposer({ userId, existing }: { userId: string; existing?: 
           </Field>
         )}
 
+        {type === "project" && <p className="rounded-xl bg-blue-050 px-4 py-3 text-xs leading-relaxed text-ink-soft">{t.rightsNote}</p>}
         {type === "project" && (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field id="post-category" label={t.projectCategory}>
@@ -179,7 +181,7 @@ export function PostComposer({ userId, existing }: { userId: string; existing?: 
               {images.map((src) => (
                 <div key={src} className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="h-24 w-full rounded-xl border border-border-c object-cover" />
+                  <img src={mediaSrc(src) ?? src} alt="" className="h-24 w-full rounded-xl border border-border-c object-cover" />
                   <button type="button" onClick={() => setImages((prev) => prev.filter((u) => u !== src))} aria-label={t.removeImage} className="absolute end-1 top-1 rounded-full bg-navy-900/80 p-1 text-white">
                     <X size={12} />
                   </button>

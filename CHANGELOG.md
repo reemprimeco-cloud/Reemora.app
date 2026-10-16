@@ -14,6 +14,10 @@ All notable changes to the Reemora platform are documented in this file. Format 
 - Project comments are sorted into feedback buckets: Like, Needs work, Suggestion, Code, Design, Tips & advice, plus General. The author sees a count strip and grouped sections; commenters pick a bucket before posting (migration `0033`).
 - Chat room accepts photo and file attachments (PDF, ZIP, Office, text, up to 10 MB) stored in a new `lounge-files` bucket with per-member folders; images are compressed in the browser first.
 - Profile pictures save the moment the upload finishes (`/api/lounge/avatar`), independent of the rest of the form.
+- Admin panel is installable as its own home-screen app, "Reemora Admin" (separate manifest at `/admin/manifest.webmanifest`, opens `/admin` directly, shortcuts to Registrations, Reservations, Lounge Members and Settings). Settings gains an install card with iPhone steps, and the Dashboard shows a dismissible reminder until installed. On iOS this is the prerequisite for admin push alerts.
+- Reservations inbox: an "Open emails in" switch (Gmail or the device's Mail app) applies to "Email all" and the per-row replies; Gmail opens a pre-filled compose with everyone in BCC. A "Copy addresses" button covers lists too long for a link.
+- Lounge uploads are private: both storage buckets are no longer public, read access is limited to the file's owner, approved members and admins (migration `0034`), and every avatar, screenshot and chat attachment is served through `/api/lounge/media/...`, which checks the session before streaming the file. A bare storage link no longer opens anything.
+- Project posts carry a copyright line (© year author, members-only, not for sharing outside Reemora) under the post and as a small badge on the image; the composer tells authors how their work is protected.
 - PWA: 192/512 px icons (plus maskable variants), manifest shortcuts, an `/offline` fallback page served by the shared service worker, and an Add-to-Home-Screen card in Lounge settings.
 
 ### Changed

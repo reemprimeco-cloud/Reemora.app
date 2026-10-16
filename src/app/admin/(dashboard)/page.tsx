@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { reconcilePendingUPayments } from "@/lib/payment-reconciliation";
 import { formatMoney } from "@/lib/utils";
+import { InstallAdminApp } from "@/components/admin/install-admin-app";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
@@ -55,6 +56,7 @@ export default async function AdminDashboardPage() {
   return (
     <div>
       <h1 className="mb-7 text-2xl font-bold">Dashboard</h1>
+      <InstallAdminApp compact />
 
       <div className="mb-8 grid grid-cols-2 gap-5 lg:grid-cols-4">
         <Kpi label="Total Courses" value={courseCount} />

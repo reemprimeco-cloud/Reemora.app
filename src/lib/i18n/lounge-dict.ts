@@ -222,8 +222,10 @@ export const loungeEn = {
     catGeneral: "General",
     catHint: "Sort your feedback so the builder can act on it.",
     moreText: "more",
+    copyright: "© {year} {name}. Shared with Reemora Lounge members only — please don't copy or share it outside Reemora.",
   },
   compose: {
+    rightsNote: "Your project stays yours. It is shown to Reemora Lounge members only, with your name and a copyright notice, and members are asked not to share it outside Reemora.",
     title: "New post",
     editTitle: "Edit post",
     type: "Post type",
@@ -627,8 +629,10 @@ export const loungeAr: LoungeDict = {
     catGeneral: "عام",
     catHint: "صنّف تعليقك ليسهل على صاحب المشروع الاستفادة منه.",
     moreText: "المزيد",
+    copyright: "© {year} {name}. مشارك مع أعضاء مجتمع Reemora فقط — يُرجى عدم نسخه أو مشاركته خارج Reemora.",
   },
   compose: {
+    rightsNote: "مشروعك يبقى ملكك. يُعرض لأعضاء مجتمع Reemora فقط مع اسمك وإشعار حقوق النشر، ويُطلب من الأعضاء عدم مشاركته خارج Reemora.",
     title: "منشور جديد",
     editTitle: "تعديل المنشور",
     type: "نوع المنشور",

@@ -1,11 +1,12 @@
 import { cn } from "@/lib/utils";
 import { initialsOf } from "@/lib/lounge/utils";
+import { mediaSrc } from "@/lib/lounge/media";
 
 const SIZES = { xs: "h-7 w-7 text-[11px]", sm: "h-9 w-9 text-xs", md: "h-12 w-12 text-sm", lg: "h-20 w-20 text-xl", xl: "h-28 w-28 text-3xl" };
 
 /** Member avatar: uploaded picture, or initials on the brand gradient.
- *  Plain <img> rather than next/image so any Supabase public URL works
- *  without remotePatterns churn. */
+ *  Plain <img> rather than next/image; uploads are served through the
+ *  members-only media proxy (see lib/lounge/media.ts). */
 export function Avatar({
   name,
   src,
@@ -19,7 +20,7 @@ export function Avatar({
 }) {
   if (src) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={name} loading="lazy" className={cn("shrink-0 rounded-full object-cover ring-2 ring-surface", SIZES[size], className)} />;
+    return <img src={mediaSrc(src) ?? src} alt={name} loading="lazy" className={cn("shrink-0 rounded-full object-cover ring-2 ring-surface", SIZES[size], className)} />;
   }
   return (
     <span

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ImagePlus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { compressImage } from "@/lib/compress-image";
+import { mediaSrc } from "@/lib/lounge/media";
 import { useLanguage } from "@/lib/i18n/context";
 import { useToast } from "@/components/toast-provider";
 import { Field, Banner, inputClass } from "@/components/lounge/form-field";
@@ -136,7 +137,7 @@ export function EntryForm({ challenge, userId, existing, onDone }: { challenge: 
               {images.map((src) => (
                 <div key={src} className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="h-24 w-full rounded-xl border border-border-c object-cover" />
+                  <img src={mediaSrc(src) ?? src} alt="" className="h-24 w-full rounded-xl border border-border-c object-cover" />
                   <button type="button" onClick={() => setImages((p) => p.filter((u) => u !== src))} aria-label={dict.lounge.compose.removeImage} className="absolute end-1 top-1 rounded-full bg-navy-900/80 p-1 text-white">
                     <X size={12} />
                   </button>

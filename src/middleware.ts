@@ -11,7 +11,10 @@ const LOUNGE_PUBLIC = new Set(["/lounge/join", "/lounge/login", "/lounge/reset"]
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  const isAdminRoute = path.startsWith("/admin") && path !== "/admin/login";
+  // The admin manifest is fetched by the browser without cookies when a
+  // device installs the "Reemora Admin" home-screen app; it holds nothing
+  // private, so it is the one /admin path served without a session.
+  const isAdminRoute = path.startsWith("/admin") && path !== "/admin/login" && path !== "/admin/manifest.webmanifest";
   // Reemora Lounge: everything under /lounge/ needs a signed-in user except
   // the landing page and the sign-in / apply / reset screens. Whether that
   // user is an *approved* member is decided by the page (and by RLS), not
