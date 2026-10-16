@@ -3,7 +3,7 @@ import type { Db } from "@/lib/lounge/api";
 import type { LoungeChallengeRow, LoungeChallengeEntryRow, LoungeChallengeAwardRow } from "@/lib/supabase/lounge.types";
 
 export interface EntryWithMember extends LoungeChallengeEntryRow {
-  member: { user_id: string; display_name: string; avatar_url: string | null };
+  member: { user_id: string; display_name: string; avatar_url: string | null; is_verified?: boolean; badge_label?: string | null };
 }
 
 export interface ChallengeDetail {
@@ -14,7 +14,7 @@ export interface ChallengeDetail {
   myVoteEntryId: string | null;
 }
 
-const ENTRY_SELECT = "*, member:lounge_members!lounge_challenge_entries_member_id_fkey(user_id, display_name, avatar_url)";
+const ENTRY_SELECT = "*, member:lounge_members!lounge_challenge_entries_member_id_fkey(user_id, display_name, avatar_url, is_verified, badge_label)";
 
 type RawEntry = LoungeChallengeEntryRow & { member: EntryWithMember["member"] | EntryWithMember["member"][] | null };
 

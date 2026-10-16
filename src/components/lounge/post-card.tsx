@@ -9,6 +9,7 @@ import { useToast } from "@/components/toast-provider";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Avatar } from "@/components/lounge/avatar";
 import { AwardBadges } from "@/components/lounge/award-badge";
+import { VerifiedBadge } from "@/components/lounge/verified-badge";
 import { ReportButton } from "@/components/lounge/report-button";
 import { memberHref, postHref, timeAgo, hostOf } from "@/lib/lounge/utils";
 import { cn } from "@/lib/utils";
@@ -99,6 +100,7 @@ export function PostCard({ post, viewerId, isAdmin, full, compact }: { post: Fee
               <Link href={memberHref(post.author.user_id)} className="truncate text-sm font-bold hover:text-blue-600">
                 {post.author.display_name}
               </Link>
+              <VerifiedBadge verified={post.author.is_verified} label={post.author.badge_label} size="sm" />
               <AwardBadges badges={post.author.badges} size="xs" lang={lang} />
             </div>
             <p className="text-xs text-ink-soft">

@@ -8,16 +8,18 @@ import { useToast } from "@/components/toast-provider";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Avatar } from "@/components/lounge/avatar";
 import { ReportButton } from "@/components/lounge/report-button";
+import { VerifiedBadge } from "@/components/lounge/verified-badge";
 import { inputClass } from "@/components/lounge/form-field";
 import { memberHref, timeAgo } from "@/lib/lounge/utils";
 import { cn } from "@/lib/utils";
 import type { LoungeCommentRow } from "@/lib/supabase/lounge.types";
 
+type CommentAuthor = { user_id: string; display_name: string; avatar_url: string | null; is_verified?: boolean; badge_label?: string | null };
 export interface CommentWithAuthor extends LoungeCommentRow {
-  author: { user_id: string; display_name: string; avatar_url: string | null } | { user_id: string; display_name: string; avatar_url: string | null }[] | null;
+  author: CommentAuthor | CommentAuthor[] | null;
 }
 
-function authorOf(c: CommentWithAuthor) {
+function authorOf(c: CommentWithAuthor): CommentAuthor {
   const a = Array.isArray(c.author) ? c.author[0] : c.author;
   return a ?? { user_id: c.author_id, display_name: "Member", avatar_url: null };
 }
@@ -99,6 +101,7 @@ export function Comments({ postId, postAuthorId, initial, viewerId, isAdmin }: {
               <Link href={memberHref(a.user_id)} className="font-bold text-foreground hover:text-blue-600">
                 {a.display_name}
               </Link>
+              <VerifiedBadge verified={a.is_verified} label={a.badge_label} size="xs" />
               {a.user_id === postAuthorId && <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-600">OP</span>}
               <time dateTime={c.created_at} className="text-ink-soft">
                 {timeAgo(c.created_at, dict.lounge.common, lang)}

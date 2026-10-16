@@ -6,7 +6,9 @@ import type { LoungeMemberStatus, LoungeMembershipAction } from "@/lib/supabase/
 
 const schema = z.object({
   userId: z.string().uuid(),
-  action: z.enum(["approve", "reject", "suspend", "reactivate", "mute", "unmute"]),
+  action: z.enum(["approve", "reject", "suspend", "reactivate", "mute", "unmute", "verify", "unverify"]),
+  /** verify only: badge text, e.g. "Reemora Team" or "Certified Trainer" */
+  label: z.string().trim().max(40).optional(),
   note: z.string().trim().max(500).optional(),
   /** mute only: hours */
   hours: z.number().int().min(1).max(24 * 365).optional(),
@@ -33,6 +35,18 @@ export async function PATCH(request: Request) {
 
   const { data: member } = await ctx.service.from("lounge_members").select("*").eq("user_id", userId).maybeSingle();
   if (!member) return jsonError("Member not found.", 404);
+
+  if (action === "verify" || action === "unverify") {
+    const verified = action === "verify";
+    const label = verified ? parsed.label?.trim() || "Verified" : null;
+    const { error } = await ctx.service.from("lounge_members").update({ is_verified: verified, badge_label: label }).eq("user_id", userId);
+    if (error) return jsonError(error.message, 500);
+    await logAudit(ctx.service, { actorId: ctx.user.id, action: `member.${action}`, targetType: "member", targetId: userId, details: { label } });
+    if (verified) {
+      await notify(ctx.service, { userId, type: "verified", title: `You're now verified: ${label}`, body: "A badge now appears next to your name across the Lounge.", url: `/lounge/members/${userId}`, dedupeKey: `verified:${userId}:${Date.now()}` });
+    }
+    return NextResponse.json({ ok: true, is_verified: verified, badge_label: label });
+  }
 
   if (action === "mute" || action === "unmute") {
     const until = action === "mute" ? new Date(Date.now() + (parsed.hours ?? 24) * 3600_000).toISOString() : null;

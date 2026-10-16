@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Check, X, Ban, RotateCcw, Search, History, VolumeX, Volume2, ExternalLink } from "lucide-react";
+import { Check, X, Ban, RotateCcw, Search, History, VolumeX, Volume2, ExternalLink, BadgeCheck, BadgeMinus } from "lucide-react";
+import { VerifiedBadge } from "@/components/lounge/verified-badge";
 import { useToast } from "@/components/toast-provider";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Avatar } from "@/components/lounge/avatar";
@@ -22,6 +23,8 @@ export interface AdminMemberRow {
   decision_note: string | null;
   points_total: number;
   chat_muted_until: string | null;
+  is_verified: boolean;
+  badge_label: string | null;
   history: { id: string; action: LoungeMembershipAction; actor_name: string | null; note: string | null; created_at: string }[];
 }
 
@@ -55,8 +58,14 @@ export function LoungeMembersManager({ initialMembers }: { initialMembers: Admin
     return !q || m.display_name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || (m.phone ?? "").includes(q) || (m.full_name ?? "").toLowerCase().includes(q);
   });
 
-  async function act(m: AdminMemberRow, action: "approve" | "reject" | "suspend" | "reactivate" | "mute" | "unmute") {
+  async function act(m: AdminMemberRow, action: "approve" | "reject" | "suspend" | "reactivate" | "mute" | "unmute" | "verify" | "unverify") {
     let note: string | undefined;
+    let label: string | undefined;
+    if (action === "verify") {
+      const entered = window.prompt("Badge text shown next to their name:", m.badge_label || "Certified Member");
+      if (entered === null) return;
+      label = entered.trim() || "Verified";
+    }
     if (action === "reject" || action === "suspend") {
       const label = action === "reject" ? "Reject" : "Suspend";
       if (!(await confirm(`${label} ${m.display_name} (${m.email})? They will be notified.`, `${label} member`))) return;
@@ -67,7 +76,7 @@ export function LoungeMembersManager({ initialMembers }: { initialMembers: Admin
       const res = await fetch("/api/admin/lounge/members", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: m.user_id, action, note, hours: action === "mute" ? 24 : undefined }),
+        body: JSON.stringify({ userId: m.user_id, action, note, label, hours: action === "mute" ? 24 : undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Request failed");
@@ -75,6 +84,7 @@ export function LoungeMembersManager({ initialMembers }: { initialMembers: Admin
         prev.map((row) => {
           if (row.user_id !== m.user_id) return row;
           if (action === "mute" || action === "unmute") return { ...row, chat_muted_until: data.chat_muted_until };
+          if (action === "verify" || action === "unverify") return { ...row, is_verified: data.is_verified, badge_label: data.badge_label };
           const eventName = ({ approve: "approved", reject: "rejected", suspend: "suspended", reactivate: "reactivated" } as const)[action];
           return {
             ...row,
@@ -86,7 +96,7 @@ export function LoungeMembersManager({ initialMembers }: { initialMembers: Admin
           };
         })
       );
-      showToast("success", `Member ${action === "approve" ? "approved" : action === "reject" ? "rejected" : action === "suspend" ? "suspended" : action === "reactivate" ? "reactivated" : action + "d"}.`);
+      showToast("success", action === "verify" ? "Verified badge added." : action === "unverify" ? "Verified badge removed." : `Member ${action === "approve" ? "approved" : action === "reject" ? "rejected" : action === "suspend" ? "suspended" : action === "reactivate" ? "reactivated" : action + "d"}.`);
     } catch (err) {
       showToast("error", err instanceof Error ? err.message : "Request failed");
     } finally {
@@ -127,6 +137,7 @@ export function LoungeMembersManager({ initialMembers }: { initialMembers: Admin
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-bold">{m.display_name}</span>
+                        <VerifiedBadge verified={m.is_verified} label={m.badge_label} size="sm" />
                         {m.full_name && m.full_name !== m.display_name && <span className="text-xs text-ink-soft">({m.full_name})</span>}
                         <span className={cn("rounded-full px-2.5 py-0.5 text-[11px] font-bold capitalize", STATUS_STYLE[m.status])}>{m.status}</span>
                         {muted && <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-bold text-red-600 dark:bg-red-950 dark:text-red-300">chat muted</span>}
@@ -160,6 +171,9 @@ export function LoungeMembersManager({ initialMembers }: { initialMembers: Admin
                     )}
                     {m.status === "approved" && (
                       <>
+                        <button disabled={busy} onClick={() => act(m, m.is_verified ? "unverify" : "verify")} className={cn(btn, m.is_verified ? "border-border-c hover:border-red-300 hover:text-red-500" : "border-blue-400 bg-blue-100 text-blue-600 hover:bg-blue-500 hover:text-white")} title={m.is_verified ? "Remove verified badge" : "Give a verified badge"}>
+                          {m.is_verified ? <BadgeMinus size={13} /> : <BadgeCheck size={13} />} {m.is_verified ? "Unverify" : "Verify"}
+                        </button>
                         <button disabled={busy} onClick={() => act(m, muted ? "unmute" : "mute")} className={cn(btn, "border-border-c hover:border-amber-400 hover:text-amber-600")} title={muted ? "Unmute in chat" : "Mute in chat for 24h"}>
                           {muted ? <Volume2 size={13} /> : <VolumeX size={13} />} {muted ? "Unmute" : "Mute 24h"}
                         </button>

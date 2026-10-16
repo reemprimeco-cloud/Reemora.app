@@ -6,6 +6,7 @@ import { Search } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/context";
 import { Avatar } from "@/components/lounge/avatar";
 import { AwardBadges, type AwardBadge } from "@/components/lounge/award-badge";
+import { VerifiedBadge } from "@/components/lounge/verified-badge";
 import { memberHref } from "@/lib/lounge/utils";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,8 @@ export interface DirectoryMember {
   points_total: number;
   followers_count: number;
   created_at: string;
+  is_verified: boolean;
+  badge_label: string | null;
   badges: AwardBadge[];
 }
 
@@ -59,6 +62,7 @@ export function MembersDirectory({ members }: { members: DirectoryMember[] }) {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="truncate text-[15px] font-bold">{m.display_name}</span>
+                  <VerifiedBadge verified={m.is_verified} label={m.badge_label} size="sm" />
                   <AwardBadges badges={m.badges} size="xs" />
                 </div>
                 <p className="mt-0.5 line-clamp-2 text-xs text-ink-soft">{m.bio || "—"}</p>

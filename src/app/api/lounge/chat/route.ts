@@ -3,7 +3,7 @@ import { parseBody, requireMember, jsonError } from "@/lib/lounge/api";
 import { chatSchema } from "@/lib/lounge/validation";
 
 const CHAT_PAGE = 50;
-const MESSAGE_SELECT = "id, author_id, body, reply_to_id, is_hidden, created_at, author:lounge_members!lounge_chat_messages_author_id_fkey(user_id, display_name, avatar_url)";
+const MESSAGE_SELECT = "id, author_id, body, reply_to_id, is_hidden, created_at, author:lounge_members!lounge_chat_messages_author_id_fkey(user_id, display_name, avatar_url, is_verified, badge_label)";
 
 /** GET ?before=<iso> — older messages for infinite scroll.
  *  GET ?after=<iso>  — anything newer than the last message the client

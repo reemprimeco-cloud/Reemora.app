@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/lounge/page-header";
 import { loadFeedPage } from "@/lib/lounge/feed";
 import Link from "next/link";
 import { PenSquare } from "lucide-react";
+import { AdminProfileSetup } from "@/components/lounge/admin-profile-setup";
 
 interface Props {
   searchParams: Promise<{ filter?: string }>;
@@ -30,6 +31,10 @@ export default async function LoungeHome({ searchParams }: Props) {
         </div>
       </>
     );
+  }
+
+  if (!viewer.member && viewer.isAdmin) {
+    return <AdminProfileSetup />;
   }
 
   if (!viewer.member) {

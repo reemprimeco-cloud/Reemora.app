@@ -28,7 +28,7 @@ export default async function AdminLoungeMembersPage() {
     const [{ data: members }, { data: events }] = await Promise.all([
       supabase
         .from("lounge_members")
-        .select("user_id, status, display_name, avatar_url, applied_at, decided_at, decided_by, decision_note, points_total, chat_muted_until")
+        .select("user_id, status, display_name, avatar_url, applied_at, decided_at, decided_by, decision_note, points_total, chat_muted_until, is_verified, badge_label")
         .order("applied_at", { ascending: false }),
       supabase.from("lounge_membership_events").select("id, user_id, action, actor_id, note, created_at").order("created_at", { ascending: false }),
     ]);
@@ -79,6 +79,8 @@ export default async function AdminLoungeMembersPage() {
         decision_note: m.decision_note,
         points_total: m.points_total,
         chat_muted_until: m.chat_muted_until,
+        is_verified: m.is_verified,
+        badge_label: m.badge_label,
         history: (events ?? [])
           .filter((e) => e.user_id === m.user_id)
           .map((e) => ({ id: e.id, action: e.action, actor_name: e.actor_id === m.user_id ? null : nameOf(e.actor_id), note: e.note, created_at: e.created_at })),

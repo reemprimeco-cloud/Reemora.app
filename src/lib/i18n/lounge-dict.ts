@@ -149,6 +149,7 @@ export const loungeEn = {
     report: "Report member",
     you: "You",
     admin: "Reemora Team",
+    verified: "Verified",
   },
   members: {
     title: "Members",
@@ -349,6 +350,13 @@ export const loungeEn = {
     by: "by",
     tieRule: "Ties are broken by the earliest submission.",
   },
+  adminSetup: {
+    title: "Set up your admin profile",
+    body: "As a Reemora admin you get a verified profile with a Reemora Team badge next to your name across the Lounge. You can edit your picture, bio and links right after.",
+    button: "Create my profile",
+    creating: "Creating...",
+    done: "Your verified profile is ready.",
+  },
   common: {
     back: "Back",
     cancel: "Cancel",
@@ -522,6 +530,7 @@ export const loungeAr: LoungeDict = {
     report: "الإبلاغ عن العضو",
     you: "أنت",
     admin: "فريق ريمورا",
+    verified: "موثّق",
   },
   members: {
     title: "الأعضاء",
@@ -721,6 +730,13 @@ export const loungeAr: LoungeDict = {
     rejected: "غير مقبولة",
     by: "بواسطة",
     tieRule: "يُحسم التعادل لصالح المشاركة الأقدم.",
+  },
+  adminSetup: {
+    title: "أنشئ ملفك كمشرف",
+    body: "بصفتك مشرفاً في ريمورا تحصل على ملف موثّق بشارة «فريق ريمورا» بجانب اسمك في كل أنحاء المجتمع. يمكنك تعديل صورتك ونبذتك وروابطك مباشرة بعد ذلك.",
+    button: "إنشاء ملفي",
+    creating: "جارٍ الإنشاء...",
+    done: "ملفك الموثّق جاهز.",
   },
   common: {
     back: "رجوع",

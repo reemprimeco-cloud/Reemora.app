@@ -9,6 +9,7 @@ import { interpolate } from "@/lib/i18n/dictionaries";
 import { Avatar } from "@/components/lounge/avatar";
 import { FollowButton } from "@/components/lounge/follow-button";
 import { AwardBadges } from "@/components/lounge/award-badge";
+import { VerifiedBadge } from "@/components/lounge/verified-badge";
 import { TrophyCase } from "@/components/lounge/trophy-case";
 import { PostCard } from "@/components/lounge/post-card";
 import { ReportButton } from "@/components/lounge/report-button";
@@ -103,6 +104,7 @@ export default async function MemberProfilePage({ params }: Props) {
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <h1 className="text-[26px] font-bold leading-tight sm:text-[30px]">{member.display_name}</h1>
+            <VerifiedBadge verified={member.is_verified} label={member.badge_label || t.verified} size="md" showLabel />
             <AwardBadges badges={awardList.map((a) => ({ code: a.code, title: a.title }))} size="sm" lang={lang} />
             {isSelf && <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-bold text-blue-600">{t.you}</span>}
           </div>

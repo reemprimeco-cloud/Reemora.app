@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const { data, error } = await ctx.supabase
     .from("lounge_comments")
     .insert({ post_id: post.id, author_id: ctx.user.id, parent_id: parsed.parentId ?? null, body: parsed.body })
-    .select("*, author:lounge_members!lounge_comments_author_id_fkey(user_id, display_name, avatar_url)")
+    .select("*, author:lounge_members!lounge_comments_author_id_fkey(user_id, display_name, avatar_url, is_verified, badge_label)")
     .single();
 
   if (error) {

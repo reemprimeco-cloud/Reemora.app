@@ -17,7 +17,7 @@ export default async function LoungeMembersPage() {
   const [{ data: members }, { data: awards }] = await Promise.all([
     supabase
       .from("lounge_members")
-      .select("user_id, display_name, avatar_url, bio, skills, points_total, followers_count, created_at")
+      .select("user_id, display_name, avatar_url, bio, skills, points_total, followers_count, created_at, is_verified, badge_label")
       .eq("status", "approved")
       .order("points_total", { ascending: false })
       .limit(500),

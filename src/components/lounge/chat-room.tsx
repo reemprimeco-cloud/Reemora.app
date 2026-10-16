@@ -10,12 +10,13 @@ import { interpolate } from "@/lib/i18n/dictionaries";
 import { useToast } from "@/components/toast-provider";
 import { Avatar } from "@/components/lounge/avatar";
 import { ReportButton } from "@/components/lounge/report-button";
+import { VerifiedBadge } from "@/components/lounge/verified-badge";
 import { memberHref, timeAgo } from "@/lib/lounge/utils";
 import { CHAT_MAX_LENGTH } from "@/lib/lounge/validation";
 import { cn } from "@/lib/utils";
 import type { LoungeChatMessageRow } from "@/lib/supabase/lounge.types";
 
-type AuthorInfo = { user_id: string; display_name: string; avatar_url: string | null };
+type AuthorInfo = { user_id: string; display_name: string; avatar_url: string | null; is_verified?: boolean; badge_label?: string | null };
 export interface ChatMessage extends LoungeChatMessageRow {
   author: AuthorInfo | AuthorInfo[] | null;
 }
@@ -70,7 +71,7 @@ export function ChatRoom({ initialMessages, viewerId, muted }: { initialMessages
     async function resolveAuthor(id: string): Promise<AuthorInfo> {
       const cached = authorsRef.current.get(id);
       if (cached) return cached;
-      const { data } = await supabase.from("lounge_members").select("user_id, display_name, avatar_url").eq("user_id", id).maybeSingle();
+      const { data } = await supabase.from("lounge_members").select("user_id, display_name, avatar_url, is_verified, badge_label").eq("user_id", id).maybeSingle();
       const info = data ?? { user_id: id, display_name: "Member", avatar_url: null };
       authorsRef.current.set(id, info);
       return info;
@@ -219,6 +220,7 @@ export function ChatRoom({ initialMessages, viewerId, muted }: { initialMessages
                   <Link href={memberHref(a.user_id)} className="font-bold text-foreground hover:text-blue-600">
                     {own ? dict.lounge.profile.you : a.display_name}
                   </Link>
+                  <VerifiedBadge verified={a.is_verified} label={a.badge_label} size="xs" />
                   <time dateTime={m.created_at}>{timeAgo(m.created_at, dict.lounge.common, lang)}</time>
                 </div>
                 <div className={cn("rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed", own ? "rounded-ee-md bg-blue-500 text-white" : "rounded-es-md bg-surface-alt")}>

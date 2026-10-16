@@ -53,6 +53,8 @@ export type LoungeMemberRow = {
   decision_note: string | null;
   invited_at: string | null;
   invited_by: string | null;
+  is_verified: boolean;
+  badge_label: string | null;
   created_at: string;
   updated_at: string;
 }

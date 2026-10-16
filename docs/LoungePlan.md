@@ -46,6 +46,9 @@ Phase 1 output: what exists today, what the Lounge adds, and how it is wired in.
 | `0026_lounge_membership.sql` | `lounge_members`, `lounge_membership_events`, `lounge_follows`, `lounge_notifications`, `lounge_audit_log`, `is_lounge_member()`, `lounge_member_contact()`, `lounge-media` bucket + policies, member push-subscription policy |
 | `0027_lounge_community.sql` | `lounge_posts`, `lounge_comments`, `lounge_post_likes`, `lounge_bookmarks`, `lounge_chat_messages` (+ Realtime publication), `lounge_reports`, counter + rate-limit + mute triggers |
 | `0028_lounge_achievements.sql` | `lounge_achievements`, `lounge_member_achievements`, `lounge_points_rules`, append-only `lounge_points_ledger`, `lounge_award_points()`, `lounge_evaluate_achievements()`, seeded definitions and rules |
+| `0030_lounge_hardening.sql` | revokes execute on `lounge_*` functions from `anon`/`authenticated` except the three member-facing ones |
+| `0031_lounge_invites.sql` | `lounge_members.invited_at/invited_by`, `invited` membership action |
+| `0032_lounge_verified.sql` | `lounge_members.is_verified`, `lounge_members.badge_label` (admin-only via service role; not in the member update grant) |
 | `0029_lounge_challenges.sql` | `lounge_challenges`, `lounge_challenge_entries`, `lounge_challenge_votes`, `lounge_challenge_awards`, `lounge_cast_vote()`, `lounge_finalize_challenge()` |
 
 Status: all four are **applied to the live project** (recorded in `supabase_migrations.schema_migrations` as versions `20261016120026`–`20261016120029`). They were run as plain SQL in chunks because the Supabase MCP tool stalls on scripts containing `drop`/`revoke` statements; the files in the repo are the source of truth and are idempotent (`if not exists`, `drop ... if exists`).
@@ -56,7 +59,7 @@ Rollback: every object is new, so dropping the `lounge_*` tables (cascade), the 
 
 1. Supabase → Authentication: enable email sign-ups, keep "Confirm email" on, add `https://reemora.app/auth/callback` to Redirect URLs, set Site URL. Configure custom SMTP (e.g. Resend) — the built-in sender is rate-limited to a few emails per hour.
 2. Vercel env: existing vars plus `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (already read by `webpush.ts`).
-3. Migrations `0024_course_archive` and `0025_relax_duration_weeks` from earlier work are still **not applied** live (the admin Course Archive page depends on 0024). Lounge migrations 0026–0029 are applied.
+3. Migrations `0024_course_archive` and `0025_relax_duration_weeks` from earlier work are still **not applied** live (the admin Course Archive page depends on 0024). Lounge migrations 0026–0032 are applied.
 
 ## 6. Verification performed (2026-10-16)
 

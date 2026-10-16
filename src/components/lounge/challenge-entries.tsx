@@ -10,6 +10,7 @@ import { useToast } from "@/components/toast-provider";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Avatar } from "@/components/lounge/avatar";
 import { AwardBadges } from "@/components/lounge/award-badge";
+import { VerifiedBadge } from "@/components/lounge/verified-badge";
 import { memberHref, hostOf } from "@/lib/lounge/utils";
 import { cn } from "@/lib/utils";
 import type { EntryWithMember } from "@/lib/lounge/challenges";
@@ -103,6 +104,7 @@ export function ChallengeEntries({
               </div>
               <Link href={memberHref(e.member.user_id)} className="mb-2 inline-flex items-center gap-2 text-xs text-ink-soft hover:text-blue-600">
                 <Avatar name={e.member.display_name} src={e.member.avatar_url} size="xs" /> {t.by} <span className="font-semibold text-foreground">{e.member.display_name}</span>
+                <VerifiedBadge verified={e.member.is_verified} label={e.member.badge_label} size="xs" />
                 {own && <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-600">{t.ownEntry}</span>}
                 {e.status === "submitted" && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">{t.pendingReview}</span>}
                 {e.status === "rejected" && <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-600">{t.rejected}</span>}

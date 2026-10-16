@@ -28,7 +28,7 @@ export default async function PostPage({ params }: Props) {
 
   const { data: comments } = await supabase
     .from("lounge_comments")
-    .select("*, author:lounge_members!lounge_comments_author_id_fkey(user_id, display_name, avatar_url)")
+    .select("*, author:lounge_members!lounge_comments_author_id_fkey(user_id, display_name, avatar_url, is_verified, badge_label)")
     .eq("post_id", id)
     .order("created_at", { ascending: true })
     .limit(500);

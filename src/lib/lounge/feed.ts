@@ -7,6 +7,8 @@ export interface FeedAuthor {
   user_id: string;
   display_name: string;
   avatar_url: string | null;
+  is_verified: boolean;
+  badge_label: string | null;
   badges: AwardBadge[];
 }
 
@@ -20,9 +22,10 @@ export const FEED_PAGE_SIZE = 10;
 export const FEED_FILTERS = ["recent", "projects", "questions", "popular", "following"] as const;
 export type FeedFilter = (typeof FEED_FILTERS)[number];
 
-const POST_SELECT = "*, author:lounge_members!lounge_posts_author_id_fkey(user_id, display_name, avatar_url)";
+const POST_SELECT = "*, author:lounge_members!lounge_posts_author_id_fkey(user_id, display_name, avatar_url, is_verified, badge_label)";
 
-type RawPost = LoungePostRow & { author: { user_id: string; display_name: string; avatar_url: string | null } | { user_id: string; display_name: string; avatar_url: string | null }[] | null };
+type RawAuthor = { user_id: string; display_name: string; avatar_url: string | null; is_verified?: boolean; badge_label?: string | null };
+type RawPost = LoungePostRow & { author: RawAuthor | RawAuthor[] | null };
 
 /** Attaches the viewer's like/bookmark state and authors' badges. */
 export async function decoratePosts(supabase: Db, raw: RawPost[], viewerId: string): Promise<FeedPost[]> {
@@ -53,6 +56,8 @@ export async function decoratePosts(supabase: Db, raw: RawPost[], viewerId: stri
         user_id: a?.user_id ?? p.author_id,
         display_name: a?.display_name ?? "Member",
         avatar_url: a?.avatar_url ?? null,
+        is_verified: Boolean(a?.is_verified),
+        badge_label: a?.badge_label ?? null,
         badges: badges.get(p.author_id) ?? [],
       },
       liked: liked.has(p.id),
