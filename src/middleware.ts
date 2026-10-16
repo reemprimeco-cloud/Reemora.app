@@ -7,9 +7,16 @@ const isSupabaseConfigured = Boolean(
   isValidHttpUrl(process.env.NEXT_PUBLIC_SUPABASE_URL) && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
+const LOUNGE_PUBLIC = new Set(["/lounge/join", "/lounge/login", "/lounge/reset"]);
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isAdminRoute = path.startsWith("/admin") && path !== "/admin/login";
+  // Reemora Lounge: everything under /lounge/ needs a signed-in user except
+  // the landing page and the sign-in / apply / reset screens. Whether that
+  // user is an *approved* member is decided by the page (and by RLS), not
+  // here — pending/rejected members still need to reach their status page.
+  const isLoungeRoute = path.startsWith("/lounge/") && !LOUNGE_PUBLIC.has(path);
 
   // Supabase isn't provisioned/reachable — skip auth gating so the rest of
   // the site (and dev preview) still works. Admin routes fall through
@@ -61,6 +68,12 @@ export async function middleware(request: NextRequest) {
 
   if (path === "/admin/login" && user) {
     return NextResponse.redirect(new URL("/admin", request.url));
+  }
+
+  if (isLoungeRoute && !user) {
+    const loginUrl = new URL("/lounge/login", request.url);
+    loginUrl.searchParams.set("next", path);
+    return NextResponse.redirect(loginUrl);
   }
 
   return response;

@@ -109,3 +109,32 @@ All fields pass through a `clean(value, maxLength)` helper that type-checks, tri
 - Every route validates input shape defensively (`typeof` checks on the parsed JSON body) before touching the database — a malformed or missing body never reaches Supabase.
 - Field-level errors are always returned as `fieldErrors: Record<string, string>` alongside a generic top-level `error` string, so the frontend can highlight the specific invalid field while still having a fallback message to display.
 - Unexpected failures are logged via `console.error` (visible in Vercel → Deployments → Logs) and returned as a generic, non-leaking error message to the client — internal error details (stack traces, database error codes) are never sent to the browser.
+
+
+## Reemora Lounge routes
+
+All Lounge routes run with the caller's cookie session (RLS applies) and use the service role only for side effects a member must not be able to forge (notifications, points, audit). Bodies are validated with zod (`src/lib/lounge/validation.ts`); validation failures return `400 { error, fieldErrors }`.
+
+| Route | Method | Who | Purpose |
+|---|---|---|---|
+| `/api/lounge/join` | POST | anyone | Apply: creates the Supabase Auth account (confirmation email) and a `pending` membership |
+| `/auth/callback` | GET | — | Email confirmation / password-recovery landing |
+| `/api/lounge/profile` | PATCH | signed in | Edit own profile (column grant limits fields) |
+| `/api/lounge/follow` | POST | member | Follow / unfollow |
+| `/api/lounge/posts` | GET, POST | member | Feed page / publish a post |
+| `/api/lounge/posts/[id]` | PATCH, DELETE | author (admin may delete) | Edit / delete |
+| `/api/lounge/posts/[id]/like`, `/bookmark` | POST | member | Toggle |
+| `/api/lounge/comments` | POST | member | Comment or reply |
+| `/api/lounge/comments/[id]` | PATCH, DELETE | post author / admin, comment author | Mark helpful / delete |
+| `/api/lounge/chat` | GET, POST | member | Older / newer messages, send |
+| `/api/lounge/reports` | POST | member | Report content (409 on duplicate) |
+| `/api/lounge/notifications` | GET, PATCH | signed in | Unread count / mark read |
+| `/api/lounge/challenges/[id]/enter` | POST, DELETE | member | Submit, update or withdraw entry |
+| `/api/lounge/challenges/[id]/vote` | POST | member | Cast vote via `lounge_cast_vote()` |
+| `/api/push/subscribe`, `/unsubscribe` | POST | signed in | Web Push device registration (admins and members) |
+| `/api/admin/lounge/members` | PATCH | admin | approve / reject / suspend / reactivate / mute |
+| `/api/admin/lounge/moderation` | PATCH | admin | hide / unhide / delete content, resolve / dismiss reports |
+| `/api/admin/lounge/achievements` | POST, PATCH, DELETE | admin | Upsert achievement, update points rule, revoke award |
+| `/api/admin/lounge/points` | POST | admin | Manual points adjustment (ledger + audit + notification) |
+| `/api/admin/lounge/challenges` | POST, PATCH | admin | Create / edit / change status |
+| `/api/admin/lounge/challenges/[id]` | POST, PATCH | admin | Finalize results / moderate an entry |

@@ -1,3 +1,5 @@
+import { loungeEn, loungeAr } from "./lounge-dict";
+
 export const LANGS = ["en", "ar"] as const;
 export type Lang = (typeof LANGS)[number];
 export const DEFAULT_LANG: Lang = "en";
@@ -23,6 +25,7 @@ const en = {
     about: "About & CV",
     projects: "Projects",
     certificates: "Certificates",
+    lounge: "Lounge",
     browseCourses: "Browse Courses",
     toggleMenu: "Toggle menu",
     switchToArabic: "التبديل إلى العربية",
@@ -449,6 +452,7 @@ const en = {
     submit: "Send Message",
     submitting: "Sending...",
   },
+  lounge: loungeEn,
 } as const;
 
 type EnDict = Widen<typeof en>;
@@ -462,6 +466,7 @@ const ar: EnDict = {
     about: "نبذة عني والسيرة الذاتية",
     projects: "المشاريع",
     certificates: "الشهادات",
+    lounge: "المجتمع",
     browseCourses: "تصفح الدورات",
     toggleMenu: "فتح القائمة",
     switchToArabic: "التبديل إلى العربية",
@@ -888,6 +893,7 @@ const ar: EnDict = {
     submit: "إرسال الرسالة",
     submitting: "جارٍ الإرسال...",
   },
+  lounge: loungeAr,
 };
 
 export const DICTIONARIES: Record<Lang, EnDict> = { en: en as unknown as EnDict, ar };

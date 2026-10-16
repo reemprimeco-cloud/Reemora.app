@@ -23,9 +23,14 @@ export function SiteHeader() {
       { href: "/#about", label: dict.nav.about },
       { href: "/#portfolio", label: dict.nav.projects },
       { href: "/#certificates", label: dict.nav.certificates },
+      { href: "/lounge", label: dict.nav.lounge },
     ],
     [dict]
   );
+
+  // Section links ("/#about") only match exactly; app sections like the
+  // Lounge stay highlighted on their sub-pages too.
+  const isActive = (href: string) => (href === "/lounge" ? pathname.startsWith("/lounge") : pathname === href);
 
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -53,10 +58,10 @@ export function SiteHeader() {
             <Link
               key={link.href}
               href={link.href}
-              aria-current={pathname === link.href ? "page" : undefined}
+              aria-current={isActive(link.href) ? "page" : undefined}
               className={cn(
                 "rounded-full px-4 py-2.5 text-[14.5px] font-semibold transition-colors",
-                pathname === link.href
+                isActive(link.href)
                   ? "bg-blue-100 text-blue-600"
                   : "text-foreground hover:bg-blue-100 hover:text-blue-600"
               )}

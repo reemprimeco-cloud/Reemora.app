@@ -221,3 +221,28 @@ Both buckets are created by `0003_rls.sql` with matching `storage.objects` polic
 ```bash
 supabase gen types typescript --project-id <ref> > src/lib/supabase/database.types.ts
 ```
+
+
+## Reemora Lounge (migrations 0026–0030)
+
+Nineteen additive `lounge_*` tables, all with Row Level Security. Access is gated by `public.is_lounge_member()` (approved membership) the same way admin writes are gated by `is_admin()`. See `docs/LoungePlan.md` for the design and the test results.
+
+| Table | Purpose | Who can write |
+|---|---|---|
+| `lounge_members` | Membership status + profile, keyed by `users.id` | Service role creates/decides; members may update only profile columns (column-level grant) |
+| `lounge_membership_events` | Approval history | Service role |
+| `lounge_follows` | Follower graph (PK prevents duplicates; counters by trigger) | Members (own rows) |
+| `lounge_posts`, `lounge_comments` | Feed content; `is_hidden` for moderation; rate-limit triggers | Authors (own rows, content columns only), admins delete |
+| `lounge_post_likes`, `lounge_bookmarks` | PK-deduplicated reactions; like counter by trigger | Members (own rows) |
+| `lounge_chat_messages` | The single public room; in the Realtime publication; 5 msgs / 10 s trigger, mute trigger | Members insert only |
+| `lounge_reports` | Content reports, one per reporter per target | Members insert; service role resolves |
+| `lounge_notifications` | In-app notifications with a unique `dedupe_key` | Service role; members may set `is_read` |
+| `lounge_achievements`, `lounge_points_rules` | Admin-configurable definitions (seeded) | Service role |
+| `lounge_member_achievements` | Awards, unique per member + achievement | `lounge_evaluate_achievements()` only |
+| `lounge_points_ledger` | Append-only; unique `(ref_type, ref_id)`; trigger maintains `lounge_members.points_total`; update/delete raise | Functions + service role |
+| `lounge_challenges`, `lounge_challenge_entries` | Competitions and entries (one per member; window + limit trigger) | Service role / members (own entry content) |
+| `lounge_challenge_votes` | One vote per member per challenge (PK); only via `lounge_cast_vote()` | Function only |
+| `lounge_challenge_awards` | Permanent badges from `lounge_finalize_challenge()` (unique per member and per place) | Function only |
+| `lounge_audit_log` | Privileged admin actions | Service role |
+
+Functions: `is_lounge_member()`, `lounge_member_contact(uuid)`, `lounge_award_points(...)`, `lounge_evaluate_achievements(uuid)`, `lounge_cast_vote(uuid)`, `lounge_finalize_challenge(uuid, uuid)`. Storage bucket `lounge-media` (public read; members write only under `<user_id>/`, 3 MB, images only).

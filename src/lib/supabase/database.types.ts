@@ -4,6 +4,30 @@
  *   supabase gen types typescript --project-id <ref> > src/lib/supabase/database.types.ts
  */
 
+import type {
+  LoungeFunctions,
+  LoungeTable,
+  LoungeMemberRow,
+  LoungeMembershipEventRow,
+  LoungeFollowRow,
+  LoungePostRow,
+  LoungeCommentRow,
+  LoungePostLikeRow,
+  LoungeBookmarkRow,
+  LoungeChatMessageRow,
+  LoungeReportRow,
+  LoungeNotificationRow,
+  LoungeAchievementRow,
+  LoungeMemberAchievementRow,
+  LoungePointsRuleRow,
+  LoungePointsLedgerRow,
+  LoungeChallengeRow,
+  LoungeChallengeEntryRow,
+  LoungeChallengeVoteRow,
+  LoungeChallengeAwardRow,
+  LoungeAuditLogRow,
+} from "@/lib/supabase/lounge.types";
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export interface Database {
@@ -694,6 +718,26 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["contact_messages"]["Insert"]>;
         Relationships: [];
       };
+      // ---------- Reemora Lounge (migrations 0026+) ----------
+      lounge_members: LoungeTable<LoungeMemberRow, "user_id" | "display_name">;
+      lounge_membership_events: LoungeTable<LoungeMembershipEventRow, "user_id" | "action">;
+      lounge_follows: LoungeTable<LoungeFollowRow, "follower_id" | "following_id">;
+      lounge_posts: LoungeTable<LoungePostRow, "author_id" | "type" | "title" | "body">;
+      lounge_comments: LoungeTable<LoungeCommentRow, "post_id" | "author_id" | "body">;
+      lounge_post_likes: LoungeTable<LoungePostLikeRow, "post_id" | "user_id">;
+      lounge_bookmarks: LoungeTable<LoungeBookmarkRow, "user_id" | "post_id">;
+      lounge_chat_messages: LoungeTable<LoungeChatMessageRow, "author_id" | "body">;
+      lounge_reports: LoungeTable<LoungeReportRow, "reporter_id" | "target_type" | "target_id" | "reason">;
+      lounge_notifications: LoungeTable<LoungeNotificationRow, "user_id" | "type" | "title">;
+      lounge_achievements: LoungeTable<LoungeAchievementRow, "code" | "name" | "description" | "criteria_type">;
+      lounge_member_achievements: LoungeTable<LoungeMemberAchievementRow, "user_id" | "achievement_id">;
+      lounge_points_rules: LoungeTable<LoungePointsRuleRow, "key" | "label" | "points">;
+      lounge_points_ledger: LoungeTable<LoungePointsLedgerRow, "user_id" | "delta" | "reason" | "ref_type" | "ref_id">;
+      lounge_challenges: LoungeTable<LoungeChallengeRow, "title" | "description">;
+      lounge_challenge_entries: LoungeTable<LoungeChallengeEntryRow, "challenge_id" | "member_id" | "title" | "description" | "project_url">;
+      lounge_challenge_votes: LoungeTable<LoungeChallengeVoteRow, "challenge_id" | "voter_id" | "entry_id">;
+      lounge_challenge_awards: LoungeTable<LoungeChallengeAwardRow, "challenge_id" | "entry_id" | "member_id" | "place" | "badge_code">;
+      lounge_audit_log: LoungeTable<LoungeAuditLogRow, "action" | "target_type">;
     };
     Views: {
       [_ in never]: never;
@@ -711,7 +755,7 @@ export interface Database {
         Args: { p_schedule_id: string; p_delta: number };
         Returns: undefined;
       };
-    };
+    } & LoungeFunctions;
     Enums: {
       [_ in never]: never;
     };

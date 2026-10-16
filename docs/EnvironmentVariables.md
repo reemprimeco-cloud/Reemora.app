@@ -9,6 +9,10 @@ All variables the application reads, verified against the source (`grep -r proce
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | **Secret — server only** | `src/lib/supabase/server.ts` (`createServiceRoleClient`) | Bypasses RLS; used only inside `/api/payments/*` and `/api/contact` route handlers for trusted, server-validated writes. Never expose to the client or commit to git. |
 | `MYFATOORAH_API_KEY` | Yes | **Secret — server only** | `src/lib/myfatoorah.ts` | Authenticates requests to the MyFatoorah payment API |
 | `MYFATOORAH_BASE_URL` | Yes | Server only | `src/lib/myfatoorah.ts` | `https://apitest.myfatoorah.com` (test) or `https://api.myfatoorah.com` (live) |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | For push | Public | `src/components/lounge/push-toggle.tsx`, `src/components/admin/push-notifications-toggle.tsx` | VAPID public key for Web Push (admin alerts + Lounge notifications). Generate a pair with `npx web-push generate-vapid-keys`. Push is silently disabled when absent. |
+| `VAPID_PRIVATE_KEY` | For push | **Secret — server only** | `src/lib/webpush.ts` | VAPID private key |
+| `VAPID_SUBJECT` | No | Server only | `src/lib/webpush.ts` | `mailto:` contact for the push service (defaults to `mailto:hello@reemora.app`) |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | No | **Secret — server only** | `src/lib/telegram.ts` | Optional admin alerts (new registrations, Lounge applications, reports) |
 | `NEXT_PUBLIC_SITE_URL` | Yes | Public | `src/app/api/payments/myfatoorah/route.ts`, `src/app/sitemap.ts`, page metadata | Canonical site URL — used for SEO metadata, the sitemap, and MyFatoorah's payment callback/error redirect URLs. Set to `https://reemora.app` in production. |
 
 Every variable above is required for full functionality. If `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` are absent, the app degrades gracefully to an in-repo seed dataset and the admin panel becomes unauthenticated — **this is a development convenience, not a supported production mode.** See [Architecture.md](./Architecture.md#data-access-fallback-pattern).

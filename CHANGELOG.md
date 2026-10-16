@@ -2,6 +2,19 @@
 
 All notable changes to the Reemora platform are documented in this file. Format loosely follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Reemora Lounge** — a members-only community at `/lounge` (Lounge / المجتمع in the site nav): application with admin approval (pending → approved / rejected / suspended), member profiles with social links and private-by-default contact details, a community feed (discussion, question, project showcase, milestone, tool posts) with comments, replies, "helpful" marks, likes, bookmarks, follows and reports, one public real-time chat room (no private messaging), an in-app notification center with optional Web Push, achievements with an append-only points ledger and profile trophy case, and Lounge Challenges with one-vote-per-member voting, documented tie-break, idempotent finalization and permanent winner badges. Admin dashboard gains Lounge Members, Moderation, Achievements & Points, Challenges and Audit Log sections. Migrations `0026`–`0030`; plan and security model in `docs/LoungePlan.md`.
+- PWA: 192/512 px icons (plus maskable variants), manifest shortcuts, an `/offline` fallback page served by the shared service worker, and an Add-to-Home-Screen card in Lounge settings.
+
+### Changed
+
+- `sendWebPushToAdmins` now targets admin subscriptions only (members can also subscribe to push).
+- CSP `connect-src` allows `wss://*.supabase.co` for Supabase Realtime.
+- `/api/push/subscribe` writes with the service role so a device endpoint re-points to the current account.
+
 ## [1.0.0] — 2026-07-02
 
 First production release. Reemora is a Next.js 15 + TypeScript + Tailwind CSS platform backed by Supabase (Postgres, Auth, Storage), deployed on Vercel at [reemora.app](https://reemora.app).

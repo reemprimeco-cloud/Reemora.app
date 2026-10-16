@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 
-/** Registers (or re-registers) a push subscription for the logged-in
- *  admin. Uses the cookie-authenticated client, not the service role, so
- *  RLS (public.is_admin()) enforces that only an actual admin can write
- *  here — no manual role check needed. */
+/** Registers (or re-registers) a push subscription for the signed-in user
+ *  — an admin (back-office alerts) or a Lounge member (community
+ *  activity). The user id comes from the verified session, never from the
+ *  body. The write uses the service role so that a browser endpoint that
+ *  was previously registered by a different account on the same device is
+ *  simply re-pointed at the current user instead of failing RLS. */
 export async function POST(request: Request) {
   let body: { endpoint?: unknown; keys?: { p256dh?: unknown; auth?: unknown } };
   try {
@@ -13,11 +15,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const endpoint = typeof body.endpoint === "string" ? body.endpoint : "";
-  const p256dh = typeof body.keys?.p256dh === "string" ? body.keys.p256dh : "";
-  const auth = typeof body.keys?.auth === "string" ? body.keys.auth : "";
+  const endpoint = typeof body.endpoint === "string" ? body.endpoint.slice(0, 2000) : "";
+  const p256dh = typeof body.keys?.p256dh === "string" ? body.keys.p256dh.slice(0, 500) : "";
+  const auth = typeof body.keys?.auth === "string" ? body.keys.auth.slice(0, 500) : "";
 
-  if (!endpoint || !p256dh || !auth) {
+  if (!endpoint.startsWith("https://") || !p256dh || !auth) {
     return NextResponse.json({ error: "Missing subscription fields." }, { status: 400 });
   }
 
@@ -27,7 +29,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not signed in." }, { status: 401 });
   }
 
-  const { error } = await supabase
+  const service = await createServiceRoleClient();
+  const { error } = await service
     .from("push_subscriptions")
     .upsert({ endpoint, p256dh, auth, user_id: userData.user.id }, { onConflict: "endpoint" });
 
