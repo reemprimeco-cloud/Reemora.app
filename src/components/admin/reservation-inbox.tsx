@@ -94,14 +94,53 @@ function readMailClient(): MailClient {
   }
 }
 
-function gmailHref(opts: { to: string; bcc?: string[]; subject: string; body: string }): string {
+type ComposeOpts = { to: string; bcc?: string[]; subject: string; body: string };
+
+/** Gmail web compose: desktop browsers open Gmail; on Android the Gmail
+ *  app claims mail.google.com links. */
+function gmailHref(opts: ComposeOpts): string {
   const params = new URLSearchParams({ view: "cm", fs: "1", to: opts.to, su: opts.subject, body: opts.body });
   if (opts.bcc?.length) params.set("bcc", opts.bcc.join(","));
   return `https://mail.google.com/mail/?${params.toString().replace(/\+/g, "%20")}`;
 }
 
-function mailtoHref(email: string, subject: string, body: string, client: MailClient = "default"): string {
-  if (client === "gmail") return gmailHref({ to: email, subject, body });
+/** The Gmail iOS app's own compose scheme. Safari does not hand
+ *  mail.google.com links to the app, so this is the only way to land in a
+ *  new Gmail draft on iPhone/iPad. */
+function gmailAppHref(opts: ComposeOpts): string {
+  const q = [`to=${encodeURIComponent(opts.to)}`, `subject=${encodeURIComponent(opts.subject)}`, `body=${encodeURIComponent(opts.body)}`];
+  if (opts.bcc?.length) q.push(`bcc=${encodeURIComponent(opts.bcc.join(","))}`);
+  return `googlegmail://co?${q.join("&")}`;
+}
+
+function isIos(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+}
+
+/** Opens a Gmail compose for the given draft. On iOS it tries the Gmail
+ *  app first and falls back to Gmail web if nothing took the hand-off
+ *  (the page stayed visible); elsewhere it opens Gmail web in a new tab. */
+function openGmail(opts: ComposeOpts) {
+  const web = gmailHref(opts);
+  if (!isIos()) {
+    window.open(web, "_blank", "noopener");
+    return;
+  }
+  let handedOff = false;
+  const onHide = () => {
+    handedOff = true;
+    document.removeEventListener("visibilitychange", onHide);
+  };
+  document.addEventListener("visibilitychange", onHide);
+  window.setTimeout(() => {
+    document.removeEventListener("visibilitychange", onHide);
+    if (!handedOff && document.visibilityState === "visible") window.location.href = web;
+  }, 1800);
+  window.location.href = gmailAppHref(opts);
+}
+
+function mailtoHref(email: string, subject: string, body: string): string {
   const params = new URLSearchParams({ subject, body });
   return `mailto:${email}?${params.toString().replace(/\+/g, "%20")}`;
 }
@@ -112,8 +151,7 @@ function mailtoHref(email: string, subject: string, body: string, client: MailCl
  *  no "to" at all, so this keeps the button reliably usable. Opens the
  *  admin's own email client with the whole list pre-filled — no email
  *  service or domain setup needed, which is the whole point of this. */
-function mailtoAllHref(to: string, emails: string[], subject: string, body: string, client: MailClient = "default"): string {
-  if (client === "gmail") return gmailHref({ to, bcc: emails, subject, body });
+function mailtoAllHref(to: string, emails: string[], subject: string, body: string): string {
   const params = new URLSearchParams({ bcc: emails.join(","), subject, body });
   return `mailto:${to}?${params.toString().replace(/\+/g, "%20")}`;
 }
@@ -172,8 +210,7 @@ export function ReservationInbox({
       /* private mode */
     }
   }
-  const mailTarget = mailClient === "gmail" ? "_blank" : undefined;
-  const mailRel = mailClient === "gmail" ? "noopener noreferrer" : undefined;
+
   const { showToast } = useToast();
   const confirm = useConfirm();
 
@@ -252,12 +289,17 @@ export function ReservationInbox({
           </div>
         </div>
         <a
-          href={announcement ? mailtoAllHref(adminEmail, announceEmails, announcement.subject, announcement.emailBody, mailClient) : undefined}
-          target={announcement ? mailTarget : undefined}
-          rel={announcement ? mailRel : undefined}
+          href={announcement ? mailtoAllHref(adminEmail, announceEmails, announcement.subject, announcement.emailBody) : undefined}
           aria-disabled={!announcement || announceEmails.length === 0}
           onClick={(e) => {
-            if (!announcement || announceEmails.length === 0) e.preventDefault();
+            if (!announcement || announceEmails.length === 0) {
+              e.preventDefault();
+              return;
+            }
+            if (mailClient === "gmail") {
+              e.preventDefault();
+              openGmail({ to: adminEmail, bcc: announceEmails, subject: announcement.subject, body: announcement.emailBody });
+            }
           }}
           className={cn(
             "inline-flex min-h-[38px] items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition",
@@ -287,7 +329,7 @@ export function ReservationInbox({
         </button>
         {announcement && (
           <p className="max-w-sm text-xs text-ink-soft">
-            {mailClient === "gmail" ? "Opens Gmail" : "Opens your Mail app"} with everyone BCC&apos;d. Very long lists can exceed what a link
+            {mailClient === "gmail" ? "Opens a new draft in the Gmail app (or Gmail on the web)" : "Opens your Mail app"} with everyone BCC&apos;d. Very long lists can exceed what a link
             can carry — if some addresses are missing, use Copy addresses and paste them into BCC. For WhatsApp, each row&apos;s
             WhatsApp button below is pre-filled with this announcement — tap through them one by one.
           </p>
@@ -315,7 +357,7 @@ export function ReservationInbox({
                 const selectedCourse = selectedId ? courseById.get(selectedId) ?? null : null;
                 const waDigits = digitsOnly(m.phone);
                 const { subject, body } = buildEmailReply(m, siteUrl, selectedCourse);
-                const mailto = mailtoHref(m.email, subject, body, mailClient);
+                const mailto = mailtoHref(m.email, subject, body);
                 return (
                   <tr
                     key={m.id}
@@ -401,8 +443,12 @@ export function ReservationInbox({
                         </a>
                         <a
                           href={mailto}
-                          target={mailTarget}
-                          rel={mailRel}
+                          onClick={(e) => {
+                            if (mailClient === "gmail") {
+                              e.preventDefault();
+                              openGmail({ to: m.email, subject, body });
+                            }
+                          }}
                           aria-label={`Reply to ${m.full_name} by email`}
                           className="flex h-7 w-7 items-center justify-center rounded-lg border border-blue-500 bg-blue-500 text-white hover:bg-navy-800"
                           title={selectedCourse ? `Reply about ${selectedCourse.title}` : "Reply with generic template"}
