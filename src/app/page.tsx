@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Layers, Rocket, Award, CalendarClock, GraduationCap } from "lucide-react";
+import { Layers, Rocket, Award, CalendarClock, GraduationCap, MessagesSquare, Trophy, Swords, ArrowRight } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { HeroSlider } from "@/components/hero-slider";
@@ -254,6 +254,70 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+
+        {/* Reemora Lounge — members-only community teaser */}
+        <section id="lounge" className="py-16 sm:py-24">
+          <div className="mx-auto grid max-w-[1180px] items-center gap-10 px-5 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
+            <Reveal>
+              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.lounge.name}</span>
+              <h2 className="mb-4 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.lounge.landing.title}</h2>
+              <p className="mb-7 text-[15px] text-ink-soft sm:text-[17px]">{dict.lounge.landing.subtitle}</p>
+              <ul className="mb-8 grid gap-3 sm:grid-cols-2">
+                {[
+                  { icon: Rocket, title: dict.lounge.landing.feature1Title },
+                  { icon: MessagesSquare, title: dict.lounge.landing.feature2Title },
+                  { icon: Trophy, title: dict.lounge.landing.feature3Title },
+                  { icon: Swords, title: dict.lounge.landing.feature4Title },
+                ].map((f) => (
+                  <li key={f.title} className="flex items-center gap-3 rounded-xl border border-border-c bg-surface px-4 py-3 text-[14.5px] font-semibold">
+                    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                      <f.icon size={17} aria-hidden="true" />
+                    </span>
+                    {f.title}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Link href="/lounge/join" className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-full border-2 border-transparent bg-blue-500 px-7 py-3.5 text-[15px] font-semibold text-white shadow-sm transition active:scale-[0.98] hover:-translate-y-0.5 hover:bg-navy-800">
+                  {dict.lounge.landing.joinCta} <ArrowRight size={16} className="rtl:rotate-180" aria-hidden="true" />
+                </Link>
+                <Link href="/lounge" className="inline-flex min-h-[52px] items-center justify-center rounded-full border-2 border-border-c bg-surface px-7 py-3.5 text-[15px] font-semibold text-foreground transition active:scale-[0.98] hover:border-blue-400 hover:text-blue-600">
+                  {dict.lounge.landing.loginCta}
+                </Link>
+              </div>
+            </Reveal>
+
+            <Reveal delay={100} className="relative">
+              <div className="pointer-events-none absolute -inset-6 rounded-[32px] bg-gradient-to-br from-blue-100 via-transparent to-transparent" aria-hidden="true" />
+              <div className="relative space-y-3">
+                <div className="rounded-2xl border border-border-c bg-surface p-4 shadow-sm">
+                  <div className="mb-2 flex items-center gap-2.5">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-navy-800 to-blue-500 text-[11px] font-bold text-white" aria-hidden="true">RM</span>
+                    <span className="text-sm font-bold">Reem</span>
+                    <span className="ms-auto rounded-full bg-green-100 px-2.5 py-0.5 text-[11px] font-bold text-green-700 dark:bg-green-950 dark:text-green-300">{dict.lounge.feed.typeProject}</span>
+                  </div>
+                  <p className="text-sm font-semibold">{dict.lounge.landing.feature1Title}</p>
+                  <p className="mt-1 text-xs text-ink-soft">{dict.lounge.landing.feature1Desc}</p>
+                </div>
+                <div className="ms-6 rounded-2xl border border-border-c bg-surface p-4 shadow-sm">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-bold text-green-700 dark:text-green-400">
+                    <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden="true" /> {dict.lounge.chat.live} · {dict.lounge.chat.title}
+                  </div>
+                  <div className="inline-block rounded-2xl rounded-es-md bg-surface-alt px-3.5 py-2 text-sm">{dict.lounge.landing.feature2Desc}</div>
+                </div>
+                <div className="flex items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-sm dark:border-amber-900 dark:bg-amber-950/40">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-200 to-amber-400 text-amber-900">
+                    <Trophy size={20} aria-hidden="true" />
+                  </span>
+                  <div className="text-sm">
+                    <p className="font-bold">{dict.lounge.challenges.place1}</p>
+                    <p className="text-xs text-ink-soft">{dict.lounge.landing.feature4Desc}</p>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </section>
 
         <section className="pb-16 sm:pb-24">
           <Reveal className="mx-auto max-w-[1180px] px-5 sm:px-6">
