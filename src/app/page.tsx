@@ -7,6 +7,8 @@ import { HeroSlider } from "@/components/hero-slider";
 import { TestimonialSlider } from "@/components/testimonial-slider";
 import { CourseCard } from "@/components/course-card";
 import { Reveal } from "@/components/reveal";
+import { CountUp } from "@/components/count-up";
+import { ShowcaseBuilder } from "@/components/showcase-builder";
 import { getCourses } from "@/lib/data/courses";
 import { getLeadInstructor } from "@/lib/data/instructors";
 import { getTestimonials } from "@/lib/data/testimonials";
@@ -70,16 +72,32 @@ export default async function HomePage() {
           <div className="mx-auto grid max-w-[1180px] grid-cols-2 gap-6 px-6 py-10 sm:grid-cols-4">
             {STATS.map((s) => (
               <div key={s.label} className="text-center text-white">
-                <strong className="block font-[family-name:var(--font-head)] text-[28px] text-blue-400 sm:text-4xl">{s.value}</strong>
+                <strong className="block font-[family-name:var(--font-head)] text-[28px] text-blue-400 sm:text-4xl">
+                  <CountUp value={s.value} />
+                </strong>
                 <span className="text-[13.5px] text-[#b7c5e0]">{s.label}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <section className="py-16 sm:py-24">
+        {/* What you'll build: the page's one authored motion moment */}
+        <section id="showcase" className="overflow-hidden py-16 sm:py-24">
+          <div className="mx-auto max-w-[1180px] px-5 sm:px-6">
+            <Reveal variant="soft" className="mx-auto mb-10 max-w-2xl text-center sm:mb-14">
+              <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.showcase.eyebrow}</span>
+              <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.showcase.title}</h2>
+              <p className="text-[15px] text-ink-soft sm:text-[17px]">{dict.showcase.subtitle}</p>
+            </Reveal>
+            <Reveal variant="soft" delay={120}>
+              <ShowcaseBuilder />
+            </Reveal>
+          </div>
+        </section>
+
+        <section className="bg-surface-alt py-16 sm:py-24">
           <div className="mx-auto max-w-[1180px] px-6">
-            <Reveal className="mx-auto mb-13 max-w-xl text-center">
+            <Reveal variant="soft" className="mx-auto mb-13 max-w-xl text-center">
               <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.features.eyebrow}</span>
               <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.features.title}</h2>
               <p className="text-[15px] text-ink-soft sm:text-[17px]">{dict.features.subtitle}</p>
@@ -100,9 +118,9 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="bg-surface-alt py-16 sm:py-24">
+        <section className="py-16 sm:py-24">
           <div className="mx-auto max-w-[1180px] px-6">
-            <Reveal className="mx-auto mb-13 max-w-xl text-center">
+            <Reveal variant="soft" className="mx-auto mb-13 max-w-xl text-center">
               <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.upcoming.eyebrow}</span>
               <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.upcoming.title}</h2>
               <p className="text-[17px] text-ink-soft">{dict.upcoming.subtitle}</p>
@@ -124,7 +142,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section id="about" className="py-16 sm:py-24">
+        <section id="about" className="bg-surface-alt py-16 sm:py-24">
           <div className="mx-auto grid max-w-[1180px] grid-cols-1 items-center gap-12 px-5 sm:gap-14 sm:px-6 lg:grid-cols-[0.85fr_1.15fr]">
             <Reveal className="relative mx-auto w-full max-w-[260px] sm:max-w-[340px] lg:mx-0">
               <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] bg-gradient-to-br from-navy-800 to-blue-600 shadow-xl">
@@ -190,9 +208,9 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section id="certificates" className="bg-surface-alt py-16 sm:py-24">
+        <section id="certificates" className="py-16 sm:py-24">
           <div className="mx-auto max-w-[1180px] px-6">
-            <Reveal className="mx-auto mb-13 max-w-xl text-center">
+            <Reveal variant="soft" className="mx-auto mb-13 max-w-xl text-center">
               <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.certificates.eyebrow}</span>
               <h2 className="mb-3.5 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.certificates.title}</h2>
               <p className="text-[17px] text-ink-soft">{interpolate(dict.certificates.subtitleTemplate, { siteName: settings.site_name })}</p>
@@ -224,9 +242,9 @@ export default async function HomePage() {
         </section>
 
         {testimonials.length > 0 && (
-          <section className="py-16 sm:py-24">
+          <section className="bg-surface-alt py-16 sm:py-24">
             <div className="mx-auto max-w-[1180px] px-6">
-              <Reveal className="mx-auto mb-13 max-w-xl text-center">
+              <Reveal variant="soft" className="mx-auto mb-13 max-w-xl text-center">
                 <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.testimonials.eyebrow}</span>
                 <h2 className="text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.testimonials.title}</h2>
               </Reveal>
@@ -236,9 +254,9 @@ export default async function HomePage() {
         )}
 
         {portfolio.length > 0 && (
-          <section id="portfolio" className="bg-surface-alt py-16 sm:py-24">
+          <section id="portfolio" className="py-16 sm:py-24">
             <div className="mx-auto max-w-[1180px] px-6">
-              <Reveal className="mx-auto mb-13 max-w-xl text-center">
+              <Reveal variant="soft" className="mx-auto mb-13 max-w-xl text-center">
                 <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.portfolio.eyebrow}</span>
                 <h2 className="mb-4 text-[24px] font-bold leading-tight sm:text-3xl md:text-4xl">{dict.portfolio.title}</h2>
                 <p className="text-ink-soft">{dict.portfolio.subtitle}</p>
@@ -253,7 +271,7 @@ export default async function HomePage() {
         )}
 
         {/* Reemora Lounge — members-only community teaser */}
-        <section id="lounge" className="overflow-hidden py-16 sm:py-24">
+        <section id="lounge" className="overflow-hidden bg-surface-alt py-16 sm:py-24">
           <div className="mx-auto grid max-w-[1180px] items-center gap-10 px-5 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
             <Reveal>
               <span className="mb-4.5 inline-flex rounded-full bg-blue-100 px-3.5 py-1.5 text-[13px] font-bold uppercase tracking-wider text-blue-600">{dict.lounge.name}</span>
@@ -316,8 +334,8 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="pb-16 sm:pb-24">
-          <Reveal className="mx-auto max-w-[1180px] px-5 sm:px-6">
+        <section className="bg-surface-alt pb-16 sm:pb-24">
+          <Reveal variant="soft" className="mx-auto max-w-[1180px] px-5 sm:px-6">
             <div className="rounded-[22px] bg-gradient-to-br from-blue-600 to-navy-800 px-6 py-10 text-center text-white sm:px-16 sm:py-14">
               <h2 className="mb-3 text-[24px] font-bold leading-tight text-white sm:text-3xl md:text-4xl">{dict.cta.title}</h2>
               <p className="mb-6 text-[15px] text-[#d7e2f4] sm:mb-7.5 sm:text-base">{dict.cta.subtitle}</p>

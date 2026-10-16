@@ -3,12 +3,14 @@ import Image from "next/image";
 import type { WebsiteSettings } from "@/lib/types";
 import { getLang, getDict } from "@/lib/i18n/get-lang";
 import { interpolate } from "@/lib/i18n/dictionaries";
+import { BackToTop } from "@/components/back-to-top";
 
 export async function SiteFooter({ settings }: { settings: WebsiteSettings }) {
   const lang = await getLang();
   const dict = getDict(lang);
   return (
     <footer className="bg-navy-900 py-16 text-[#b7c5e0]">
+      <BackToTop />
       <div className="mx-auto max-w-[1180px] px-6">
         <div className="mb-12 grid grid-cols-1 gap-10 sm:grid-cols-2 md:grid-cols-4">
           <div>
