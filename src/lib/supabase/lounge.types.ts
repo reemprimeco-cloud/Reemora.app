@@ -13,7 +13,7 @@ export type LoungeTable<Row, Required extends keyof Row = never> = {
 };
 
 export type LoungeMemberStatus = "pending" | "approved" | "rejected" | "suspended";
-export type LoungeMembershipAction = "applied" | "approved" | "rejected" | "suspended" | "reactivated" | "note";
+export type LoungeMembershipAction = "applied" | "invited" | "approved" | "rejected" | "suspended" | "reactivated" | "note";
 export type LoungePostType = "discussion" | "question" | "project" | "milestone" | "tool";
 export type LoungeProjectStatus = "prototype" | "in_progress" | "completed";
 export type LoungeReportTarget = "post" | "comment" | "chat_message" | "member";
@@ -51,6 +51,8 @@ export type LoungeMemberRow = {
   decided_at: string | null;
   decided_by: string | null;
   decision_note: string | null;
+  invited_at: string | null;
+  invited_by: string | null;
   created_at: string;
   updated_at: string;
 }

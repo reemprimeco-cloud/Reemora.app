@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, BookOpen, CalendarClock, ClipboardList, LogOut, Tags, GraduationCap, Quote, Mail, Settings, Briefcase, HelpCircle, UserPlus, ListOrdered, CalendarPlus, Menu, X, Printer, Archive, Users, ShieldAlert, Trophy, Swords, ScrollText } from "lucide-react";
+import { LayoutDashboard, BookOpen, CalendarClock, ClipboardList, LogOut, Tags, GraduationCap, Quote, Mail, Settings, Briefcase, HelpCircle, UserPlus, ListOrdered, CalendarPlus, Menu, X, Printer, Archive, Users, ShieldAlert, Trophy, Swords, ScrollText, Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +25,7 @@ const LINKS = [
   { href: "/admin/portfolio", label: "Portfolio", icon: Briefcase },
   { href: "/admin/messages", label: "Contact Messages", icon: Mail },
   { href: "/admin/lounge/members", label: "Lounge Members", icon: Users },
+  { href: "/admin/lounge/invites", label: "Lounge Invitations", icon: Send },
   { href: "/admin/lounge/moderation", label: "Lounge Moderation", icon: ShieldAlert },
   { href: "/admin/lounge/achievements", label: "Lounge Achievements", icon: Trophy },
   { href: "/admin/lounge/challenges", label: "Lounge Challenges", icon: Swords },

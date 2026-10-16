@@ -97,6 +97,10 @@ export const loungeEn = {
     newPasswordTitle: "Choose a new password",
     newPasswordSubmit: "Update password",
     newPasswordDone: "Password updated. You're signed in.",
+    welcomeTitle: "Welcome to the Reemora Lounge",
+    welcomeSubtitle: "You've been invited by the Reemora team. Choose a password to finish setting up your account — your membership is already approved.",
+    finishing: "Signing you in...",
+    finishFailed: "This link has expired or was already used. Ask for a new invitation, or sign in if you already have a password.",
   },
   profile: {
     editTitle: "Edit your profile",
@@ -466,6 +470,10 @@ export const loungeAr: LoungeDict = {
     newPasswordTitle: "اختر كلمة مرور جديدة",
     newPasswordSubmit: "تحديث كلمة المرور",
     newPasswordDone: "تم تحديث كلمة المرور. أنت مسجّل الدخول.",
+    welcomeTitle: "أهلاً بك في مجتمع ريمورا",
+    welcomeSubtitle: "تمت دعوتك من فريق ريمورا. اختر كلمة مرور لإكمال إعداد حسابك — عضويتك معتمدة بالفعل.",
+    finishing: "جارٍ تسجيل دخولك...",
+    finishFailed: "انتهت صلاحية هذا الرابط أو تم استخدامه من قبل. اطلب دعوة جديدة، أو سجّل الدخول إن كانت لديك كلمة مرور.",
   },
   profile: {
     editTitle: "تعديل ملفك الشخصي",

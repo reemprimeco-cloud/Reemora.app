@@ -133,6 +133,8 @@ All Lounge routes run with the caller's cookie session (RLS applies) and use the
 | `/api/lounge/challenges/[id]/vote` | POST | member | Cast vote via `lounge_cast_vote()` |
 | `/api/push/subscribe`, `/unsubscribe` | POST | signed in | Web Push device registration (admins and members) |
 | `/api/admin/lounge/members` | PATCH | admin | approve / reject / suspend / reactivate / mute |
+| `/api/admin/lounge/invites` | POST | admin | Invite up to 50 people (pre-approved membership). `channel: "email"` sends through Supabase Auth; `channel: "link"` returns one-time sign-in links for WhatsApp |
+| `/auth/finish` | GET (page) | — | Client-side landing for Supabase's fragment-style email links; stores the session and continues to `next` |
 | `/api/admin/lounge/moderation` | PATCH | admin | hide / unhide / delete content, resolve / dismiss reports |
 | `/api/admin/lounge/achievements` | POST, PATCH, DELETE | admin | Upsert achievement, update points rule, revoke award |
 | `/api/admin/lounge/points` | POST | admin | Manual points adjustment (ledger + audit + notification) |

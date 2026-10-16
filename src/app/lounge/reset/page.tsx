@@ -7,15 +7,19 @@ import { PageHeader } from "@/components/lounge/page-header";
 
 export const metadata: Metadata = { title: "Reset password" };
 
-export default async function LoungeResetPage() {
-  const [viewer, lang] = await Promise.all([getLoungeViewer(), getLang()]);
+interface Props {
+  searchParams: Promise<{ welcome?: string }>;
+}
+
+export default async function LoungeResetPage({ searchParams }: Props) {
+  const [viewer, lang, params] = await Promise.all([getLoungeViewer(), getLang(), searchParams]);
   // The recovery link creates a session via /auth/callback; without one
   // there is nothing to update.
   if (!viewer.user) redirect("/lounge/login");
   const t = getDict(lang).lounge.login;
   return (
     <div className="mx-auto max-w-[480px]">
-      <PageHeader eyebrow={t.eyebrow} title={t.newPasswordTitle} />
+      {params.welcome ? <PageHeader eyebrow={t.eyebrow} title={t.welcomeTitle} subtitle={t.welcomeSubtitle} /> : <PageHeader eyebrow={t.eyebrow} title={t.newPasswordTitle} />}
       <ResetPasswordForm />
     </div>
   );

@@ -37,6 +37,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(next, origin));
   }
 
+  if (!code && !tokenHash) {
+    // Supabase's default email templates return the session in the URL
+    // fragment, which never reaches the server. Browsers keep the fragment
+    // across this redirect, and /auth/finish stores the session client-side.
+    const finish = new URL("/auth/finish", origin);
+    finish.searchParams.set("next", next);
+    return NextResponse.redirect(finish);
+  }
+
   const fallback = new URL("/lounge/login", origin);
   fallback.searchParams.set("confirmed", "1");
   if (next !== "/lounge") fallback.searchParams.set("next", next);

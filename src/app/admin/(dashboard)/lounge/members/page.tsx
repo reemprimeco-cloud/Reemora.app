@@ -89,7 +89,10 @@ export default async function AdminLoungeMembersPage() {
   return (
     <div>
       <h1 className="mb-2 text-2xl font-bold">Lounge Members</h1>
-      <p className="mb-7 text-sm text-ink-soft">Review applications, approve or reject, suspend or reactivate. Every decision is logged and the member is notified.</p>
+      <p className="mb-7 text-sm text-ink-soft">
+        Review applications, approve or reject, suspend or reactivate. Every decision is logged and the member is notified. To bring in past course participants directly, use{" "}
+        <a href="/admin/lounge/invites" className="font-semibold text-blue-600 hover:underline">Lounge Invitations</a>.
+      </p>
       {stats && (
         <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
