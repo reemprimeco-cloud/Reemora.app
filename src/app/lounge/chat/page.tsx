@@ -15,7 +15,7 @@ export default async function ChatPage() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("lounge_chat_messages")
-    .select("id, author_id, body, reply_to_id, is_hidden, created_at, author:lounge_members!lounge_chat_messages_author_id_fkey(user_id, display_name, avatar_url, is_verified, badge_label)")
+    .select("id, author_id, body, reply_to_id, is_hidden, attachment_url, attachment_type, attachment_name, attachment_size, created_at, author:lounge_members!lounge_chat_messages_author_id_fkey(user_id, display_name, avatar_url, is_verified, badge_label)")
     .order("created_at", { ascending: false })
     .limit(50);
 

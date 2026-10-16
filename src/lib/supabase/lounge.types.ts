@@ -94,12 +94,16 @@ export type LoungePostRow = {
   updated_at: string;
 }
 
+export type LoungeCommentCategory = "like" | "needs_work" | "suggestion" | "code" | "design" | "tip";
+
 export type LoungeCommentRow = {
   id: string;
   post_id: string;
   author_id: string;
   parent_id: string | null;
   body: string;
+  /** Feedback bucket under a project; null = plain comment. */
+  category: LoungeCommentCategory | null;
   is_helpful: boolean;
   is_hidden: boolean;
   created_at: string;
@@ -118,12 +122,18 @@ export type LoungeBookmarkRow = {
   created_at: string;
 }
 
+export type LoungeChatAttachmentType = "image" | "file";
+
 export type LoungeChatMessageRow = {
   id: string;
   author_id: string;
   body: string;
   reply_to_id: string | null;
   is_hidden: boolean;
+  attachment_url: string | null;
+  attachment_type: LoungeChatAttachmentType | null;
+  attachment_name: string | null;
+  attachment_size: number | null;
   created_at: string;
 }
 

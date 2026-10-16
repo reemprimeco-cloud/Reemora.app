@@ -26,21 +26,16 @@ export const getLoungeViewer = cache(async (): Promise<LoungeViewer> => {
   const user = auth.user;
   if (!user) return EMPTY;
 
-  const [{ data: profile }, { data: member }] = await Promise.all([
+  // All three in parallel: the unread count is RLS-scoped to the caller,
+  // so it is safe to ask for before we know the membership status.
+  const [{ data: profile }, { data: member }, { count }] = await Promise.all([
     supabase.from("users").select("role").eq("id", user.id).maybeSingle(),
     supabase.from("lounge_members").select("*").eq("user_id", user.id).maybeSingle(),
+    supabase.from("lounge_notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false),
   ]);
 
   const isApproved = member?.status === "approved";
-  let unreadCount = 0;
-  if (isApproved) {
-    const { count } = await supabase
-      .from("lounge_notifications")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("is_read", false);
-    unreadCount = count ?? 0;
-  }
+  const unreadCount = isApproved ? (count ?? 0) : 0;
 
   return {
     user: { id: user.id, email: user.email ?? null },

@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Camera } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { compressImage } from "@/lib/compress-image";
+import { compressImage, isTooLarge } from "@/lib/compress-image";
 import { useLanguage } from "@/lib/i18n/context";
 import { useToast } from "@/components/toast-provider";
 import { Avatar } from "@/components/lounge/avatar";
@@ -44,13 +44,21 @@ export function ProfileEditor({ member, email, phone }: { member: LoungeMemberRo
     if (!file) return;
     setUploading(true);
     try {
-      const compressed = await compressImage(file);
+      // Avatars never need more than ~1000px; aim well under the bucket cap.
+      const compressed = await compressImage(file, { maxEdge: 1024, targetBytes: 600 * 1024 });
+      if (isTooLarge(compressed)) throw new Error(t.avatarTooLarge);
       const supabase = createClient();
-      const path = `${member.user_id}/avatar-${Date.now()}.${compressed.type === "image/png" ? "png" : "jpg"}`;
+      const path = `${member.user_id}/avatar-${Date.now()}.${compressed.type === "image/png" ? "png" : compressed.type === "image/webp" ? "webp" : "jpg"}`;
       const { error } = await supabase.storage.from("lounge-media").upload(path, compressed, { upsert: false, contentType: compressed.type });
       if (error) throw new Error(error.message);
       const { data } = supabase.storage.from("lounge-media").getPublicUrl(path);
       setAvatarUrl(data.publicUrl);
+      // Persist immediately so the picture survives any later form error.
+      const res = await fetch("/api/lounge/avatar", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ avatarUrl: data.publicUrl }) });
+      const saved = await res.json();
+      if (!res.ok) throw new Error(saved.error || dict.lounge.common.error);
+      showToast("success", t.avatarSaved);
+      router.refresh();
     } catch (err) {
       showToast("error", err instanceof Error ? err.message : dict.lounge.common.error);
     } finally {

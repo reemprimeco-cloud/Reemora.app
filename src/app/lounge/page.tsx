@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { getWebsiteSettings } from "@/lib/data/settings";
 import { Feed } from "@/components/lounge/feed";
 import { PageHeader } from "@/components/lounge/page-header";
-import { loadFeedPage } from "@/lib/lounge/feed";
+import { loadFeedPage, loadRecentBuilders } from "@/lib/lounge/feed";
 import Link from "next/link";
 import { PenSquare } from "lucide-react";
 import { AdminProfileSetup } from "@/components/lounge/admin-profile-setup";
@@ -51,7 +51,7 @@ export default async function LoungeHome({ searchParams }: Props) {
   }
 
   const filter = params.filter ?? "recent";
-  const page = await loadFeedPage({ filter, viewerId: viewer.user.id });
+  const [page, builders] = await Promise.all([loadFeedPage({ filter, viewerId: viewer.user.id }), loadRecentBuilders()]);
 
   return (
     <div>
@@ -64,7 +64,7 @@ export default async function LoungeHome({ searchParams }: Props) {
           </Link>
         }
       />
-      <Feed initialPosts={page.posts} initialCursor={page.nextCursor} filter={filter} viewerId={viewer.user.id} isAdmin={viewer.isAdmin} />
+      <Feed initialPosts={page.posts} initialCursor={page.nextCursor} filter={filter} viewerId={viewer.user.id} isAdmin={viewer.isAdmin} builders={builders} />
     </div>
   );
 }

@@ -10,9 +10,15 @@ All notable changes to the Reemora platform are documented in this file. Format 
 - Lounge invitations: admins can pre-approve existing course registrants and send them an email invite or a copyable sign-in link (`/admin/lounge/invites`, migration `0031`).
 - Lounge verified badges: admins can give any approved member a badge with custom text (e.g. "Certified Trainer") from Lounge Members, and an admin without a Lounge profile gets a one-click "Create my profile" card on `/lounge` that creates a verified "Reemora Team" profile. The badge appears next to the name in the feed, comments, chat, members directory, profiles and challenge entries (migration `0032`).
 - Lounge profile links accept a bare username (e.g. `prime_kw`) or domain (`reemora.app`); the editor shows the platform prefix and stores a canonical https link, and profile chips show `@handle` so taps open the native app on phones.
+- Lounge feed redesigned around the work itself: a stories-style strip of members who posted recently, then Instagram-style cards (author, swipeable screenshots or a gradient link cover for projects without one, like/comment/share/save row, like count, caption with "more", "View all N comments").
+- Project comments are sorted into feedback buckets: Like, Needs work, Suggestion, Code, Design, Tips & advice, plus General. The author sees a count strip and grouped sections; commenters pick a bucket before posting (migration `0033`).
+- Chat room accepts photo and file attachments (PDF, ZIP, Office, text, up to 10 MB) stored in a new `lounge-files` bucket with per-member folders; images are compressed in the browser first.
+- Profile pictures save the moment the upload finishes (`/api/lounge/avatar`), independent of the rest of the form.
 - PWA: 192/512 px icons (plus maskable variants), manifest shortcuts, an `/offline` fallback page served by the shared service worker, and an Add-to-Home-Screen card in Lounge settings.
 
 ### Changed
+
+- Lounge navigation is faster: Vercel functions now run in Mumbai (`bom1`) next to the Supabase project, the middleware verifies the session JWT locally instead of calling the auth server, the viewer loader runs its queries in parallel, and `/lounge` has an instant loading skeleton so tab switches paint immediately.
 
 - `sendWebPushToAdmins` now targets admin subscriptions only (members can also subscribe to push).
 - CSP `connect-src` allows `wss://*.supabase.co` for Supabase Realtime.
@@ -41,6 +47,8 @@ First production release. Reemora is a Next.js 15 + TypeScript + Tailwind CSS pl
 - Increased the header logo from 32px to 44px for legibility.
 
 ### Fixed
+
+- Browser image compression no longer gives up on large phone photos (48 MP iPhone shots were sent at full size and rejected by Storage); it now resizes during decode, retries at smaller sizes, and refuses the upload with a clear message if it still cannot fit. The `lounge-media` bucket limit is raised to 5 MB as a safety net.
 
 - **Critical**: closed a payment price-tampering vulnerability — the MyFatoorah registration API previously trusted a client-supplied price; it now derives price, currency, and course identity server-side from the database, keyed only by the cohort ID.
 - Added payment amount verification on the MyFatoorah callback route, guarding against a stale or mismatched payment ID being replayed against a different invoice.

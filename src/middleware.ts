@@ -52,12 +52,16 @@ export async function middleware(request: NextRequest) {
 
   // A network/Supabase outage must not 500 the entire site. Fail closed for
   // admin routes (treat as logged-out) and fail open for everything else.
-  let user = null;
+  // getClaims() verifies the session JWT against the project's public
+  // signing key without a network call where the project uses asymmetric
+  // keys, and falls back to the auth server otherwise. The pages and RLS
+  // still authorize every read/write; this only decides redirects.
+  let user: { id: string } | null = null;
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data.user;
+    const { data } = await supabase.auth.getClaims();
+    user = data?.claims?.sub ? { id: data.claims.sub } : null;
   } catch (err) {
-    console.error("middleware: auth.getUser() failed:", err);
+    console.error("middleware: auth.getClaims() failed:", err);
   }
 
   if (isAdminRoute && !user) {

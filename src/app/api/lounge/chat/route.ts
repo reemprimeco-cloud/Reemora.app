@@ -3,7 +3,7 @@ import { parseBody, requireMember, jsonError } from "@/lib/lounge/api";
 import { chatSchema } from "@/lib/lounge/validation";
 
 const CHAT_PAGE = 50;
-const MESSAGE_SELECT = "id, author_id, body, reply_to_id, is_hidden, created_at, author:lounge_members!lounge_chat_messages_author_id_fkey(user_id, display_name, avatar_url, is_verified, badge_label)";
+const MESSAGE_SELECT = "id, author_id, body, reply_to_id, is_hidden, attachment_url, attachment_type, attachment_name, attachment_size, created_at, author:lounge_members!lounge_chat_messages_author_id_fkey(user_id, display_name, avatar_url, is_verified, badge_label)";
 
 /** GET ?before=<iso> — older messages for infinite scroll.
  *  GET ?after=<iso>  — anything newer than the last message the client
@@ -37,9 +37,24 @@ export async function POST(request: Request) {
   const parsed = await parseBody(request, chatSchema);
   if (parsed instanceof NextResponse) return parsed;
 
+  // Attachments must come from the caller's own folder in the Lounge files
+  // bucket; anything else is rejected before it can become an <a href>.
+  const att = parsed.attachment ?? null;
+  if (att && !att.url.includes(`/storage/v1/object/public/lounge-files/${ctx.user.id}/`)) {
+    return jsonError("Attachments must be uploaded through the Lounge.", 400, { attachment: "invalid" });
+  }
+
   const { data, error } = await ctx.supabase
     .from("lounge_chat_messages")
-    .insert({ author_id: ctx.user.id, body: parsed.body, reply_to_id: parsed.replyToId ?? null })
+    .insert({
+      author_id: ctx.user.id,
+      body: parsed.body,
+      reply_to_id: parsed.replyToId ?? null,
+      attachment_url: att?.url ?? null,
+      attachment_type: att?.type ?? null,
+      attachment_name: att?.name ?? null,
+      attachment_size: att?.size ?? null,
+    })
     .select(MESSAGE_SELECT)
     .single();
 

@@ -115,17 +115,33 @@ export const postSchema = z
     }
   });
 
+/** Order matters: it is the display order under a project. */
+export const COMMENT_CATEGORIES = ["like", "needs_work", "suggestion", "code", "design", "tip"] as const;
+
 export const commentSchema = z.object({
   postId: z.string().uuid(),
   parentId: z.string().uuid().nullable().optional(),
   body: trimmed(2000, 1),
+  category: z.enum(COMMENT_CATEGORIES).nullable().optional(),
 });
 
 export const CHAT_MAX_LENGTH = 1000;
-export const chatSchema = z.object({
-  body: trimmed(CHAT_MAX_LENGTH, 1),
-  replyToId: z.string().uuid().nullable().optional(),
+export const CHAT_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
+export const chatAttachmentSchema = z.object({
+  url: z.string().trim().max(500).refine(isSafeHttpUrl, "Invalid URL"),
+  type: z.enum(["image", "file"]),
+  name: z.string().trim().min(1).max(200),
+  size: z.number().int().min(0).max(CHAT_ATTACHMENT_MAX_BYTES),
 });
+export const chatSchema = z
+  .object({
+    body: z.string().trim().max(CHAT_MAX_LENGTH).default(""),
+    replyToId: z.string().uuid().nullable().optional(),
+    attachment: chatAttachmentSchema.nullable().optional(),
+  })
+  .superRefine((v, ctx) => {
+    if (!v.body && !v.attachment) ctx.addIssue({ code: "custom", path: ["body"], message: "Write a message or attach a file." });
+  });
 
 export const REPORT_TARGETS = ["post", "comment", "chat_message", "member"] as const;
 export const reportSchema = z.object({

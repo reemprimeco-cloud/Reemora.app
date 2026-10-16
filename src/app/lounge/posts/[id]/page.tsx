@@ -40,7 +40,7 @@ export default async function PostPage({ params }: Props) {
       </Link>
       <div className="space-y-5">
         <PostCard post={post} viewerId={viewer.user!.id} isAdmin={viewer.isAdmin} full />
-        <Comments postId={post.id} postAuthorId={post.author_id} initial={(comments ?? []) as unknown as CommentWithAuthor[]} viewerId={viewer.user!.id} isAdmin={viewer.isAdmin} />
+        <Comments postId={post.id} postAuthorId={post.author_id} postType={post.type} initial={(comments ?? []) as unknown as CommentWithAuthor[]} viewerId={viewer.user!.id} isAdmin={viewer.isAdmin} />
       </div>
     </div>
   );

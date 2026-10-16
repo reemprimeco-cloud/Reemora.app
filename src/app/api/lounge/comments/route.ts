@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   const parsed = await parseBody(request, commentSchema);
   if (parsed instanceof NextResponse) return parsed;
 
-  const { data: post } = await ctx.supabase.from("lounge_posts").select("id, author_id, title").eq("id", parsed.postId).maybeSingle();
+  const { data: post } = await ctx.supabase.from("lounge_posts").select("id, author_id, title, type").eq("id", parsed.postId).maybeSingle();
   if (!post) return jsonError("Post not found.", 404);
 
   let parentAuthor: string | null = null;
@@ -26,7 +26,14 @@ export async function POST(request: Request) {
 
   const { data, error } = await ctx.supabase
     .from("lounge_comments")
-    .insert({ post_id: post.id, author_id: ctx.user.id, parent_id: parsed.parentId ?? null, body: parsed.body })
+    .insert({
+      post_id: post.id,
+      author_id: ctx.user.id,
+      parent_id: parsed.parentId ?? null,
+      body: parsed.body,
+      // Structured feedback lives on project posts; replies follow their root.
+      category: post.type === "project" && !parsed.parentId ? (parsed.category ?? null) : null,
+    })
     .select("*, author:lounge_members!lounge_comments_author_id_fkey(user_id, display_name, avatar_url, is_verified, badge_label)")
     .single();
 

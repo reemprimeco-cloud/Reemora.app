@@ -127,3 +127,16 @@ export async function loadBookmarkedPosts(viewerId: string): Promise<FeedPost[]>
   const ordered = ids.map((id) => byId.get(id)).filter((p): p is RawPost => Boolean(p));
   return decoratePosts(supabase, ordered, viewerId);
 }
+
+/** Members who posted most recently, for the home strip. */
+export async function loadRecentBuilders(limit = 14, supabase?: Db): Promise<{ user_id: string; display_name: string; avatar_url: string | null; is_verified: boolean }[]> {
+  const db = supabase ?? (await createClient());
+  const { data: posts } = await db.from("lounge_posts").select("author_id").eq("is_hidden", false).order("created_at", { ascending: false }).limit(60);
+  const ids: string[] = [];
+  for (const p of posts ?? []) if (!ids.includes(p.author_id)) ids.push(p.author_id);
+  const top = ids.slice(0, limit);
+  if (!top.length) return [];
+  const { data: members } = await db.from("lounge_members").select("user_id, display_name, avatar_url, is_verified").in("user_id", top).eq("status", "approved");
+  const byId = new Map((members ?? []).map((m) => [m.user_id, m]));
+  return top.map((id) => byId.get(id)).filter((m): m is NonNullable<typeof m> => Boolean(m));
+}

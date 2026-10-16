@@ -3,8 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Heart, MessageCircle, Bookmark, Link2, ExternalLink, Trash2, Pencil, EyeOff } from "lucide-react";
+import { Heart, MessageCircle, Bookmark, Link2, ExternalLink, Trash2, Pencil, EyeOff, Globe, Images } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/context";
+import { interpolate } from "@/lib/i18n/dictionaries";
 import { useToast } from "@/components/toast-provider";
 import { useConfirm } from "@/components/confirm-dialog";
 import { Avatar } from "@/components/lounge/avatar";
@@ -23,6 +24,20 @@ const TYPE_STYLE: Record<FeedPost["type"], string> = {
   tool: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
 };
 
+/** Gradient "cover" for posts that have a link but no screenshot, keyed by
+ *  project category so a feed of link-only posts still reads visually. */
+const COVER_STYLE: Record<string, string> = {
+  website: "from-navy-900 via-navy-800 to-blue-600",
+  app: "from-blue-600 via-navy-800 to-navy-900",
+  ai: "from-purple-700 via-navy-800 to-navy-900",
+  automation: "from-emerald-700 via-navy-800 to-navy-900",
+  productivity: "from-amber-600 via-navy-800 to-navy-900",
+  other: "from-navy-800 via-navy-700 to-blue-600",
+};
+
+/** Instagram-style card: who, then the thing itself (screenshot or link
+ *  cover), then actions, then the caption. The media is the hero because
+ *  members share apps, sites and content, not text. */
 export function PostCard({ post, viewerId, isAdmin, full, compact }: { post: FeedPost; viewerId: string; isAdmin: boolean; full?: boolean; compact?: boolean }) {
   const router = useRouter();
   const { dict, lang } = useLanguage();
@@ -34,6 +49,8 @@ export function PostCard({ post, viewerId, isAdmin, full, compact }: { post: Fee
   const [likeCount, setLikeCount] = React.useState(post.like_count);
   const [bookmarked, setBookmarked] = React.useState(post.bookmarked);
   const [deleted, setDeleted] = React.useState(false);
+  const [slide, setSlide] = React.useState(0);
+  const [expanded, setExpanded] = React.useState(Boolean(full));
 
   const typeLabel = { discussion: t.typeDiscussion, question: t.typeQuestion, project: t.typeProject, milestone: t.typeMilestone, tool: t.typeTool }[post.type];
   const statusLabel = post.project_status ? { prototype: t.statusPrototype, in_progress: t.statusInProgress, completed: t.statusCompleted }[post.project_status] : null;
@@ -86,26 +103,40 @@ export function PostCard({ post, viewerId, isAdmin, full, compact }: { post: Fee
   if (deleted) return null;
 
   const images = [post.image_url, ...post.gallery_urls].filter((u): u is string => Boolean(u));
-  const shownImages = full ? images : images.slice(0, 1);
+  const hasMedia = images.length > 0;
+  const showCover = !hasMedia && Boolean(post.project_url);
+  const longBody = post.body.length > 220;
+  const padX = compact ? "px-4" : "px-4 sm:px-5";
+
+  const Title = full ? "h1" : "h2";
 
   return (
-    <article className={cn("rounded-2xl border border-border-c bg-surface", compact ? "p-4" : "p-5 sm:p-6", post.is_hidden && "opacity-70")}>
-      <header className="mb-3 flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <Link href={memberHref(post.author.user_id)} className="shrink-0">
+    <article className={cn("overflow-hidden rounded-2xl border border-border-c bg-surface", post.is_hidden && "opacity-70")}>
+      {/* Header: author */}
+      <header className={cn("flex items-center justify-between gap-3 py-3", padX)}>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <Link href={memberHref(post.author.user_id)} className="shrink-0 rounded-full ring-2 ring-blue-400/40 ring-offset-2 ring-offset-surface">
             <Avatar name={post.author.display_name} src={post.author.avatar_url} size="sm" />
           </Link>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-1.5">
-              <Link href={memberHref(post.author.user_id)} className="truncate text-sm font-bold hover:text-blue-600">
+              <Link href={memberHref(post.author.user_id)} className="truncate text-[14px] font-bold hover:text-blue-600">
                 {post.author.display_name}
               </Link>
               <VerifiedBadge verified={post.author.is_verified} label={post.author.badge_label} size="sm" />
               <AwardBadges badges={post.author.badges} size="xs" lang={lang} />
             </div>
-            <p className="text-xs text-ink-soft">
+            <p className="flex items-center gap-1.5 text-[11.5px] text-ink-soft">
               <time dateTime={post.created_at}>{timeAgo(post.created_at, dict.lounge.common, lang)}</time>
-              {post.updated_at !== post.created_at && " · ✎"}
+              {post.updated_at !== post.created_at && <span aria-hidden="true">· ✎</span>}
+              {post.project_url && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span className="inline-flex items-center gap-1" dir="ltr">
+                    <Globe size={11} aria-hidden="true" /> {hostOf(post.project_url)}
+                  </span>
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -113,79 +144,132 @@ export function PostCard({ post, viewerId, isAdmin, full, compact }: { post: Fee
       </header>
 
       {post.is_hidden && (
-        <p className="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 dark:bg-red-950 dark:text-red-300">
+        <p className={cn("mb-2 inline-flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 dark:bg-red-950 dark:text-red-300", padX)}>
           <EyeOff size={12} aria-hidden="true" /> {t.hidden}
           {post.hidden_reason && <> — {post.hidden_reason}</>}
         </p>
       )}
 
-      {full ? (
-        <h1 className="mb-2 text-[22px] font-bold leading-tight sm:text-[26px]">{post.title}</h1>
-      ) : (
-        <h2 className="mb-2 text-[17px] font-bold leading-snug">
-          <Link href={postHref(post.id)} className="hover:text-blue-600">
-            {post.title}
-          </Link>
-        </h2>
-      )}
-
-      <p className={cn("whitespace-pre-line text-[15px] leading-relaxed text-foreground/90", !full && "line-clamp-4")}>{post.body}</p>
-      {!full && post.body.length > 280 && (
-        <Link href={postHref(post.id)} className="mt-1 inline-block text-sm font-semibold text-blue-600 hover:underline">
-          …
-        </Link>
-      )}
-
-      {shownImages.length > 0 && (
-        <div className={cn("mt-4 grid gap-2", shownImages.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
-          {shownImages.map((src) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={src} src={src} alt="" loading="lazy" className="max-h-[420px] w-full rounded-xl border border-border-c object-cover" />
-          ))}
-        </div>
-      )}
-
-      {(post.project_url || post.tools.length > 0 || statusLabel) && (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {post.project_url && (
-            <a href={post.project_url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 rounded-full bg-navy-800 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-600">
-              <ExternalLink size={12} aria-hidden="true" /> {t.visitProject} · {hostOf(post.project_url)}
-            </a>
+      {/* Media: screenshots, swipeable on phones */}
+      {hasMedia && (
+        <div className="relative bg-navy-900/5">
+          <div
+            className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none]"
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              setSlide(Math.round(el.scrollLeft / Math.max(1, el.clientWidth)));
+            }}
+          >
+            {(full ? images : images.slice(0, 6)).map((src, i) => (
+              <Link key={src} href={full ? src : postHref(post.id)} target={full ? "_blank" : undefined} className="w-full shrink-0 snap-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" loading={i === 0 ? "eager" : "lazy"} className={cn("w-full object-cover", full ? "max-h-[640px]" : "aspect-[4/3] sm:aspect-[16/10]")} />
+              </Link>
+            ))}
+          </div>
+          {images.length > 1 && (
+            <>
+              <span className="absolute end-3 top-3 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-bold text-white backdrop-blur">
+                <Images size={12} aria-hidden="true" /> {Math.abs(slide) + 1}/{images.length}
+              </span>
+              <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center gap-1">
+                {images.map((_, i) => (
+                  <span key={i} className={cn("h-1.5 w-1.5 rounded-full bg-white/90 shadow", i !== Math.abs(slide) && "opacity-50")} />
+                ))}
+              </div>
+            </>
           )}
-          {statusLabel && <span className="rounded-full border border-border-c px-3 py-1.5 text-xs font-semibold">{statusLabel}</span>}
-          {post.tools.map((tool) => (
-            <span key={tool} className="rounded-full bg-surface-alt px-2.5 py-1 text-[11px] font-semibold text-ink-soft">{tool}</span>
-          ))}
         </div>
       )}
 
-      <footer className="mt-4 flex flex-wrap items-center gap-1 border-t border-border-c pt-3">
-        <button type="button" onClick={() => toggle("like")} aria-pressed={liked} aria-label={liked ? t.unlike : t.like} className={cn("inline-flex min-h-[40px] items-center gap-1.5 rounded-full px-3 text-sm font-semibold transition hover:bg-surface-alt", liked ? "text-red-500" : "text-ink-soft")}>
-          <Heart size={17} className={liked ? "fill-current" : ""} aria-hidden="true" /> {likeCount}
+      {/* Link cover for projects without a screenshot */}
+      {showCover && (
+        <a href={post.project_url!} target="_blank" rel="noopener noreferrer nofollow" className={cn("relative block overflow-hidden bg-gradient-to-br text-white", COVER_STYLE[post.project_category ?? "other"] ?? COVER_STYLE.other)}>
+          <div className="pointer-events-none absolute -end-10 -top-10 h-44 w-44 rounded-full bg-white/10 blur-2xl" aria-hidden="true" />
+          <div className="flex min-h-[150px] flex-col justify-end p-5 sm:min-h-[170px]">
+            <span className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-bold backdrop-blur" dir="ltr">
+              <Globe size={12} aria-hidden="true" /> {hostOf(post.project_url!)}
+            </span>
+            <span className="text-[20px] font-bold leading-tight sm:text-[22px]">{post.title}</span>
+            <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-white/80">
+              {t.visitProject} <ExternalLink size={12} aria-hidden="true" />
+            </span>
+          </div>
+        </a>
+      )}
+
+      {/* Actions */}
+      <div className={cn("flex items-center gap-0.5 pt-1.5", padX)}>
+        <button type="button" onClick={() => toggle("like")} aria-pressed={liked} aria-label={liked ? t.unlike : t.like} className={cn("inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition hover:bg-surface-alt active:scale-90", liked ? "text-red-500" : "text-foreground")}>
+          <Heart size={23} className={liked ? "fill-current" : ""} aria-hidden="true" />
         </button>
-        <Link href={`${postHref(post.id)}#comments`} className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-ink-soft transition hover:bg-surface-alt">
-          <MessageCircle size={17} aria-hidden="true" /> {post.comment_count}
+        <Link href={`${postHref(post.id)}#comments`} aria-label={t.comments} className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full text-foreground transition hover:bg-surface-alt">
+          <MessageCircle size={23} aria-hidden="true" />
         </Link>
-        <button type="button" onClick={() => toggle("bookmark")} aria-pressed={bookmarked} aria-label={bookmarked ? t.unbookmark : t.bookmark} className={cn("inline-flex min-h-[40px] items-center gap-1.5 rounded-full px-3 text-sm font-semibold transition hover:bg-surface-alt", bookmarked ? "text-blue-600" : "text-ink-soft")}>
-          <Bookmark size={17} className={bookmarked ? "fill-current" : ""} aria-hidden="true" />
+        <button type="button" onClick={copyLink} aria-label={t.share} className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full text-foreground transition hover:bg-surface-alt">
+          <Link2 size={23} aria-hidden="true" />
         </button>
-        <button type="button" onClick={copyLink} aria-label={t.share} className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-ink-soft transition hover:bg-surface-alt">
-          <Link2 size={17} aria-hidden="true" />
+        {post.project_url && !showCover && (
+          <a href={post.project_url} target="_blank" rel="noopener noreferrer nofollow" className="ms-1 inline-flex items-center gap-1.5 rounded-full bg-navy-800 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-600">
+            <ExternalLink size={12} aria-hidden="true" /> {t.visitProject}
+          </a>
+        )}
+        <button type="button" onClick={() => toggle("bookmark")} aria-pressed={bookmarked} aria-label={bookmarked ? t.unbookmark : t.bookmark} className={cn("ms-auto inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition hover:bg-surface-alt", bookmarked ? "text-blue-600" : "text-foreground")}>
+          <Bookmark size={23} className={bookmarked ? "fill-current" : ""} aria-hidden="true" />
         </button>
-        <span className="ms-auto flex items-center gap-2">
-          {isOwner && (
-            <Link href={`/lounge/posts/${post.id}/edit`} aria-label={t.edit} className="inline-flex min-h-[40px] items-center gap-1 rounded-full px-3 text-xs font-semibold text-ink-soft hover:bg-surface-alt">
-              <Pencil size={13} aria-hidden="true" /> {t.edit}
+      </div>
+
+      {/* Caption */}
+      <div className={cn("pb-4", padX)}>
+        {likeCount > 0 && (
+          <p className="text-[13px] font-bold">
+            {likeCount} {likeCount === 1 ? t.like.toLowerCase() : t.like.toLowerCase() + (lang === "en" ? "s" : "")}
+          </p>
+        )}
+        <Title className={cn("mt-1 font-bold leading-snug", full ? "text-[22px] sm:text-[26px]" : "text-[16px]")}>
+          {full ? post.title : (
+            <Link href={postHref(post.id)} className="hover:text-blue-600">
+              {post.title}
             </Link>
           )}
-          {(isOwner || isAdmin) && (
-            <button type="button" onClick={remove} aria-label={t.delete} className="inline-flex min-h-[40px] items-center gap-1 rounded-full px-3 text-xs font-semibold text-ink-soft hover:bg-surface-alt hover:text-red-500">
-              <Trash2 size={13} aria-hidden="true" /> {t.delete}
-            </button>
+        </Title>
+        <p className={cn("mt-1 whitespace-pre-line text-[14.5px] leading-relaxed text-foreground/90", !expanded && "line-clamp-3")}>{post.body}</p>
+        {!expanded && longBody && (
+          <button type="button" onClick={() => setExpanded(true)} className="mt-0.5 text-[13px] font-semibold text-ink-soft hover:text-blue-600">
+            … {t.moreText}
+          </button>
+        )}
+
+        {(post.tools.length > 0 || statusLabel) && (
+          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+            {statusLabel && <span className="rounded-full border border-border-c px-2.5 py-1 text-[11px] font-semibold">{statusLabel}</span>}
+            {post.tools.map((tool) => (
+              <span key={tool} className="rounded-full bg-surface-alt px-2.5 py-1 text-[11px] font-semibold text-ink-soft">{tool}</span>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[13px] text-ink-soft">
+          {!full && post.comment_count > 0 && (
+            <Link href={`${postHref(post.id)}#comments`} className="font-semibold hover:text-blue-600">
+              {interpolate(t.viewAllComments, { n: post.comment_count })}
+            </Link>
           )}
-          {!isOwner && <ReportButton targetType="post" targetId={post.id} compact />}
-        </span>
-      </footer>
+          <span className="ms-auto flex items-center gap-2">
+            {isOwner && (
+              <Link href={`/lounge/posts/${post.id}/edit`} aria-label={t.edit} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold hover:bg-surface-alt">
+                <Pencil size={12} aria-hidden="true" /> {t.edit}
+              </Link>
+            )}
+            {(isOwner || isAdmin) && (
+              <button type="button" onClick={remove} aria-label={t.delete} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold hover:bg-surface-alt hover:text-red-500">
+                <Trash2 size={12} aria-hidden="true" /> {t.delete}
+              </button>
+            )}
+            {!isOwner && <ReportButton targetType="post" targetId={post.id} compact />}
+          </span>
+        </div>
+      </div>
     </article>
   );
 }
