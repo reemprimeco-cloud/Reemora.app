@@ -5,6 +5,7 @@ import { X, CalendarPlus } from "lucide-react";
 import { useCloseOnEscape } from "@/lib/use-close-on-escape";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/context";
+import { track } from "@/lib/meta";
 
 interface Props {
   courseId: string;
@@ -76,6 +77,7 @@ export function PrivateSessionModal({ courseId, courseTitle }: Props) {
         setBanner({ type: "error", text: data.error || t.genericError });
         return;
       }
+      track("Lead", { content_category: "private_session", content_name: courseTitle, content_ids: [courseId] }, { user: { email, phone } });
       setBanner({ type: "success", text: t.successMessage });
       setFullName("");
       setEmail("");

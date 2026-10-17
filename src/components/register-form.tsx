@@ -10,6 +10,7 @@ import { useLanguage } from "@/lib/i18n/context";
 import { interpolate } from "@/lib/i18n/dictionaries";
 import { computeOrderTotal, computeSplitPayment, MULTI_SEAT_DISCOUNT_THRESHOLD, type Attendee } from "@/lib/course-utils";
 import type { PaymentPlan } from "@/lib/types";
+import { track, toMetaValue } from "@/lib/meta";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
@@ -94,6 +95,19 @@ export function RegisterForm({
     }
 
     setSubmitting(true);
+    // Validated and about to go to payment: the start of checkout.
+    track(
+      "InitiateCheckout",
+      {
+        content_name: course.title,
+        content_ids: [course.id],
+        content_type: "product",
+        value: toMetaValue(isSplit ? dueNow : total),
+        currency: course.currency || "KWD",
+        num_items: seats,
+      },
+      { user: { email, phone } }
+    );
     try {
       const res = await fetch("/api/payments/checkout", {
         method: "POST",

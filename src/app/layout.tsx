@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/lib/i18n/context";
 import { getLang } from "@/lib/i18n/get-lang";
 import { DIR } from "@/lib/i18n/dictionaries";
+import { MetaPixel } from "@/components/meta-pixel";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -111,6 +112,7 @@ export default async function RootLayout({
         >
           <LanguageProvider initialLang={lang}>{children}</LanguageProvider>
         </ThemeProvider>
+        <MetaPixel />
       </body>
     </html>
   );

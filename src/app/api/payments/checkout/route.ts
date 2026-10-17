@@ -6,6 +6,7 @@ import { computeOrderTotal, computeSplitPayment, type Attendee } from "@/lib/cou
 import { formatMoney } from "@/lib/utils";
 import { sendTelegramNotification } from "@/lib/telegram";
 import { sendWebPushToAdmins } from "@/lib/webpush";
+import { metaContextFromRequest, queueMetaEvent, toMetaValue } from "@/lib/meta-capi";
 import type { Json } from "@/lib/supabase/database.types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -171,6 +172,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not save your registration. Please try again." }, { status: 500 });
   }
 
+  // Meta: the registration form was completed and saved. Sent from the
+  // server only (never the browser) and keyed on the registration id, so a
+  // retried request can't double count. Runs after the response is sent.
+  const registerPageUrl = `${siteUrl}/register/${course.slug}`;
+  const metaContext = metaContextFromRequest(request, request.headers.get("referer"));
+  queueMetaEvent({
+    eventName: "CompleteRegistration",
+    eventId: `reg_${registration.id}`,
+    eventSourceUrl: registerPageUrl,
+    user: { ...metaContext, email, phone },
+    customData: {
+      content_name: course.title,
+      content_ids: [course.id],
+      content_type: "product",
+      value: toMetaValue(total),
+      currency: course.currency,
+      num_items: seats,
+    },
+  });
+
   // Notify as soon as the order exists — this is the "someone registered"
   // moment, independent of whether payment completes right after.
   const planNote = paymentPlan === "split_50_50" ? " (split payment: 50% now, 50% in 30 days)" : "";
@@ -302,7 +323,23 @@ export async function POST(request: Request) {
       payment_id: payment.id,
       event_type: "created",
       status: "invoice_created",
-      raw_response: { invoiceId, checkoutUrl, subtotal, discount, total, paymentPlan },
+      // `meta` keeps the buyer's browser signals so the server-side Purchase
+      // (sent later, possibly from the webhook or a sweep with no browser
+      // attached) can still be matched to them. Admin-only table.
+      raw_response: {
+        invoiceId,
+        checkoutUrl,
+        subtotal,
+        discount,
+        total,
+        paymentPlan,
+        meta: {
+          client_ip_address: metaContext.clientIp ?? null,
+          client_user_agent: metaContext.userAgent ?? null,
+          fbp: metaContext.fbp ?? null,
+          fbc: metaContext.fbc ?? null,
+        },
+      },
     });
 
     return NextResponse.json({ invoiceUrl: checkoutUrl, registrationId: registration.id });

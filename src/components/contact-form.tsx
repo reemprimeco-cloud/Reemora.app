@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/context";
+import { track } from "@/lib/meta";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -52,6 +53,7 @@ export function ContactForm() {
         setAlert({ type: "error", message: data.error || t.genericError });
         return;
       }
+      track("Lead", { content_category: "contact_form" }, { user: { email, phone } });
       setAlert({ type: "success", message: t.successMessage });
       setName("");
       setEmail("");

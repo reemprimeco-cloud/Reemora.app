@@ -8,6 +8,7 @@ import { InquiryModal } from "@/components/inquiry-modal";
 import { WaitlistModal } from "@/components/waitlist-modal";
 import { PrivateSessionModal } from "@/components/private-session-modal";
 import { CourseGallery } from "@/components/course-gallery";
+import { MetaViewContent } from "@/components/meta-view-content";
 import { getCourseBySlug, getCourses } from "@/lib/data/courses";
 import { getTestimonialsForCourse } from "@/lib/data/testimonials";
 import { courseImageSrc, formatDuration, primarySchedule } from "@/lib/course-utils";
@@ -117,6 +118,7 @@ export default async function CourseDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(courseJsonLd) }}
       />
+      <MetaViewContent courseId={course.id} courseTitle={course.title} price={course.price} currency={course.currency} />
       <SiteHeader />
       <main className="pb-20 pt-[130px]">
         <div className="mx-auto max-w-[1180px] px-6">

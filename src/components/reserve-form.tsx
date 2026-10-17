@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/context";
+import { track } from "@/lib/meta";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
@@ -63,6 +64,7 @@ export function ReserveForm({ courses }: { courses: CourseOption[] }) {
         setBanner({ type: "error", text: data.error || t.genericError });
         return;
       }
+      track("Lead", { content_category: "seat_reservation", ...(courseId ? { content_ids: [courseId] } : {}) }, { user: { email, phone } });
       setDone(true);
     } catch {
       setBanner({ type: "error", text: t.networkError });

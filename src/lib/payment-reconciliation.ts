@@ -6,6 +6,7 @@ import {
   type UPaymentTransaction,
 } from "@/lib/upayment";
 import type { Json } from "@/lib/supabase/database.types";
+import { isMetaCapiConfigured, runInBackground, sendMetaEvent, toMetaValue, type MetaUserInput } from "@/lib/meta-capi";
 
 interface ReconcileResult {
   ok: boolean;
@@ -104,7 +105,7 @@ async function applyTransaction(
   const paymentId = knownPaymentId ?? transaction.merchant_requested_order_id;
   const { data: payment } = await supabase
     .from("payments")
-    .select("*, registrations(id, course_schedule_id, seats, status, course_schedule(courses(slug)))")
+    .select("*, registrations(id, course_schedule_id, seats, status, email, phone, course_schedule(courses(id, slug, title)))")
     .eq("id", paymentId)
     .maybeSingle();
 
@@ -185,5 +186,90 @@ async function applyTransaction(
     }
   }
 
+  // Meta Purchase: only on the transition into "paid", which every
+  // retry path (browser refresh of the callback, webhook redelivery, the
+  // sweep) sees as already-paid afterwards. The event id is derived from
+  // the payment row, so even two racing requests dedupe at Meta.
+  if (isPaid && !wasAlreadyPaid && registration && course) {
+    queuePurchaseEvent({
+      paymentId: payment.id,
+      amount: Number(payment.amount),
+      currency: payment.currency,
+      registration,
+      course,
+    });
+  }
+
   return { ok: true, isPaid, registrationId: registration?.id ?? null, courseSlug };
+}
+
+interface PurchaseInput {
+  paymentId: string;
+  amount: number;
+  currency: string;
+  registration: { id: string; seats: number; email?: string | null; phone?: string | null };
+  course: { id?: string | null; slug: string; title?: string | null };
+}
+
+/** Sends one installment's (or the full) payment as a server-side
+ *  Purchase. The buyer's browser signals are read from the checkout's
+ *  stored context, since the confirmation itself may come from a webhook
+ *  or a sweep with no browser attached. */
+function queuePurchaseEvent(input: PurchaseInput): void {
+  if (!isMetaCapiConfigured()) return;
+  runInBackground(async () => {
+    const browser = await loadCheckoutBrowserContext(input.registration.id);
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://reemora.app";
+    await sendMetaEvent({
+      eventName: "Purchase",
+      eventId: `purchase_${input.paymentId}`,
+      eventSourceUrl: `${siteUrl}/register/${input.course.slug}`,
+      user: { ...browser, email: input.registration.email, phone: input.registration.phone },
+      customData: {
+        value: toMetaValue(input.amount),
+        currency: input.currency || "KWD",
+        content_ids: [input.course.id ?? input.course.slug],
+        content_type: "product",
+        ...(input.course.title ? { content_name: input.course.title } : {}),
+        num_items: input.registration.seats,
+        order_id: input.registration.id,
+      },
+    });
+  });
+}
+
+/** The browser signals saved when this registration's first invoice was
+ *  created (see /api/payments/checkout). Empty if none were stored. */
+async function loadCheckoutBrowserContext(registrationId: string): Promise<MetaUserInput> {
+  try {
+    const supabase = await createServiceRoleClient();
+    const { data: first } = await supabase
+      .from("payments")
+      .select("id")
+      .eq("registration_id", registrationId)
+      .is("due_date", null)
+      .limit(1)
+      .maybeSingle();
+    if (!first) return {};
+
+    const { data: created } = await supabase
+      .from("payment_transactions")
+      .select("raw_response")
+      .eq("payment_id", first.id)
+      .eq("status", "invoice_created")
+      .limit(1)
+      .maybeSingle();
+    const raw = created?.raw_response as { meta?: Record<string, unknown> } | null | undefined;
+    const meta = raw?.meta;
+    if (!meta || typeof meta !== "object") return {};
+    const pick = (key: string) => (typeof meta[key] === "string" ? (meta[key] as string) : null);
+    return {
+      clientIp: pick("client_ip_address"),
+      userAgent: pick("client_user_agent"),
+      fbp: pick("fbp"),
+      fbc: pick("fbc"),
+    };
+  } catch {
+    return {};
+  }
 }
