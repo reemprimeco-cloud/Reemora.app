@@ -46,6 +46,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(finish);
   }
 
+  // Admin password-reset links that fail (expired or already used) go back
+  // to the admin login with a clear message, not to the Lounge.
+  if (next.startsWith("/admin")) {
+    const adminLogin = new URL("/admin/login", origin);
+    adminLogin.searchParams.set("reset", "expired");
+    return NextResponse.redirect(adminLogin);
+  }
+
   const fallback = new URL("/lounge/login", origin);
   fallback.searchParams.set("confirmed", "1");
   if (next !== "/lounge") fallback.searchParams.set("next", next);

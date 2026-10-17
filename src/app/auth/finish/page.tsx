@@ -27,6 +27,10 @@ function Finish() {
     const refreshToken = hash.get("refresh_token");
 
     if (!accessToken || !refreshToken) {
+      if (next.startsWith("/admin")) {
+        router.replace("/admin/login?reset=expired");
+        return;
+      }
       if (hash.get("error")) setFailed(true);
       else router.replace(`/lounge/login?confirmed=1${next !== "/lounge" ? `&next=${encodeURIComponent(next)}` : ""}`);
       return;
