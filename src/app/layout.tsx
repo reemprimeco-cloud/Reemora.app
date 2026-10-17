@@ -6,6 +6,7 @@ import { LanguageProvider } from "@/lib/i18n/context";
 import { getLang } from "@/lib/i18n/get-lang";
 import { DIR } from "@/lib/i18n/dictionaries";
 import { MetaPixel } from "@/components/meta-pixel";
+import { AuthHashForwarder } from "@/components/auth-hash-forwarder";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -104,6 +105,7 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
+        <AuthHashForwarder />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
