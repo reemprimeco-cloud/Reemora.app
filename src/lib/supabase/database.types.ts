@@ -70,6 +70,11 @@ export interface Database {
           social_links: Json;
           timeline: Json;
           skills: string[];
+          full_name_ar: string | null;
+          title_ar: string | null;
+          bio_ar: string | null;
+          timeline_ar: Json;
+          skills_ar: string[];
           display_order: number;
           created_at: string;
           updated_at: string;
@@ -86,6 +91,11 @@ export interface Database {
           social_links?: Json;
           timeline?: Json;
           skills?: string[];
+          full_name_ar?: string | null;
+          title_ar?: string | null;
+          bio_ar?: string | null;
+          timeline_ar?: Json;
+          skills_ar?: string[];
           display_order?: number;
           created_at?: string;
           updated_at?: string;
@@ -279,6 +289,8 @@ export interface Database {
           instructor_id: string;
           title: string;
           issuing_body: string | null;
+          title_ar: string | null;
+          issuing_body_ar: string | null;
           image_url: string | null;
           issue_date: string | null;
           credential_url: string | null;
@@ -290,6 +302,8 @@ export interface Database {
           instructor_id: string;
           title: string;
           issuing_body?: string | null;
+          title_ar?: string | null;
+          issuing_body_ar?: string | null;
           image_url?: string | null;
           issue_date?: string | null;
           credential_url?: string | null;
@@ -313,6 +327,7 @@ export interface Database {
           name: string;
           slug: string;
           description: string | null;
+          name_ar: string | null;
           display_order: number;
           created_at: string;
         };
@@ -321,6 +336,7 @@ export interface Database {
           name: string;
           slug: string;
           description?: string | null;
+          name_ar?: string | null;
           display_order?: number;
           created_at?: string;
         };
@@ -345,6 +361,10 @@ export interface Database {
           short_description: string;
           description: string;
           curriculum: string[];
+          title_ar: string | null;
+          short_description_ar: string | null;
+          description_ar: string | null;
+          curriculum_ar: string[];
           is_published: boolean;
           registration_open: boolean;
           installments_enabled: boolean;
@@ -370,6 +390,10 @@ export interface Database {
           short_description: string;
           description: string;
           curriculum?: string[];
+          title_ar?: string | null;
+          short_description_ar?: string | null;
+          description_ar?: string | null;
+          curriculum_ar?: string[];
           is_published?: boolean;
           registration_open?: boolean;
           installments_enabled?: boolean;
@@ -624,6 +648,9 @@ export interface Database {
           student_name: string;
           role_company: string | null;
           quote: string;
+          student_name_ar: string | null;
+          role_company_ar: string | null;
+          quote_ar: string | null;
           avatar_url: string | null;
           rating: number | null;
           is_published: boolean;
@@ -636,6 +663,9 @@ export interface Database {
           student_name: string;
           role_company?: string | null;
           quote: string;
+          student_name_ar?: string | null;
+          role_company_ar?: string | null;
+          quote_ar?: string | null;
           avatar_url?: string | null;
           rating?: number | null;
           is_published?: boolean;
@@ -676,6 +706,9 @@ export interface Database {
           image_url: string | null;
           project_url: string | null;
           category: string | null;
+          title_ar: string | null;
+          description_ar: string | null;
+          category_ar: string | null;
           is_published: boolean;
           display_order: number;
           created_at: string;
@@ -687,6 +720,9 @@ export interface Database {
           image_url?: string | null;
           project_url?: string | null;
           category?: string | null;
+          title_ar?: string | null;
+          description_ar?: string | null;
+          category_ar?: string | null;
           is_published?: boolean;
           display_order?: number;
           created_at?: string;

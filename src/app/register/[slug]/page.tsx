@@ -28,7 +28,8 @@ export const metadata: Metadata = {
 
 export default async function RegisterPage({ params }: Props) {
   const { slug } = await params;
-  const [lang, course, settings] = await Promise.all([getLang(), getCourseBySlug(slug), getWebsiteSettings()]);
+  const lang = await getLang();
+  const [course, settings] = await Promise.all([getCourseBySlug(slug, lang), getWebsiteSettings(lang)]);
   if (!course) notFound();
   const schedule = primarySchedule(course);
   if (!schedule) notFound();

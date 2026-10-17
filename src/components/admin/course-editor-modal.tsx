@@ -49,6 +49,11 @@ export function CourseEditorModal({
   const [shortDescription, setShortDescription] = React.useState(course?.short_description ?? "");
   const [description, setDescription] = React.useState(course?.description ?? "");
   const [curriculum, setCurriculum] = React.useState((course?.curriculum ?? []).join("\n"));
+  // Arabic twins: shown on the Arabic site when filled, otherwise English is used.
+  const [titleAr, setTitleAr] = React.useState(course?.title_ar ?? "");
+  const [shortDescriptionAr, setShortDescriptionAr] = React.useState(course?.short_description_ar ?? "");
+  const [descriptionAr, setDescriptionAr] = React.useState(course?.description_ar ?? "");
+  const [curriculumAr, setCurriculumAr] = React.useState((course?.curriculum_ar ?? []).join("\n"));
   const [imageUrl, setImageUrl] = React.useState(course?.image_url ?? "");
   const [galleryImages, setGalleryImages] = React.useState<string[]>(course?.gallery_images ?? []);
   const [uploading, setUploading] = React.useState(false);
@@ -157,6 +162,10 @@ export function CourseEditorModal({
       short_description: shortDescription.trim(),
       description: description.trim(),
       curriculum: curriculum.split("\n").map((s) => s.trim()).filter(Boolean),
+      title_ar: titleAr.trim() || null,
+      short_description_ar: shortDescriptionAr.trim() || null,
+      description_ar: descriptionAr.trim() || null,
+      curriculum_ar: curriculumAr.split("\n").map((s) => s.trim()).filter(Boolean),
       image_url: imageUrl || null,
       gallery_images: galleryImages,
     };
@@ -358,6 +367,28 @@ export function CourseEditorModal({
             <div className="sm:col-span-2">
               <FieldLabel htmlFor="f-curriculum">Curriculum (one item per line)</FieldLabel>
               <textarea id="f-curriculum" value={curriculum} onChange={(e) => setCurriculum(e.target.value)} required className={`${selectClass} min-h-[100px]`} />
+            </div>
+            <div className="sm:col-span-2 rounded-xl border border-border-c bg-surface-alt p-4">
+              <p className="mb-1 text-[13px] font-bold uppercase tracking-wide text-blue-600">Arabic version · النسخة العربية</p>
+              <p className="mb-4 text-xs text-ink-soft">Shown when the site is in Arabic. Any field left empty falls back to the English text above.</p>
+              <div className="space-y-4">
+                <div>
+                  <FieldLabel htmlFor="f-title-ar">Course Title (Arabic)</FieldLabel>
+                  <input id="f-title-ar" dir="rtl" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} className={selectClass} />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="f-short-desc-ar">Short Description (Arabic)</FieldLabel>
+                  <textarea id="f-short-desc-ar" dir="rtl" value={shortDescriptionAr} onChange={(e) => setShortDescriptionAr(e.target.value)} className={`${selectClass} min-h-[70px]`} />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="f-description-ar">Full Description (Arabic)</FieldLabel>
+                  <textarea id="f-description-ar" dir="rtl" value={descriptionAr} onChange={(e) => setDescriptionAr(e.target.value)} className={`${selectClass} min-h-[100px]`} />
+                </div>
+                <div>
+                  <FieldLabel htmlFor="f-curriculum-ar">Curriculum (Arabic, one item per line)</FieldLabel>
+                  <textarea id="f-curriculum-ar" dir="rtl" value={curriculumAr} onChange={(e) => setCurriculumAr(e.target.value)} className={`${selectClass} min-h-[100px]`} />
+                </div>
+              </div>
             </div>
           </div>
 

@@ -30,13 +30,13 @@ import { interpolate } from "@/lib/i18n/dictionaries";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [lang, courses, instructor, testimonials, settings, portfolio] = await Promise.all([
-    getLang(),
-    getCourses(),
-    getLeadInstructor(),
-    getTestimonials(),
-    getWebsiteSettings(),
-    getPortfolioItems(),
+  const lang = await getLang();
+  const [courses, instructor, testimonials, settings, portfolio] = await Promise.all([
+    getCourses(lang),
+    getLeadInstructor(lang),
+    getTestimonials(lang),
+    getWebsiteSettings(lang),
+    getPortfolioItems(lang),
   ]);
   const dict = getDict(lang);
   const featuredCourses = courses.slice(0, 3);
@@ -218,7 +218,7 @@ export default async function HomePage() {
                     <div key={`${item.title}-${idx}`} className="flex gap-4">
                       <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full bg-blue-500 shadow-[0_0_0_4px_var(--color-blue-100)]" />
                       <div>
-                        <span className="text-xs font-bold text-blue-600">{item.date}</span>
+                        <span className="text-xs font-bold text-blue-600" dir="auto">{item.date}</span>
                         <h3 className="text-[15.5px] font-bold">{item.title}</h3>
                         <p className="text-sm text-ink-soft">{item.desc}</p>
                       </div>

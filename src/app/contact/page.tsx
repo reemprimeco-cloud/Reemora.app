@@ -12,7 +12,8 @@ export const metadata: Metadata = {
 };
 
 export default async function ContactPage() {
-  const [lang, settings] = await Promise.all([getLang(), getWebsiteSettings()]);
+  const lang = await getLang();
+  const settings = await getWebsiteSettings(lang);
   const dict = getDict(lang);
 
   return (

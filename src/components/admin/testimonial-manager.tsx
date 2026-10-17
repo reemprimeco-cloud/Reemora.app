@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Trash2, Plus, EyeOff, Eye, Star, Download, Copy, Check } from "lucide-react";
+import { Trash2, Plus, EyeOff, Eye, Star, Download, Copy, Check, Languages } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 import { createClient } from "@/lib/supabase/client";
 import type { Testimonial } from "@/lib/types";
@@ -88,6 +88,11 @@ export function TestimonialManager({
   const [studentName, setStudentName] = React.useState("");
   const [roleCompany, setRoleCompany] = React.useState("");
   const [quote, setQuote] = React.useState("");
+  const [studentNameAr, setStudentNameAr] = React.useState("");
+  const [roleCompanyAr, setRoleCompanyAr] = React.useState("");
+  const [quoteAr, setQuoteAr] = React.useState("");
+  const [arEditing, setArEditing] = React.useState<string | null>(null);
+  const [arDraft, setArDraft] = React.useState({ student_name_ar: "", role_company_ar: "", quote_ar: "" });
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState("");
   const { showToast } = useToast();
@@ -113,7 +118,15 @@ export function TestimonialManager({
     const supabase = createClient();
     const { data, error } = await supabase
       .from("testimonials")
-      .insert({ student_name: studentName.trim(), role_company: roleCompany.trim() || null, quote: quote.trim(), display_order: testimonials.length + 1 })
+      .insert({
+        student_name: studentName.trim(),
+        role_company: roleCompany.trim() || null,
+        quote: quote.trim(),
+        student_name_ar: studentNameAr.trim() || null,
+        role_company_ar: roleCompanyAr.trim() || null,
+        quote_ar: quoteAr.trim() || null,
+        display_order: testimonials.length + 1,
+      })
       .select()
       .single();
     setSaving(false);
@@ -125,7 +138,32 @@ export function TestimonialManager({
     setStudentName("");
     setRoleCompany("");
     setQuote("");
+    setStudentNameAr("");
+    setRoleCompanyAr("");
+    setQuoteAr("");
     showToast("success", "Testimonial added.");
+  }
+
+  function startArabic(t: Testimonial) {
+    setArEditing(t.id);
+    setArDraft({ student_name_ar: t.student_name_ar ?? "", role_company_ar: t.role_company_ar ?? "", quote_ar: t.quote_ar ?? "" });
+  }
+
+  async function saveArabic(t: Testimonial) {
+    const payload = {
+      student_name_ar: arDraft.student_name_ar.trim() || null,
+      role_company_ar: arDraft.role_company_ar.trim() || null,
+      quote_ar: arDraft.quote_ar.trim() || null,
+    };
+    const supabase = createClient();
+    const { error } = await supabase.from("testimonials").update(payload).eq("id", t.id);
+    if (error) {
+      showToast("error", error.message);
+      return;
+    }
+    setTestimonials((prev) => prev.map((item) => (item.id === t.id ? { ...item, ...payload } : item)));
+    setArEditing(null);
+    showToast("success", "Arabic text saved.");
   }
 
   async function handleTogglePublished(t: Testimonial) {
@@ -166,8 +204,26 @@ export function TestimonialManager({
           </div>
           <p className="mb-1.5 text-sm italic text-ink-soft">&ldquo;{t.quote}&rdquo;</p>
           <p className="text-sm font-semibold">{t.student_name}{t.role_company ? ` — ${t.role_company}` : ""}</p>
+          {arEditing === t.id ? (
+            <div className="mt-3 grid grid-cols-1 gap-2 rounded-xl border border-border-c bg-surface-alt p-3 sm:grid-cols-2">
+              <input dir="rtl" value={arDraft.student_name_ar} onChange={(e) => setArDraft({ ...arDraft, student_name_ar: e.target.value })} placeholder="اسم المشارك" aria-label="Student name in Arabic" className={inputClass} />
+              <input dir="rtl" value={arDraft.role_company_ar} onChange={(e) => setArDraft({ ...arDraft, role_company_ar: e.target.value })} placeholder="المسمى / الجهة" aria-label="Role or company in Arabic" className={inputClass} />
+              <textarea dir="rtl" value={arDraft.quote_ar} onChange={(e) => setArDraft({ ...arDraft, quote_ar: e.target.value })} placeholder="نص الشهادة (اتركه فارغاً إذا كان النص الأصلي بالعربية)" aria-label="Quote in Arabic" className={`${inputClass} min-h-[70px] sm:col-span-2`} />
+              <div className="flex gap-2 sm:col-span-2">
+                <button onClick={() => saveArabic(t)} className="rounded-full bg-blue-500 px-4 py-2 text-xs font-semibold text-white hover:bg-navy-800">Save Arabic</button>
+                <button onClick={() => setArEditing(null)} className="rounded-full border border-border-c px-4 py-2 text-xs font-semibold hover:border-blue-400">Cancel</button>
+              </div>
+            </div>
+          ) : (
+            (t.student_name_ar || t.role_company_ar) && (
+              <p className="mt-1 text-xs text-ink-soft" dir="rtl">{t.student_name_ar ?? t.student_name}{t.role_company_ar ? ` — ${t.role_company_ar}` : ""}</p>
+            )
+          )}
         </div>
         <div className="flex shrink-0 gap-2">
+          <button onClick={() => (arEditing === t.id ? setArEditing(null) : startArabic(t))} aria-label={`Edit Arabic text for ${t.student_name}`} title="Arabic text" className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-c hover:border-blue-400 hover:text-blue-600">
+            <Languages size={14} />
+          </button>
           <button
             onClick={() => handleTogglePublished(t)}
             aria-label={t.is_published ? `Unpublish testimonial from ${t.student_name}` : `Approve testimonial from ${t.student_name}`}
@@ -197,6 +253,9 @@ export function TestimonialManager({
         <input value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder="Student name" aria-label="Student name" required className={inputClass} />
         <input value={roleCompany} onChange={(e) => setRoleCompany(e.target.value)} placeholder="Role / Company" aria-label="Role or company" className={inputClass} />
         <textarea value={quote} onChange={(e) => setQuote(e.target.value)} placeholder="Testimonial quote" aria-label="Testimonial quote" required className={`${inputClass} min-h-[80px] sm:col-span-2`} />
+        <input dir="rtl" value={studentNameAr} onChange={(e) => setStudentNameAr(e.target.value)} placeholder="اسم المشارك بالعربية (اختياري)" aria-label="Student name in Arabic" className={inputClass} />
+        <input dir="rtl" value={roleCompanyAr} onChange={(e) => setRoleCompanyAr(e.target.value)} placeholder="المسمى / الجهة بالعربية (اختياري)" aria-label="Role or company in Arabic" className={inputClass} />
+        <textarea dir="rtl" value={quoteAr} onChange={(e) => setQuoteAr(e.target.value)} placeholder="نص الشهادة بالعربية (اختياري — اتركه فارغاً إذا كان النص أعلاه بالعربية)" aria-label="Quote in Arabic" className={`${inputClass} min-h-[60px] sm:col-span-2`} />
         <button type="submit" disabled={saving} className="inline-flex w-fit items-center gap-2 rounded-full border-2 border-transparent bg-blue-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:opacity-60 sm:col-span-2">
           <Plus size={16} /> {saving ? "Adding..." : "Add Testimonial"}
         </button>

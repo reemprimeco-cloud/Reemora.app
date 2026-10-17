@@ -27,7 +27,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const course = await getCourseBySlug(slug);
+  const course = await getCourseBySlug(slug, await getLang());
   if (!course) return { title: "Course not found" };
   return {
     title: course.title,
@@ -50,15 +50,12 @@ const LEVEL_KEY: Record<string, "beginner" | "intermediate" | "advanced"> = {
 
 export default async function CourseDetailPage({ params }: Props) {
   const { slug } = await params;
-  const [lang, resolvedCourse, settings] = await Promise.all([
-    getLang(),
-    getCourseBySlug(slug),
-    getWebsiteSettings(),
-  ]);
+  const lang = await getLang();
+  const [resolvedCourse, settings] = await Promise.all([getCourseBySlug(slug, lang), getWebsiteSettings(lang)]);
   if (!resolvedCourse) notFound();
   const course = resolvedCourse;
   const dict = getDict(lang);
-  const feedback = await getTestimonialsForCourse(course.id);
+  const feedback = await getTestimonialsForCourse(course.id, lang);
 
   const image = courseImageSrc(course);
   const schedule = primarySchedule(course);

@@ -57,9 +57,11 @@ export function SettingsManager({ initialSettings }: { initialSettings: WebsiteS
         <form onSubmit={handleSave} className="space-y-4">
           <Field label="Site Name" value={settings.site_name} onChange={(v) => update("site_name", v)} />
           <Field label="Tagline" value={settings.tagline} onChange={(v) => update("tagline", v)} />
+          <Field label="Tagline (Arabic)" value={settings.tagline_ar ?? ""} onChange={(v) => update("tagline_ar", v)} dir="rtl" />
           <Field label="Contact Email" value={settings.contact_email} onChange={(v) => update("contact_email", v)} type="email" />
           <Field label="Contact Phone" value={settings.contact_phone} onChange={(v) => update("contact_phone", v)} />
           <Field label="Address" value={settings.address} onChange={(v) => update("address", v)} />
+          <Field label="Address (Arabic)" value={settings.address_ar ?? ""} onChange={(v) => update("address_ar", v)} dir="rtl" />
           <Field label="CV URL" value={settings.cv_url} onChange={(v) => update("cv_url", v)} />
 
           <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
@@ -135,12 +137,12 @@ export function SettingsManager({ initialSettings }: { initialSettings: WebsiteS
 
 const inputClass = "w-full rounded-lg border border-border-c bg-surface-alt px-4 py-3 text-sm outline-none focus:border-blue-400 focus:bg-surface";
 
-function Field({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
+function Field({ label, value, onChange, type = "text", dir }: { label: string; value: string; onChange: (v: string) => void; type?: string; dir?: "rtl" | "ltr" }) {
   const id = React.useId();
   return (
     <div>
       <label htmlFor={id} className="mb-1.5 block text-[13.5px] font-semibold">{label}</label>
-      <input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} className={inputClass} />
+      <input id={id} type={type} dir={dir} value={value} onChange={(e) => onChange(e.target.value)} className={inputClass} />
     </div>
   );
 }

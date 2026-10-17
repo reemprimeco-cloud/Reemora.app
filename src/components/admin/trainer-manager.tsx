@@ -10,14 +10,29 @@ import { useConfirm } from "@/components/confirm-dialog";
 import { slugify } from "@/lib/utils";
 import { compressImage } from "@/lib/compress-image";
 
-function initialTimeline(instructor: InstructorWithCertificates | null): TimelineEntry[] {
-  const raw = (instructor as unknown as { timeline?: unknown } | null)?.timeline;
+function initialTimeline(instructor: InstructorWithCertificates | null, key: "timeline" | "timeline_ar" = "timeline"): TimelineEntry[] {
+  const raw = (instructor as unknown as Record<string, unknown> | null)?.[key];
   return Array.isArray(raw) ? (raw as TimelineEntry[]) : [];
 }
 
-function initialSkills(instructor: InstructorWithCertificates | null): string[] {
-  const raw = (instructor as unknown as { skills?: unknown } | null)?.skills;
+function initialSkills(instructor: InstructorWithCertificates | null, key: "skills" | "skills_ar" = "skills"): string[] {
+  const raw = (instructor as unknown as Record<string, unknown> | null)?.[key];
   return Array.isArray(raw) ? (raw as string[]) : [];
+}
+
+/** Plain object literals (not the TimelineEntry interface) so the result
+ *  is assignable to the jsonb column type. */
+function cleanTimeline(entries: TimelineEntry[]): Array<{ date: string; title: string; desc: string }> {
+  return entries
+    .map((e) => ({ date: e.date.trim(), title: e.title.trim(), desc: e.desc.trim() }))
+    .filter((e) => e.date || e.title || e.desc);
+}
+
+function splitSkills(input: string): string[] {
+  return input
+    .split(/[,،]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 export function TrainerManager({ instructor: initialInstructor }: { instructor: InstructorWithCertificates | null }) {
@@ -29,6 +44,12 @@ export function TrainerManager({ instructor: initialInstructor }: { instructor: 
   const [photoUrl, setPhotoUrl] = React.useState(initialInstructor?.photo_url ?? "");
   const [timeline, setTimeline] = React.useState<TimelineEntry[]>(() => initialTimeline(initialInstructor));
   const [skillsInput, setSkillsInput] = React.useState(() => initialSkills(initialInstructor).join(", "));
+  // Arabic twins: shown on the Arabic site when filled, otherwise the English text is used.
+  const [fullNameAr, setFullNameAr] = React.useState(initialInstructor?.full_name_ar ?? "");
+  const [titleAr, setTitleAr] = React.useState(initialInstructor?.title_ar ?? "");
+  const [bioAr, setBioAr] = React.useState(initialInstructor?.bio_ar ?? "");
+  const [timelineAr, setTimelineAr] = React.useState<TimelineEntry[]>(() => initialTimeline(initialInstructor, "timeline_ar"));
+  const [skillsArInput, setSkillsArInput] = React.useState(() => initialSkills(initialInstructor, "skills_ar").join("، "));
   const [uploading, setUploading] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState("");
@@ -37,26 +58,11 @@ export function TrainerManager({ instructor: initialInstructor }: { instructor: 
 
   const [certTitle, setCertTitle] = React.useState("");
   const [certIssuer, setCertIssuer] = React.useState("");
+  const [certTitleAr, setCertTitleAr] = React.useState("");
+  const [certIssuerAr, setCertIssuerAr] = React.useState("");
+  const [certArDraft, setCertArDraft] = React.useState<Record<string, { title_ar: string; issuing_body_ar: string }>>({});
   const [certUploading, setCertUploading] = React.useState<string | null>(null);
 
-  function updateTimelineEntry(idx: number, patch: Partial<TimelineEntry>) {
-    setTimeline((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)));
-  }
-  function addTimelineEntry() {
-    setTimeline((prev) => [...prev, { date: "", title: "", desc: "" }]);
-  }
-  function removeTimelineEntry(idx: number) {
-    setTimeline((prev) => prev.filter((_, i) => i !== idx));
-  }
-  function moveTimelineEntry(idx: number, dir: -1 | 1) {
-    setTimeline((prev) => {
-      const next = [...prev];
-      const target = idx + dir;
-      if (target < 0 || target >= next.length) return prev;
-      [next[idx], next[target]] = [next[target], next[idx]];
-      return next;
-    });
-  }
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -92,22 +98,19 @@ export function TrainerManager({ instructor: initialInstructor }: { instructor: 
     setError("");
     const supabase = createClient();
 
-    const cleanTimeline = timeline
-      .map((e) => ({ date: e.date.trim(), title: e.title.trim(), desc: e.desc.trim() }))
-      .filter((e) => e.date || e.title || e.desc);
-    const cleanSkills = skillsInput
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
     const payload = {
       full_name: fullName,
       title,
       bio,
       years_experience: yearsExperience,
       photo_url: photoUrl || null,
-      timeline: cleanTimeline,
-      skills: cleanSkills,
+      timeline: cleanTimeline(timeline),
+      skills: splitSkills(skillsInput),
+      full_name_ar: fullNameAr.trim() || null,
+      title_ar: titleAr.trim() || null,
+      bio_ar: bioAr.trim() || null,
+      timeline_ar: cleanTimeline(timelineAr),
+      skills_ar: splitSkills(skillsArInput),
       is_lead: true,
     };
 
@@ -170,7 +173,14 @@ export function TrainerManager({ instructor: initialInstructor }: { instructor: 
     const supabase = createClient();
     const { data, error } = await supabase
       .from("certificates")
-      .insert({ instructor_id: instructor.id, title: certTitle.trim(), issuing_body: certIssuer.trim() || null, display_order: instructor.certificates.length + 1 })
+      .insert({
+        instructor_id: instructor.id,
+        title: certTitle.trim(),
+        issuing_body: certIssuer.trim() || null,
+        title_ar: certTitleAr.trim() || null,
+        issuing_body_ar: certIssuerAr.trim() || null,
+        display_order: instructor.certificates.length + 1,
+      })
       .select()
       .single();
     if (error) {
@@ -180,7 +190,32 @@ export function TrainerManager({ instructor: initialInstructor }: { instructor: 
     setInstructor({ ...instructor, certificates: [...instructor.certificates, data as Certificate] });
     setCertTitle("");
     setCertIssuer("");
+    setCertTitleAr("");
+    setCertIssuerAr("");
     showToast("success", "Certificate added.");
+  }
+
+  function certArValue(cert: Certificate) {
+    return certArDraft[cert.id] ?? { title_ar: cert.title_ar ?? "", issuing_body_ar: cert.issuing_body_ar ?? "" };
+  }
+
+  async function handleSaveCertArabic(cert: Certificate) {
+    if (!instructor) return;
+    const draft = certArValue(cert);
+    const payload = { title_ar: draft.title_ar.trim() || null, issuing_body_ar: draft.issuing_body_ar.trim() || null };
+    const supabase = createClient();
+    const { error } = await supabase.from("certificates").update(payload).eq("id", cert.id);
+    if (error) {
+      showToast("error", error.message);
+      return;
+    }
+    setInstructor({ ...instructor, certificates: instructor.certificates.map((c) => (c.id === cert.id ? { ...c, ...payload } : c)) });
+    setCertArDraft((prev) => {
+      const next = { ...prev };
+      delete next[cert.id];
+      return next;
+    });
+    showToast("success", "Arabic text saved.");
   }
 
   async function handleDeleteCertificate(cert: Certificate) {
@@ -245,47 +280,47 @@ export function TrainerManager({ instructor: initialInstructor }: { instructor: 
             <textarea id="trainer-bio" value={bio} onChange={(e) => setBio(e.target.value)} className={`${inputClass} min-h-[140px]`} />
           </div>
 
-          <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <span className="text-[13.5px] font-semibold">Timeline / Experience</span>
-              <button type="button" onClick={addTimelineEntry} className="inline-flex items-center gap-1 rounded-full border border-border-c px-3 py-1 text-xs font-semibold hover:border-blue-400 hover:text-blue-600">
-                <Plus size={13} /> Add row
-              </button>
-            </div>
-            {timeline.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-border-c px-4 py-3 text-xs text-ink-soft">
-                No entries yet — click <strong>Add row</strong> to add one. Each row shows on the homepage as one bullet under the trainer bio (e.g. &ldquo;2024 — Present · Founder & Lead Trainer, Reemora · Designing and delivering AI courses…&rdquo;).
-              </p>
-            ) : (
-              <div className="space-y-2.5">
-                {timeline.map((entry, idx) => (
-                  <div key={idx} className="rounded-lg border border-border-c bg-surface-alt p-3">
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <input value={entry.date} onChange={(e) => updateTimelineEntry(idx, { date: e.target.value })} placeholder="Date / period (e.g. 2024 — Present)" aria-label={`Timeline row ${idx + 1} date`} className={inputClass} />
-                      <input value={entry.title} onChange={(e) => updateTimelineEntry(idx, { title: e.target.value })} placeholder="Title (e.g. Founder & Lead Trainer)" aria-label={`Timeline row ${idx + 1} title`} className={inputClass} />
-                    </div>
-                    <textarea value={entry.desc} onChange={(e) => updateTimelineEntry(idx, { desc: e.target.value })} placeholder="Short description" aria-label={`Timeline row ${idx + 1} description`} className={`${inputClass} mt-2 min-h-[60px]`} />
-                    <div className="mt-2 flex justify-end gap-1">
-                      <button type="button" onClick={() => moveTimelineEntry(idx, -1)} disabled={idx === 0} aria-label="Move up" className="flex h-7 w-7 items-center justify-center rounded-md border border-border-c disabled:opacity-30 hover:border-blue-400 hover:text-blue-600">
-                        <ArrowUp size={13} />
-                      </button>
-                      <button type="button" onClick={() => moveTimelineEntry(idx, 1)} disabled={idx === timeline.length - 1} aria-label="Move down" className="flex h-7 w-7 items-center justify-center rounded-md border border-border-c disabled:opacity-30 hover:border-blue-400 hover:text-blue-600">
-                        <ArrowDown size={13} />
-                      </button>
-                      <button type="button" onClick={() => removeTimelineEntry(idx)} aria-label="Delete row" className="flex h-7 w-7 items-center justify-center rounded-md border border-border-c hover:border-red-300 hover:text-red-500">
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          <TimelineEditor
+            label="Timeline / Experience"
+            entries={timeline}
+            onChange={setTimeline}
+            emptyHint="No entries yet — click Add row to add one. Each row shows on the homepage as one bullet under the trainer bio (e.g. 2024 — Present · Founder & Lead Trainer, Reemora · Designing and delivering AI courses…)."
+          />
 
           <div>
             <label htmlFor="trainer-skills" className="mb-1.5 block text-[13.5px] font-semibold">Skill chips <span className="font-normal text-ink-soft">(comma-separated)</span></label>
             <input id="trainer-skills" value={skillsInput} onChange={(e) => setSkillsInput(e.target.value)} placeholder="e.g. AI App Development, Prompt Engineering, Curriculum Design" className={inputClass} />
             <p className="mt-1 text-xs text-ink-soft">Shown as pill-style tags under the timeline on the homepage.</p>
+          </div>
+
+          <div className="rounded-xl border border-border-c bg-surface-alt p-4">
+            <p className="mb-1 text-[13px] font-bold uppercase tracking-wide text-blue-600">Arabic version · النسخة العربية</p>
+            <p className="mb-4 text-xs text-ink-soft">Shown when the site is in Arabic. Any field left empty falls back to the English text above.</p>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="trainer-name-ar" className="mb-1.5 block text-[13.5px] font-semibold">Full Name (Arabic)</label>
+                <input id="trainer-name-ar" dir="rtl" value={fullNameAr} onChange={(e) => setFullNameAr(e.target.value)} className={inputClass} placeholder="الاسم الكامل" />
+              </div>
+              <div>
+                <label htmlFor="trainer-title-ar" className="mb-1.5 block text-[13.5px] font-semibold">Title (Arabic)</label>
+                <input id="trainer-title-ar" dir="rtl" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} className={inputClass} placeholder="مثال: مدرّبة معتمدة ومؤسِّسة" />
+              </div>
+              <div>
+                <label htmlFor="trainer-bio-ar" className="mb-1.5 block text-[13.5px] font-semibold">Bio (Arabic)</label>
+                <textarea id="trainer-bio-ar" dir="rtl" value={bioAr} onChange={(e) => setBioAr(e.target.value)} className={`${inputClass} min-h-[140px]`} />
+              </div>
+              <TimelineEditor
+                label="Timeline / Experience (Arabic)"
+                entries={timelineAr}
+                onChange={setTimelineAr}
+                dir="rtl"
+                emptyHint="No Arabic entries — the English timeline is shown on the Arabic site until you add rows here."
+              />
+              <div>
+                <label htmlFor="trainer-skills-ar" className="mb-1.5 block text-[13.5px] font-semibold">Skill chips (Arabic) <span className="font-normal text-ink-soft">(comma-separated)</span></label>
+                <input id="trainer-skills-ar" dir="rtl" value={skillsArInput} onChange={(e) => setSkillsArInput(e.target.value)} placeholder="مثال: تطوير تطبيقات الذكاء الاصطناعي، هندسة الأوامر" className={inputClass} />
+              </div>
+            </div>
           </div>
 
           <button type="submit" disabled={saving || uploading} className="w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-[15px] font-semibold text-white transition hover:bg-navy-800 disabled:opacity-60">
@@ -303,6 +338,10 @@ export function TrainerManager({ instructor: initialInstructor }: { instructor: 
             <form onSubmit={handleAddCertificate} className="mb-5 space-y-3">
               <input value={certTitle} onChange={(e) => setCertTitle(e.target.value)} placeholder="Certificate title" aria-label="Certificate title" className={inputClass} />
               <input value={certIssuer} onChange={(e) => setCertIssuer(e.target.value)} placeholder="Issuing body (optional)" aria-label="Issuing body" className={inputClass} />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <input dir="rtl" value={certTitleAr} onChange={(e) => setCertTitleAr(e.target.value)} placeholder="عنوان الشهادة (اختياري)" aria-label="Certificate title in Arabic" className={inputClass} />
+                <input dir="rtl" value={certIssuerAr} onChange={(e) => setCertIssuerAr(e.target.value)} placeholder="الجهة المانحة (اختياري)" aria-label="Issuing body in Arabic" className={inputClass} />
+              </div>
               <button type="submit" className="inline-flex items-center gap-2 rounded-full border-2 border-transparent bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600">
                 <Plus size={15} /> Add Certificate
               </button>
@@ -323,6 +362,30 @@ export function TrainerManager({ instructor: initialInstructor }: { instructor: 
                       <span className="text-[12.5px] text-ink-soft">
                         {cert.issuing_body || "Placeholder — replace with certificate image"}
                       </span>
+                      <div className="mt-3 space-y-2 rounded-lg border border-border-c bg-surface-alt p-2.5">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-blue-600">Arabic</p>
+                        <input
+                          dir="rtl"
+                          value={certArValue(cert).title_ar}
+                          onChange={(e) => setCertArDraft((prev) => ({ ...prev, [cert.id]: { ...certArValue(cert), title_ar: e.target.value } }))}
+                          placeholder="عنوان الشهادة"
+                          aria-label={`Arabic title for ${cert.title}`}
+                          className={`${inputClass} py-2`}
+                        />
+                        <input
+                          dir="rtl"
+                          value={certArValue(cert).issuing_body_ar}
+                          onChange={(e) => setCertArDraft((prev) => ({ ...prev, [cert.id]: { ...certArValue(cert), issuing_body_ar: e.target.value } }))}
+                          placeholder="الجهة المانحة"
+                          aria-label={`Arabic issuing body for ${cert.title}`}
+                          className={`${inputClass} py-2`}
+                        />
+                        {certArDraft[cert.id] && (
+                          <button type="button" onClick={() => handleSaveCertArabic(cert)} className="inline-flex min-h-[32px] items-center rounded-full bg-blue-500 px-3.5 text-xs font-semibold text-white transition hover:bg-navy-800">
+                            Save Arabic
+                          </button>
+                        )}
+                      </div>
                       <div className="mt-3 flex flex-wrap items-center gap-2">
                         <label className="inline-flex min-h-[36px] cursor-pointer items-center gap-1.5 rounded-full border border-border-c bg-surface px-3.5 py-1.5 text-xs font-semibold text-foreground transition hover:border-blue-400 hover:text-blue-600">
                           <Upload size={13} aria-hidden="true" />
@@ -360,3 +423,70 @@ export function TrainerManager({ instructor: initialInstructor }: { instructor: 
 }
 
 const inputClass = "w-full rounded-lg border border-border-c bg-surface-alt px-4 py-3 text-sm outline-none focus:border-blue-400 focus:bg-surface";
+
+/** Row editor for the trainer timeline, used once for English and once
+ *  for Arabic so both lists get the same add / reorder / delete controls. */
+function TimelineEditor({
+  label,
+  entries,
+  onChange,
+  emptyHint,
+  dir,
+}: {
+  label: string;
+  entries: TimelineEntry[];
+  onChange: React.Dispatch<React.SetStateAction<TimelineEntry[]>>;
+  emptyHint: string;
+  dir?: "rtl" | "ltr";
+}) {
+  const update = (idx: number, patch: Partial<TimelineEntry>) =>
+    onChange((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)));
+  const move = (idx: number, step: -1 | 1) =>
+    onChange((prev) => {
+      const next = [...prev];
+      const target = idx + step;
+      if (target < 0 || target >= next.length) return prev;
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  const placeholders =
+    dir === "rtl"
+      ? { date: "الفترة (مثال: 2024 — حتى الآن)", title: "المسمى (مثال: المؤسِّسة والمدرّبة الرئيسية)", desc: "وصف قصير" }
+      : { date: "Date / period (e.g. 2024 — Present)", title: "Title (e.g. Founder & Lead Trainer)", desc: "Short description" };
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between">
+        <span className="text-[13.5px] font-semibold">{label}</span>
+        <button type="button" onClick={() => onChange((prev) => [...prev, { date: "", title: "", desc: "" }])} className="inline-flex items-center gap-1 rounded-full border border-border-c px-3 py-1 text-xs font-semibold hover:border-blue-400 hover:text-blue-600">
+          <Plus size={13} /> Add row
+        </button>
+      </div>
+      {entries.length === 0 ? (
+        <p className="rounded-lg border border-dashed border-border-c px-4 py-3 text-xs text-ink-soft">{emptyHint}</p>
+      ) : (
+        <div className="space-y-2.5">
+          {entries.map((entry, idx) => (
+            <div key={idx} className="rounded-lg border border-border-c bg-surface-alt p-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <input dir={dir} value={entry.date} onChange={(e) => update(idx, { date: e.target.value })} placeholder={placeholders.date} aria-label={`${label} row ${idx + 1} date`} className={inputClass} />
+                <input dir={dir} value={entry.title} onChange={(e) => update(idx, { title: e.target.value })} placeholder={placeholders.title} aria-label={`${label} row ${idx + 1} title`} className={inputClass} />
+              </div>
+              <textarea dir={dir} value={entry.desc} onChange={(e) => update(idx, { desc: e.target.value })} placeholder={placeholders.desc} aria-label={`${label} row ${idx + 1} description`} className={`${inputClass} mt-2 min-h-[60px]`} />
+              <div className="mt-2 flex justify-end gap-1">
+                <button type="button" onClick={() => move(idx, -1)} disabled={idx === 0} aria-label="Move up" className="flex h-7 w-7 items-center justify-center rounded-md border border-border-c disabled:opacity-30 hover:border-blue-400 hover:text-blue-600">
+                  <ArrowUp size={13} />
+                </button>
+                <button type="button" onClick={() => move(idx, 1)} disabled={idx === entries.length - 1} aria-label="Move down" className="flex h-7 w-7 items-center justify-center rounded-md border border-border-c disabled:opacity-30 hover:border-blue-400 hover:text-blue-600">
+                  <ArrowDown size={13} />
+                </button>
+                <button type="button" onClick={() => onChange((prev) => prev.filter((_, i) => i !== idx))} aria-label="Delete row" className="flex h-7 w-7 items-center justify-center rounded-md border border-border-c hover:border-red-300 hover:text-red-500">
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

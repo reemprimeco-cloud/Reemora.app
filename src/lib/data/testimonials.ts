@@ -1,8 +1,10 @@
 import { createPublicClient } from "@/lib/supabase/public";
 import { SEED_TESTIMONIALS, isSupabaseConfigured } from "@/lib/data/seed-courses";
 import type { Testimonial } from "@/lib/types";
+import { localizeRow, TESTIMONIAL_FIELDS } from "@/lib/i18n/localize";
+import type { Lang } from "@/lib/i18n/dictionaries";
 
-export async function getTestimonials(): Promise<Testimonial[]> {
+export async function getTestimonials(lang: Lang = "en"): Promise<Testimonial[]> {
   if (!isSupabaseConfigured) return SEED_TESTIMONIALS;
 
   const supabase = createPublicClient();
@@ -16,7 +18,7 @@ export async function getTestimonials(): Promise<Testimonial[]> {
     console.error("getTestimonials:", error.message);
     return SEED_TESTIMONIALS;
   }
-  return data ?? SEED_TESTIMONIALS;
+  return (data ?? SEED_TESTIMONIALS).map((t) => localizeRow(t, lang, TESTIMONIAL_FIELDS));
 }
 
 /** Approved feedback submitted for one specific course (via the shared
@@ -24,7 +26,7 @@ export async function getTestimonials(): Promise<Testimonial[]> {
  *  Empty (not the generic seed list) when Supabase isn't configured or
  *  there's simply no approved feedback yet — the caller hides the
  *  section entirely rather than showing unrelated seed testimonials. */
-export async function getTestimonialsForCourse(courseId: string): Promise<Testimonial[]> {
+export async function getTestimonialsForCourse(courseId: string, lang: Lang = "en"): Promise<Testimonial[]> {
   if (!isSupabaseConfigured) return [];
 
   const supabase = createPublicClient();
@@ -39,5 +41,5 @@ export async function getTestimonialsForCourse(courseId: string): Promise<Testim
     console.error("getTestimonialsForCourse:", error.message);
     return [];
   }
-  return data ?? [];
+  return (data ?? []).map((t) => localizeRow(t, lang, TESTIMONIAL_FIELDS));
 }

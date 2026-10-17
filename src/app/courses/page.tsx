@@ -16,7 +16,8 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function CoursesPage() {
-  const [lang, courses, settings] = await Promise.all([getLang(), getCourses(), getWebsiteSettings()]);
+  const lang = await getLang();
+  const [courses, settings] = await Promise.all([getCourses(lang), getWebsiteSettings(lang)]);
   const dict = getDict(lang);
 
   return (

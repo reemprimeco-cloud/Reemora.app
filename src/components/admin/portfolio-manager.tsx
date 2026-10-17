@@ -18,10 +18,13 @@ interface DraftFields {
   project_url: string;
   category: string;
   image_url: string;
+  title_ar: string;
+  description_ar: string;
+  category_ar: string;
 }
 
 function emptyDraft(): DraftFields {
-  return { title: "", description: "", project_url: "", category: "", image_url: "" };
+  return { title: "", description: "", project_url: "", category: "", image_url: "", title_ar: "", description_ar: "", category_ar: "" };
 }
 
 function toDraft(item: PortfolioItem): DraftFields {
@@ -31,6 +34,17 @@ function toDraft(item: PortfolioItem): DraftFields {
     project_url: item.project_url ?? "",
     category: item.category ?? "",
     image_url: item.image_url ?? "",
+    title_ar: item.title_ar ?? "",
+    description_ar: item.description_ar ?? "",
+    category_ar: item.category_ar ?? "",
+  };
+}
+
+function arabicFields(d: DraftFields) {
+  return {
+    title_ar: d.title_ar.trim() || null,
+    description_ar: d.description_ar.trim() || null,
+    category_ar: d.category_ar.trim() || null,
   };
 }
 
@@ -83,6 +97,7 @@ export function PortfolioManager({ initialItems }: { initialItems: PortfolioItem
         project_url: addDraft.project_url.trim() || null,
         category: addDraft.category.trim() || null,
         image_url: addDraft.image_url.trim() || null,
+        ...arabicFields(addDraft),
         display_order: items.length + 1,
       })
       .select()
@@ -122,6 +137,7 @@ export function PortfolioManager({ initialItems }: { initialItems: PortfolioItem
       project_url: editDraft.project_url.trim() || null,
       category: editDraft.category.trim() || null,
       image_url: editDraft.image_url.trim() || null,
+      ...arabicFields(editDraft),
     };
     const { error } = await supabase.from("portfolio").update(payload).eq("id", id);
     setSaving(false);
@@ -163,6 +179,9 @@ export function PortfolioManager({ initialItems }: { initialItems: PortfolioItem
         <input value={addDraft.category} onChange={(e) => setAddDraft({ ...addDraft, category: e.target.value })} placeholder="Category (e.g. SaaS, HR, Fitness)" aria-label="Project category" className={inputClass} />
         <input value={addDraft.project_url} onChange={(e) => setAddDraft({ ...addDraft, project_url: e.target.value })} placeholder="https://www.example.com" aria-label="Project URL" type="url" className={`${inputClass} sm:col-span-2`} />
         <textarea value={addDraft.description} onChange={(e) => setAddDraft({ ...addDraft, description: e.target.value })} placeholder="Short description shown on the card" aria-label="Project description" className={`${inputClass} min-h-[70px] sm:col-span-2`} />
+        <input dir="rtl" value={addDraft.title_ar} onChange={(e) => setAddDraft({ ...addDraft, title_ar: e.target.value })} placeholder="اسم المشروع بالعربية (اختياري)" aria-label="Project title in Arabic" className={inputClass} />
+        <input dir="rtl" value={addDraft.category_ar} onChange={(e) => setAddDraft({ ...addDraft, category_ar: e.target.value })} placeholder="الفئة بالعربية (اختياري)" aria-label="Project category in Arabic" className={inputClass} />
+        <textarea dir="rtl" value={addDraft.description_ar} onChange={(e) => setAddDraft({ ...addDraft, description_ar: e.target.value })} placeholder="وصف قصير بالعربية (اختياري)" aria-label="Project description in Arabic" className={`${inputClass} min-h-[60px] sm:col-span-2`} />
         <div className="sm:col-span-2">
           <label className="mb-1.5 block text-[13.5px] font-semibold">Screenshot / Cover image (optional)</label>
           <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0], "add")} aria-label="Project image upload" className="text-sm" />
@@ -191,6 +210,9 @@ export function PortfolioManager({ initialItems }: { initialItems: PortfolioItem
                     <input value={editDraft.category} onChange={(e) => setEditDraft({ ...editDraft, category: e.target.value })} placeholder="Category" aria-label="Edit category" className={inputClass} />
                     <input value={editDraft.project_url} onChange={(e) => setEditDraft({ ...editDraft, project_url: e.target.value })} placeholder="https://..." aria-label="Edit URL" type="url" className={`${inputClass} sm:col-span-2`} />
                     <textarea value={editDraft.description} onChange={(e) => setEditDraft({ ...editDraft, description: e.target.value })} placeholder="Short description" aria-label="Edit description" className={`${inputClass} min-h-[70px] sm:col-span-2`} />
+                    <input dir="rtl" value={editDraft.title_ar} onChange={(e) => setEditDraft({ ...editDraft, title_ar: e.target.value })} placeholder="اسم المشروع بالعربية" aria-label="Edit Arabic title" className={inputClass} />
+                    <input dir="rtl" value={editDraft.category_ar} onChange={(e) => setEditDraft({ ...editDraft, category_ar: e.target.value })} placeholder="الفئة بالعربية" aria-label="Edit Arabic category" className={inputClass} />
+                    <textarea dir="rtl" value={editDraft.description_ar} onChange={(e) => setEditDraft({ ...editDraft, description_ar: e.target.value })} placeholder="وصف قصير بالعربية" aria-label="Edit Arabic description" className={`${inputClass} min-h-[60px] sm:col-span-2`} />
                     <div className="sm:col-span-2">
                       <label className="mb-1.5 block text-[13.5px] font-semibold">Replace image (optional)</label>
                       <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0], "edit")} aria-label="Replace project image" className="text-sm" />

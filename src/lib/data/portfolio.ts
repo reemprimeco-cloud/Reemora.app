@@ -2,8 +2,10 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { createClient } from "@/lib/supabase/server";
 import { SEED_PORTFOLIO, isSupabaseConfigured } from "@/lib/data/seed-courses";
 import type { PortfolioItem } from "@/lib/types";
+import { localizeRow, PORTFOLIO_FIELDS } from "@/lib/i18n/localize";
+import type { Lang } from "@/lib/i18n/dictionaries";
 
-export async function getPortfolioItems(): Promise<PortfolioItem[]> {
+export async function getPortfolioItems(lang: Lang = "en"): Promise<PortfolioItem[]> {
   if (!isSupabaseConfigured) return SEED_PORTFOLIO;
 
   const supabase = createPublicClient();
@@ -17,7 +19,7 @@ export async function getPortfolioItems(): Promise<PortfolioItem[]> {
     console.error("getPortfolioItems:", error.message);
     return SEED_PORTFOLIO;
   }
-  return data ?? [];
+  return (data ?? []).map((item) => localizeRow(item, lang, PORTFOLIO_FIELDS));
 }
 
 /** Admin-only: includes unpublished items too. */

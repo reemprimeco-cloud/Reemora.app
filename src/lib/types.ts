@@ -72,6 +72,9 @@ export type CourseWithSchedule = Course & {
 export type WebsiteSettings = {
   site_name: string;
   tagline: string;
+  /** Arabic twins, shown in Arabic mode when filled (empty falls back). */
+  tagline_ar: string;
+  address_ar: string;
   contact_email: string;
   contact_phone: string;
   address: string;

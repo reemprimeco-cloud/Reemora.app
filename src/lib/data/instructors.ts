@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { SEED_INSTRUCTORS, isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { toMany } from "@/lib/data/relations";
 import type { Certificate, Instructor, InstructorWithCertificates } from "@/lib/types";
+import { localizeRow, CERTIFICATE_FIELDS, INSTRUCTOR_FIELDS } from "@/lib/i18n/localize";
+import type { Lang } from "@/lib/i18n/dictionaries";
 
 export async function getInstructors(): Promise<Instructor[]> {
   if (!isSupabaseConfigured) {
@@ -26,7 +28,7 @@ export async function getInstructors(): Promise<Instructor[]> {
   return data ?? [];
 }
 
-export async function getLeadInstructor(): Promise<InstructorWithCertificates | null> {
+export async function getLeadInstructor(lang: Lang = "en"): Promise<InstructorWithCertificates | null> {
   if (!isSupabaseConfigured) return SEED_INSTRUCTORS[0] ?? null;
 
   const supabase = createPublicClient();
@@ -49,7 +51,10 @@ export async function getLeadInstructor(): Promise<InstructorWithCertificates | 
   if (!data) return null;
 
   const row = data as Instructor & { certificates: Certificate | Certificate[] | null };
-  return { ...row, certificates: toMany(row.certificates) };
+  return {
+    ...localizeRow(row, lang, INSTRUCTOR_FIELDS),
+    certificates: toMany(row.certificates).map((c) => localizeRow(c, lang, CERTIFICATE_FIELDS)),
+  };
 }
 
 /** Admin-only: reads directly from Supabase with NO seed-data fallback.

@@ -16,7 +16,8 @@ export const metadata: Metadata = {
 };
 
 export default async function ReservePage() {
-  const [lang, courses, settings] = await Promise.all([getLang(), getCourses(), getWebsiteSettings()]);
+  const lang = await getLang();
+  const [courses, settings] = await Promise.all([getCourses(lang), getWebsiteSettings(lang)]);
   const dict = getDict(lang);
   const courseOptions = courses.map((c) => ({ id: c.id, title: c.title }));
 

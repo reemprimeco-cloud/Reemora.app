@@ -3,6 +3,8 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { SEED_COURSES, isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { toOne, toMany } from "@/lib/data/relations";
 import type { Course, CourseCategory, CourseSchedule, CourseWithRelations, Instructor } from "@/lib/types";
+import { localizeRow, CATEGORY_FIELDS, COURSE_FIELDS, INSTRUCTOR_FIELDS } from "@/lib/i18n/localize";
+import type { Lang } from "@/lib/i18n/dictionaries";
 
 const COURSE_SELECT = "*, category:course_categories(*), instructor:instructors(*), schedules:course_schedule(*)";
 
@@ -12,18 +14,22 @@ type RawCourseRow = Course & {
   schedules: CourseSchedule | CourseSchedule[] | null;
 };
 
-function shapeCourse(row: RawCourseRow): CourseWithRelations {
+function shapeCourse(row: RawCourseRow, lang: Lang = "en"): CourseWithRelations {
+  const category = toOne(row.category);
+  const instructor = toOne(row.instructor);
   return {
-    ...row,
-    category: toOne(row.category),
-    instructor: toOne(row.instructor),
+    ...localizeRow(row, lang, COURSE_FIELDS),
+    category: category ? localizeRow(category, lang, CATEGORY_FIELDS) : null,
+    instructor: instructor ? localizeRow(instructor, lang, INSTRUCTOR_FIELDS) : null,
     schedules: toMany(row.schedules).sort((a, b) =>
       (a.start_date ?? "9999").localeCompare(b.start_date ?? "9999")
     ),
   };
 }
 
-export async function getCourses(): Promise<CourseWithRelations[]> {
+/** Public catalog. Pass the visitor's `lang` for Arabic text where the admin
+ *  filled it in; admin screens call without it to keep the originals. */
+export async function getCourses(lang: Lang = "en"): Promise<CourseWithRelations[]> {
   if (!isSupabaseConfigured) return SEED_COURSES;
 
   const supabase = createPublicClient();
@@ -37,7 +43,7 @@ export async function getCourses(): Promise<CourseWithRelations[]> {
     console.error("getCourses:", error.message);
     return SEED_COURSES;
   }
-  return (data as unknown as RawCourseRow[]).map(shapeCourse);
+  return (data as unknown as RawCourseRow[]).map((row) => shapeCourse(row, lang));
 }
 
 /** Admin-only: includes unpublished/draft courses. Relies on the caller
@@ -56,10 +62,10 @@ export async function getAllCoursesForAdmin(): Promise<CourseWithRelations[]> {
     console.error("getAllCoursesForAdmin:", error.message);
     return SEED_COURSES;
   }
-  return (data as unknown as RawCourseRow[]).map(shapeCourse);
+  return (data as unknown as RawCourseRow[]).map((row) => shapeCourse(row));
 }
 
-export async function getCourseBySlug(slug: string): Promise<CourseWithRelations | null> {
+export async function getCourseBySlug(slug: string, lang: Lang = "en"): Promise<CourseWithRelations | null> {
   if (!isSupabaseConfigured) {
     return SEED_COURSES.find((c) => c.slug === slug) ?? null;
   }
@@ -75,5 +81,5 @@ export async function getCourseBySlug(slug: string): Promise<CourseWithRelations
     console.error("getCourseBySlug:", error.message);
     return SEED_COURSES.find((c) => c.slug === slug) ?? null;
   }
-  return data ? shapeCourse(data as unknown as RawCourseRow) : null;
+  return data ? shapeCourse(data as unknown as RawCourseRow, lang) : null;
 }
