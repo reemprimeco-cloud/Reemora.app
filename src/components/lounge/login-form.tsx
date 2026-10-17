@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useLanguage } from "@/lib/i18n/context";
 import { Field, Banner, inputClass } from "@/components/lounge/form-field";
+import { PasswordInput } from "@/components/password-input";
 
 function safeNext(value: string | null): string {
   return value && value.startsWith("/") && !value.startsWith("//") ? value : "/lounge";
@@ -65,7 +66,7 @@ export function LoginForm() {
         </Field>
         {!isReset && (
           <Field id="login-password" label={t.password}>
-            <input id="login-password" type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass()} />
+            <PasswordInput id="login-password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass()} showLabel={t.showPassword} hideLabel={t.hidePassword} />
           </Field>
         )}
         <button type="submit" disabled={busy} className="min-h-[52px] w-full rounded-full border-2 border-transparent bg-blue-500 py-3.5 text-[15px] font-semibold text-white transition active:scale-[0.98] hover:bg-navy-800 disabled:opacity-60">

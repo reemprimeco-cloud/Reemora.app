@@ -6,6 +6,7 @@ import { CheckCircle2 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/context";
 import { interpolate } from "@/lib/i18n/dictionaries";
 import { Field, Banner, inputClass } from "@/components/lounge/form-field";
+import { PasswordInput } from "@/components/password-input";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
@@ -95,7 +96,7 @@ export function JoinForm({ signedInEmail }: { signedInEmail: string | null }) {
         </Field>
         {!signedInEmail && (
           <Field id="join-password" label={t.password} error={errors.password ? t.passwordError : null}>
-            <input id="join-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t.passwordPlaceholder} autoComplete="new-password" minLength={8} aria-invalid={errors.password || undefined} className={inputClass(errors.password)} />
+            <PasswordInput id="join-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t.passwordPlaceholder} autoComplete="new-password" minLength={8} aria-invalid={errors.password || undefined} className={inputClass(errors.password)} showLabel={t.showPassword} hideLabel={t.hidePassword} />
           </Field>
         )}
         <div>

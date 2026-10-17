@@ -3,6 +3,7 @@
 import * as React from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { WebsiteSettings } from "@/lib/types";
+import { PasswordInput } from "@/components/password-input";
 
 export function SettingsManager({ initialSettings }: { initialSettings: WebsiteSettings }) {
   const [settings, setSettings] = React.useState(initialSettings);
@@ -124,7 +125,7 @@ export function SettingsManager({ initialSettings }: { initialSettings: WebsiteS
         <form onSubmit={handleChangePassword} className="space-y-4">
           <div>
             <label htmlFor="new-password" className="mb-1.5 block text-[13.5px] font-semibold">New Password</label>
-            <input id="new-password" type="password" required minLength={6} autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputClass} />
+            <PasswordInput id="new-password" required minLength={6} autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputClass} />
           </div>
           <button type="submit" disabled={pwSaving} className="w-full rounded-full border-2 border-transparent bg-navy-800 py-3.5 text-[15px] font-semibold text-white transition hover:bg-blue-600 disabled:opacity-60">
             {pwSaving ? "Updating..." : "Update Password"}

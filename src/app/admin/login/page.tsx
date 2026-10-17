@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { PasswordInput } from "@/components/password-input";
 
 function LoginForm() {
   const router = useRouter();
@@ -59,9 +60,8 @@ function LoginForm() {
           </div>
           <div className="mb-5">
             <label htmlFor="login-password" className="mb-1.5 block text-[13.5px] font-semibold">Password</label>
-            <input
+            <PasswordInput
               id="login-password"
-              type="password"
               required
               autoComplete="current-password"
               value={password}
