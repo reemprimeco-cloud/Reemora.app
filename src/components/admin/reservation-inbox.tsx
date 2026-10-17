@@ -7,13 +7,20 @@ import type { SeatReservation } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/toast-provider";
 import { useConfirm } from "@/components/confirm-dialog";
+import {
+  type AnnounceCourse,
+  type MailClient,
+  buildAnnouncement,
+  digitsOnly,
+  firstName,
+  mailtoAllHref,
+  mailtoHref,
+  openGmail,
+  readMailClient,
+  storeMailClient,
+} from "@/lib/admin/mail";
 
-export interface ReservationCourse {
-  id: string;
-  title: string;
-  slug: string;
-  short_description: string;
-}
+export type ReservationCourse = AnnounceCourse;
 
 type ReservationRow = SeatReservation & {
   courses?: ReservationCourse | ReservationCourse[] | null;
@@ -22,16 +29,6 @@ type ReservationRow = SeatReservation & {
 function courseOf(row: ReservationRow): ReservationCourse | null {
   const c = Array.isArray(row.courses) ? row.courses[0] : row.courses;
   return c ?? null;
-}
-
-function digitsOnly(phone: string): string {
-  return phone.replace(/\D+/g, "");
-}
-
-function firstName(fullName: string): string {
-  const trimmed = fullName.trim();
-  const first = trimmed.split(/\s+/)[0] ?? trimmed;
-  return first || trimmed;
 }
 
 function buildEmailReply(
@@ -79,104 +76,6 @@ function buildEmailReply(
   return { subject, body };
 }
 
-/** Which program opens when an admin taps an email button. "gmail" uses
- *  Gmail's compose URL, which the Gmail app on iPhone/Android claims as a
- *  universal link and desktop browsers open in Gmail web; "default" is a
- *  plain mailto: handled by whatever the device has (Apple Mail on iPhone). */
-type MailClient = "gmail" | "default";
-const MAIL_CLIENT_KEY = "admin.mailClient";
-
-function readMailClient(): MailClient {
-  try {
-    return window.localStorage.getItem(MAIL_CLIENT_KEY) === "gmail" ? "gmail" : "default";
-  } catch {
-    return "default";
-  }
-}
-
-type ComposeOpts = { to: string; bcc?: string[]; subject: string; body: string };
-
-/** Gmail web compose: desktop browsers open Gmail; on Android the Gmail
- *  app claims mail.google.com links. */
-function gmailHref(opts: ComposeOpts): string {
-  const params = new URLSearchParams({ view: "cm", fs: "1", to: opts.to, su: opts.subject, body: opts.body });
-  if (opts.bcc?.length) params.set("bcc", opts.bcc.join(","));
-  return `https://mail.google.com/mail/?${params.toString().replace(/\+/g, "%20")}`;
-}
-
-/** The Gmail iOS app's own compose scheme. Safari does not hand
- *  mail.google.com links to the app, so this is the only way to land in a
- *  new Gmail draft on iPhone/iPad. */
-function gmailAppHref(opts: ComposeOpts): string {
-  const q = [`to=${encodeURIComponent(opts.to)}`, `subject=${encodeURIComponent(opts.subject)}`, `body=${encodeURIComponent(opts.body)}`];
-  if (opts.bcc?.length) q.push(`bcc=${encodeURIComponent(opts.bcc.join(","))}`);
-  return `googlegmail://co?${q.join("&")}`;
-}
-
-function isIos(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-}
-
-/** Opens a Gmail compose for the given draft. On iOS it tries the Gmail
- *  app first and falls back to Gmail web if nothing took the hand-off
- *  (the page stayed visible); elsewhere it opens Gmail web in a new tab. */
-function openGmail(opts: ComposeOpts) {
-  const web = gmailHref(opts);
-  if (!isIos()) {
-    window.open(web, "_blank", "noopener");
-    return;
-  }
-  let handedOff = false;
-  const onHide = () => {
-    handedOff = true;
-    document.removeEventListener("visibilitychange", onHide);
-  };
-  document.addEventListener("visibilitychange", onHide);
-  window.setTimeout(() => {
-    document.removeEventListener("visibilitychange", onHide);
-    if (!handedOff && document.visibilityState === "visible") window.location.href = web;
-  }, 1800);
-  window.location.href = gmailAppHref(opts);
-}
-
-function mailtoHref(email: string, subject: string, body: string): string {
-  const params = new URLSearchParams({ subject, body });
-  return `mailto:${email}?${params.toString().replace(/\+/g, "%20")}`;
-}
-
-/** Bulk-announce version of mailtoHref: recipients go in bcc so they don't
- *  see each other's addresses, with the site's own contact address as "to"
- *  — most webmail (Gmail included) refuses to send a bcc-only draft with
- *  no "to" at all, so this keeps the button reliably usable. Opens the
- *  admin's own email client with the whole list pre-filled — no email
- *  service or domain setup needed, which is the whole point of this. */
-function mailtoAllHref(to: string, emails: string[], subject: string, body: string): string {
-  const params = new URLSearchParams({ bcc: emails.join(","), subject, body });
-  return `mailto:${to}?${params.toString().replace(/\+/g, "%20")}`;
-}
-
-function buildAnnouncement(course: ReservationCourse, siteUrl: string) {
-  const link = `${siteUrl}/register/${course.slug}`;
-  const subject = `🎉 ${course.title} is now open for registration`;
-  const emailBody = [
-    "Hi there,",
-    "",
-    `Great news — the course you were interested in, "${course.title}", is now open for registration!`,
-    "",
-    course.short_description,
-    "",
-    "Reserve your seat here:",
-    link,
-    "",
-    "See you soon,",
-    "Reemora Training",
-  ].join("\n");
-  const waTemplate = (name: string) =>
-    `Hi ${name}, great news! Our course "${course.title}" is now open for registration. Reserve your seat here: ${link}`;
-  return { subject, emailBody, waTemplate };
-}
-
 export function ReservationInbox({
   initialReservations,
   allCourses,
@@ -204,11 +103,7 @@ export function ReservationInbox({
   React.useEffect(() => setMailClient(readMailClient()), []);
   function chooseMailClient(next: MailClient) {
     setMailClient(next);
-    try {
-      window.localStorage.setItem(MAIL_CLIENT_KEY, next);
-    } catch {
-      /* private mode */
-    }
+    storeMailClient(next);
   }
 
   const { showToast } = useToast();
