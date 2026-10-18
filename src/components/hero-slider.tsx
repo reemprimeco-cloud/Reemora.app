@@ -23,7 +23,7 @@ function HeroMedia({ image, video, poster, title }: { image: string; video: stri
     setReduced(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
   }, []);
   if (!video || failed) {
-    return <Image src={poster ?? image} alt={title} fill priority sizes="(max-width: 768px) 0px, 40vw" className="object-cover" />;
+    return <Image src={poster ?? image} alt={title} fill priority sizes="(max-width: 768px) 92vw, 40vw" className="object-cover" />;
   }
   return (
     <video
@@ -50,6 +50,17 @@ export function HeroSlider({
   studentsCount?: string;
 }) {
   const [current, setCurrent] = React.useState(0);
+  // Which hero layout is on screen, so only that copy of the slide video is
+  // mounted and downloaded. Unknown during server render: both stay in the
+  // markup (CSS hides one) until the first client render settles it.
+  const [isDesktop, setIsDesktop] = React.useState<boolean | null>(null);
+  React.useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
   const { dict } = useLanguage();
 
   const slides = React.useMemo(() => {
@@ -124,6 +135,13 @@ export function HeroSlider({
             <h1 className="mb-5 text-[34px] font-bold leading-tight text-white sm:text-[46px] lg:text-[58px]">
               {slide.titleA} <em className="not-italic text-blue-400">{slide.titleAccent}</em>{slide.titleB}
             </h1>
+            {/* Phones: the slide's video sits right under the headline. */}
+            <div className="mx-auto mb-6 w-full max-w-[440px] md:hidden">
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-[18px] border border-white/20 bg-navy-800 shadow-[0_20px_40px_-20px_rgba(0,0,0,0.6)]">
+                {isDesktop !== true && <HeroMedia image={slide.image} video={slide.video} poster={slide.poster} title={slide.imageTitle} />}
+              </div>
+              <p className="mt-2.5 text-[13px] font-semibold text-[#cfe0f8]">{slide.imageTitle}</p>
+            </div>
             <p className="mx-auto mb-8 max-w-[520px] text-lg text-[#c6d3ea] md:mx-0">
               {slide.description}
             </p>
@@ -148,7 +166,7 @@ export function HeroSlider({
           <div className="hidden md:block">
             <div className="rounded-[22px] border border-white/20 bg-white/10 p-7 backdrop-blur-sm">
               <div className="relative mb-4.5 aspect-[4/3] w-full overflow-hidden rounded-[14px] bg-blue-100">
-                <HeroMedia image={slide.image} video={slide.video} poster={slide.poster} title={slide.imageTitle} />
+                {isDesktop !== false && <HeroMedia image={slide.image} video={slide.video} poster={slide.poster} title={slide.imageTitle} />}
               </div>
               <h4 className="mb-1.5 text-lg font-semibold text-white">{slide.imageTitle}</h4>
               <p className="text-sm text-[#c6d3ea]">{slide.imageDesc}</p>
