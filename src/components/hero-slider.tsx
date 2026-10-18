@@ -6,11 +6,40 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/context";
 
-const IMAGES = [
-  { image: "/images/courses/ai-app-bootcamp.svg" },
-  { image: "/images/courses/ai-agents.svg" },
-  { image: "/images/courses/prompt-engineering.svg" },
+/** Card media per slide. `video` plays muted on a loop with `image` as its
+ *  poster; leave it null (or if the file fails to load) and the image is
+ *  shown instead. Videos live in /public/videos. */
+const MEDIA: { image: string; video: string | null }[] = [
+  { image: "/images/courses/ai-app-bootcamp.svg", video: null },
+  { image: "/images/courses/ai-agents.svg", video: null },
+  { image: "/images/courses/prompt-engineering.svg", video: null },
 ];
+
+function HeroMedia({ image, video, title }: { image: string; video: string | null; title: string }) {
+  const [failed, setFailed] = React.useState(false);
+  const [reduced, setReduced] = React.useState(false);
+  React.useEffect(() => {
+    setReduced(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
+  }, []);
+  if (!video || failed) {
+    return <Image src={image} alt={title} fill priority sizes="(max-width: 768px) 0px, 40vw" className="object-cover" />;
+  }
+  return (
+    <video
+      key={video}
+      src={video}
+      poster={image}
+      autoPlay={!reduced}
+      muted
+      loop
+      playsInline
+      preload="metadata"
+      aria-label={title}
+      onError={() => setFailed(true)}
+      className="absolute inset-0 h-full w-full object-cover"
+    />
+  );
+}
 
 export function HeroSlider({
   coursesCount = "4+",
@@ -29,7 +58,8 @@ export function HeroSlider({
         ...slide1,
         primaryHref: "/courses",
         secondaryHref: "/#about",
-        image: IMAGES[0].image,
+        image: MEDIA[0].image,
+        video: MEDIA[0].video,
         meta: [
           { value: coursesCount, label: slide1.metaA },
           { value: studentsCount, label: slide1.metaB },
@@ -40,7 +70,8 @@ export function HeroSlider({
         ...slide2,
         primaryHref: "/reserve",
         secondaryHref: "/#certificates",
-        image: IMAGES[1].image,
+        image: MEDIA[1].image,
+        video: MEDIA[1].video,
         meta: [
           { value: slide2.metaAValue, label: slide2.metaA },
           { value: slide2.metaBValue, label: slide2.metaB },
@@ -51,7 +82,8 @@ export function HeroSlider({
         ...slide3,
         primaryHref: "/courses",
         secondaryHref: "/courses",
-        image: IMAGES[2].image,
+        image: MEDIA[2].image,
+        video: MEDIA[2].video,
         meta: [
           { value: slide3.metaAValue, label: slide3.metaA },
           { value: slide3.metaBValue, label: slide3.metaB },
@@ -112,7 +144,7 @@ export function HeroSlider({
           <div className="hidden md:block">
             <div className="rounded-[22px] border border-white/20 bg-white/10 p-7 backdrop-blur-sm">
               <div className="relative mb-4.5 aspect-[4/3] w-full overflow-hidden rounded-[14px] bg-blue-100">
-                <Image src={slide.image} alt={slide.imageTitle} fill priority sizes="(max-width: 768px) 0px, 40vw" className="object-cover" />
+                <HeroMedia image={slide.image} video={slide.video} title={slide.imageTitle} />
               </div>
               <h4 className="mb-1.5 text-lg font-semibold text-white">{slide.imageTitle}</h4>
               <p className="text-sm text-[#c6d3ea]">{slide.imageDesc}</p>
