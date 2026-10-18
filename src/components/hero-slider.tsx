@@ -6,29 +6,30 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/i18n/context";
 
-/** Card media per slide. `video` plays muted on a loop with `image` as its
- *  poster; leave it null (or if the file fails to load) and the image is
- *  shown instead. Videos live in /public/videos. */
-const MEDIA: { image: string; video: string | null }[] = [
-  { image: "/images/courses/ai-app-bootcamp.svg", video: null },
-  { image: "/images/courses/ai-agents.svg", video: null },
-  { image: "/images/courses/prompt-engineering.svg", video: null },
+/** Card media per slide. `video` plays muted on a loop, showing `poster`
+ *  (its first frame) while it loads; if there is no video or it fails to
+ *  load, the poster (or the `image` illustration) is shown instead. Files live in
+ *  /public/videos as 960x720 H.264 without audio. */
+const MEDIA: { image: string; video: string | null; poster: string | null }[] = [
+  { image: "/images/courses/ai-app-bootcamp.svg", video: "/videos/hero-app-bootcamp.mp4", poster: "/videos/hero-app-bootcamp.jpg" },
+  { image: "/images/courses/ai-agents.svg", video: "/videos/hero-ai-agents.mp4", poster: "/videos/hero-ai-agents.jpg" },
+  { image: "/images/courses/prompt-engineering.svg", video: "/videos/hero-prompt-engineering.mp4", poster: "/videos/hero-prompt-engineering.jpg" },
 ];
 
-function HeroMedia({ image, video, title }: { image: string; video: string | null; title: string }) {
+function HeroMedia({ image, video, poster, title }: { image: string; video: string | null; poster: string | null; title: string }) {
   const [failed, setFailed] = React.useState(false);
   const [reduced, setReduced] = React.useState(false);
   React.useEffect(() => {
     setReduced(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
   }, []);
   if (!video || failed) {
-    return <Image src={image} alt={title} fill priority sizes="(max-width: 768px) 0px, 40vw" className="object-cover" />;
+    return <Image src={poster ?? image} alt={title} fill priority sizes="(max-width: 768px) 0px, 40vw" className="object-cover" />;
   }
   return (
     <video
       key={video}
       src={video}
-      poster={image}
+      poster={poster ?? image}
       autoPlay={!reduced}
       muted
       loop
@@ -60,6 +61,7 @@ export function HeroSlider({
         secondaryHref: "/#about",
         image: MEDIA[0].image,
         video: MEDIA[0].video,
+        poster: MEDIA[0].poster,
         meta: [
           { value: coursesCount, label: slide1.metaA },
           { value: studentsCount, label: slide1.metaB },
@@ -72,6 +74,7 @@ export function HeroSlider({
         secondaryHref: "/#certificates",
         image: MEDIA[1].image,
         video: MEDIA[1].video,
+        poster: MEDIA[1].poster,
         meta: [
           { value: slide2.metaAValue, label: slide2.metaA },
           { value: slide2.metaBValue, label: slide2.metaB },
@@ -84,6 +87,7 @@ export function HeroSlider({
         secondaryHref: "/courses",
         image: MEDIA[2].image,
         video: MEDIA[2].video,
+        poster: MEDIA[2].poster,
         meta: [
           { value: slide3.metaAValue, label: slide3.metaA },
           { value: slide3.metaBValue, label: slide3.metaB },
@@ -144,7 +148,7 @@ export function HeroSlider({
           <div className="hidden md:block">
             <div className="rounded-[22px] border border-white/20 bg-white/10 p-7 backdrop-blur-sm">
               <div className="relative mb-4.5 aspect-[4/3] w-full overflow-hidden rounded-[14px] bg-blue-100">
-                <HeroMedia image={slide.image} video={slide.video} title={slide.imageTitle} />
+                <HeroMedia image={slide.image} video={slide.video} poster={slide.poster} title={slide.imageTitle} />
               </div>
               <h4 className="mb-1.5 text-lg font-semibold text-white">{slide.imageTitle}</h4>
               <p className="text-sm text-[#c6d3ea]">{slide.imageDesc}</p>
