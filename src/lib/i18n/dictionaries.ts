@@ -482,6 +482,9 @@ const en = {
   thankYouPage: {
     title: "Thank you for registering!",
     whatsappBody: "You will receive the payment link through your WhatsApp shortly. Our team will reach out to complete your registration.",
+    freeTitle: "You're registered!",
+    freeBody: "Your seat is confirmed. We'll send you the workshop details on WhatsApp before the day. See you there!",
+    freeTotal: "Free",
     referenceLabel: "Reference",
     course: "Course",
     total: "Total Due",
@@ -1042,6 +1045,9 @@ const ar: EnDict = {
   thankYouPage: {
     title: "شكراً لتسجيلك!",
     whatsappBody: "ستستلم رابط الدفع عبر واتساب قريباً. سيتواصل معك فريقنا لإكمال تسجيلك.",
+    freeTitle: "تم تسجيلك بنجاح!",
+    freeBody: "مقعدك مؤكد. سنرسل لك تفاصيل الورشة عبر واتساب قبل موعدها. نراك هناك!",
+    freeTotal: "مجاناً",
     referenceLabel: "الرقم المرجعي",
     course: "الدورة",
     total: "الإجمالي المستحق",

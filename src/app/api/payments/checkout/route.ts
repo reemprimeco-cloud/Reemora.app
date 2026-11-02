@@ -13,6 +13,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\s()-]{7,20}$/;
 const MAX_SEATS = 10;
 const SPLIT_REMINDER_DAYS = 30;
+/** A second submit from the same email for the same cohort within this
+ *  window reuses the first registration instead of creating a duplicate
+ *  (and a duplicate admin alert). Free registrations are matched at any age. */
+const DUPLICATE_WINDOW_MINUTES = 30;
 
 /** Parse an attendee entry from the request body. Trims strings, drops
  *  everything else. Missing fields become empty string so validation can
@@ -25,6 +29,13 @@ function parseAttendee(raw: unknown): Attendee {
     email: typeof obj.email === "string" ? obj.email.trim() : "",
     phone: typeof obj.phone === "string" ? obj.phone.trim() : "",
   };
+}
+
+type ServiceClient = Awaited<ReturnType<typeof createServiceRoleClient>>;
+
+async function readPaymentMode(supabase: ServiceClient): Promise<"whatsapp_manual" | "upayment"> {
+  const { data } = await supabase.from("website_settings").select("key, value").eq("key", "payment_mode");
+  return data?.[0]?.value === "whatsapp_manual" ? "whatsapp_manual" : "upayment";
 }
 
 export async function POST(request: Request) {
@@ -120,6 +131,50 @@ export async function POST(request: Request) {
   }
 
   const { subtotal, discount, total } = computeOrderTotal(course.price, seats);
+  const isFree = total <= 0;
+
+  // Duplicate guard: someone who presses Register again (after an error,
+  // a slow network or the back button) gets their existing registration
+  // back instead of a second one.
+  {
+    let dupQuery = supabase
+      .from("registrations")
+      .select("id, status, created_at")
+      .eq("course_schedule_id", courseScheduleId)
+      // Case-insensitive exact match: escape LIKE wildcards in the address.
+      .ilike("email", email.replace(/[\\%_]/g, (c) => `\\${c}`))
+      .in("status", ["pending", "confirmed"])
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (!isFree) {
+      dupQuery = dupQuery.gte("created_at", new Date(Date.now() - DUPLICATE_WINDOW_MINUTES * 60_000).toISOString());
+    }
+    const { data: existing } = await dupQuery.maybeSingle();
+    if (existing) {
+      if (isFree) {
+        return NextResponse.json({ free: true, registrationId: existing.id, alreadyRegistered: true });
+      }
+      const { data: openPayment } = await supabase
+        .from("payments")
+        .select("checkout_url, status")
+        .eq("registration_id", existing.id)
+        .is("due_date", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (openPayment?.status === "paid") {
+        return NextResponse.json({ error: "You're already registered for this course with this email.", alreadyRegistered: true }, { status: 409 });
+      }
+      if (openPayment?.checkout_url) {
+        return NextResponse.json({ invoiceUrl: openPayment.checkout_url, registrationId: existing.id });
+      }
+      if ((await readPaymentMode(supabase)) === "whatsapp_manual") {
+        return NextResponse.json({ whatsappManual: true, registrationId: existing.id });
+      }
+      // A recent paid registration without a usable checkout link: fall
+      // through and start a fresh attempt.
+    }
+  }
 
   // Full attendee list stored on the registration = booker (seat 1) + extras.
   const attendeesForDb: Attendee[] = [
@@ -133,11 +188,7 @@ export async function POST(request: Request) {
   // active — there's no automatic reminder link to generate later
   // otherwise — so it silently downgrades to a full payment in
   // whatsapp_manual mode.
-  const { data: settingsRows } = await supabase
-    .from("website_settings")
-    .select("key, value")
-    .eq("key", "payment_mode");
-  const paymentMode = settingsRows?.[0]?.value === "whatsapp_manual" ? "whatsapp_manual" : "upayment";
+  const paymentMode = await readPaymentMode(supabase);
   // The split-payment plan is additionally gated per course — an admin
   // must opt each course in from the course editor. A request for
   // "split_50_50" on a course that hasn't opted in downgrades to a full
@@ -192,9 +243,23 @@ export async function POST(request: Request) {
     },
   });
 
+  // Free course: nothing to pay, so never touch the payment gateway (it
+  // rejects amounts under 0.001). Confirm the seat straight away.
+  if (isFree) {
+    await supabase.from("registrations").update({ status: "confirmed" }).eq("id", registration.id);
+    await supabase.from("payments").insert({
+      registration_id: registration.id,
+      amount: 0,
+      currency: course.currency,
+      status: "paid",
+      method: "free",
+    });
+    await supabase.rpc("decrement_seats", { p_schedule_id: courseScheduleId, p_seats: seats });
+  }
+
   // Notify as soon as the order exists — this is the "someone registered"
   // moment, independent of whether payment completes right after.
-  const planNote = paymentPlan === "split_50_50" ? " (split payment: 50% now, 50% in 30 days)" : "";
+  const planNote = isFree ? " (free — seat confirmed)" : paymentPlan === "split_50_50" ? " (split payment: 50% now, 50% in 30 days)" : "";
   await Promise.all([
     sendTelegramNotification(
       [
@@ -213,6 +278,10 @@ export async function POST(request: Request) {
       url: "/admin/registrations",
     }),
   ]);
+
+  if (isFree) {
+    return NextResponse.json({ free: true, registrationId: registration.id });
+  }
 
   if (paymentMode === "whatsapp_manual") {
     const { data: payment, error: paymentError } = await supabase
