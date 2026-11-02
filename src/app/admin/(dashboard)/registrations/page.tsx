@@ -108,10 +108,15 @@ export default async function AdminRegistrationsPage() {
 
   return (
     <div>
-      <h1 className="mb-3 text-2xl font-bold">Registrations</h1>
-      <p className="mb-6 max-w-2xl text-sm text-ink-soft">
+      <h1 className="mb-2 text-2xl font-bold">Registrations</h1>
+      <details className="group mb-5 max-w-2xl text-sm text-ink-soft">
+        <summary className="inline-flex min-h-[36px] cursor-pointer list-none items-center gap-1.5 rounded-full border border-border-c px-3 text-xs font-semibold text-ink-soft transition hover:border-blue-400 hover:text-blue-600 [&::-webkit-details-marker]:hidden">
+          <span aria-hidden="true" className="transition-transform group-open:rotate-90">›</span> How statuses work
+        </summary>
+        <p className="mt-3">
         Each course has its own list: pick it above the table to see, contact or print only its participants. Use the status dropdown on each row to move a registration through Pending → Accepted → Cancelled / Refunded / No-show / Waitlist. For UPayments registrations, status is a label only — seats are freed/reserved automatically by the payment webhook. For WhatsApp (manual) registrations, moving to Accepted reserves a seat and moving away from it releases the seat back, since there&apos;s no webhook to do that for you. For a split-payment registration where the student withdraws after paying the first half, use <strong>Waive</strong> next to the 2nd installment to stop chasing the remaining half — it won&apos;t be charged and the reminder job will skip it.
-      </p>
+        </p>
+      </details>
       <RegistrationsTable initialRows={rows} adminEmail={settings.contact_email} />
     </div>
   );
