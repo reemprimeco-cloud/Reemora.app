@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { MessageCircle, Phone, Trash2, BellOff } from "lucide-react";
+import { MessageCircle, Phone, Trash2, BellOff, Printer, Mail, Copy } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { formatMoney } from "@/lib/utils";
+import { formatDate, formatMoney } from "@/lib/utils";
+import { type MailClient, mailtoAllHref, openGmail, readMailClient, storeMailClient } from "@/lib/admin/mail";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/toast-provider";
 import { useConfirm } from "@/components/confirm-dialog";
@@ -25,6 +26,8 @@ export interface RegistrationRow {
   created_at: string;
   course_title: string;
   course_schedule_id: string;
+  /** Cohort start date, used to tell two runs of the same course apart. */
+  start_date: string | null;
   /** Null for older rows saved before payments.method existed. */
   payment_method: string | null;
   payment_plan: PaymentPlan;
@@ -58,8 +61,78 @@ function statusLabel(status: RegistrationStatus): string {
   return STATUS_OPTIONS.find((o) => o.value === status)?.label ?? status;
 }
 
-export function RegistrationsTable({ initialRows }: { initialRows: RegistrationRow[] }) {
+/** Registrations still counting toward the class list. */
+const ACTIVE: RegistrationStatus[] = ["pending", "confirmed", "waitlist"];
+const COURSE_KEY = "admin.registrationsCourse";
+
+interface CourseGroup {
+  scheduleId: string;
+  title: string;
+  startDate: string | null;
+  count: number;
+  latest: string;
+}
+
+function groupByCourse(rows: RegistrationRow[]): CourseGroup[] {
+  const map = new Map<string, CourseGroup>();
+  for (const r of rows) {
+    const g = map.get(r.course_schedule_id);
+    if (g) {
+      g.count += 1;
+      if (r.created_at > g.latest) g.latest = r.created_at;
+    } else {
+      map.set(r.course_schedule_id, { scheduleId: r.course_schedule_id, title: r.course_title, startDate: r.start_date, count: 1, latest: r.created_at });
+    }
+  }
+  // Courses with the newest registration first.
+  return [...map.values()].sort((a, b) => b.latest.localeCompare(a.latest));
+}
+
+export function RegistrationsTable({ initialRows, adminEmail }: { initialRows: RegistrationRow[]; adminEmail: string }) {
   const [rows, setRows] = React.useState(initialRows);
+  const groups = React.useMemo(() => groupByCourse(rows), [rows]);
+  const [courseId, setCourseId] = React.useState<string>(() => groups[0]?.scheduleId ?? "");
+  const [mailClient, setMailClient] = React.useState<MailClient>("default");
+  React.useEffect(() => {
+    setMailClient(readMailClient());
+    try {
+      const saved = window.localStorage.getItem(COURSE_KEY);
+      if (saved && groups.some((g) => g.scheduleId === saved)) setCourseId(saved);
+    } catch {
+      /* private mode */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Keep a valid selection if the chosen course loses its last registration.
+  React.useEffect(() => {
+    if (groups.length && !groups.some((g) => g.scheduleId === courseId)) setCourseId(groups[0].scheduleId);
+  }, [groups, courseId]);
+  function chooseCourse(id: string) {
+    setCourseId(id);
+    try {
+      window.localStorage.setItem(COURSE_KEY, id);
+    } catch {
+      /* private mode */
+    }
+  }
+  const group = groups.find((g) => g.scheduleId === courseId) ?? null;
+  const courseRows = React.useMemo(() => rows.filter((r) => r.course_schedule_id === courseId), [rows, courseId]);
+  const activeRows = courseRows.filter((r) => ACTIVE.includes(r.status));
+  const confirmedSeats = courseRows.filter((r) => r.status === "confirmed").reduce((n, r) => n + r.seats, 0);
+  const emails = Array.from(new Set(activeRows.map((r) => r.email.trim().toLowerCase()).filter(Boolean)));
+  const phones = Array.from(new Set(activeRows.map((r) => r.phone.trim()).filter(Boolean)));
+  const courseLabel = group ? `${group.title}${group.startDate ? ` — ${formatDate(group.startDate)}` : ""}` : "";
+  const mailSubject = group ? `Reemora — ${group.title}` : "";
+  const mailBody = group ? ["Hi there,", "", `A quick note about "${group.title}"${group.startDate ? ` on ${formatDate(group.startDate)}` : ""}:`, "", "", "See you soon,", "Reemora Training"].join("\n") : "";
+
+  async function copyList(list: string[], what: string) {
+    try {
+      await navigator.clipboard.writeText(list.join(what === "phones" ? "\n" : ", "));
+      showToast("success", `Copied ${list.length} ${what}.`);
+    } catch {
+      showToast("error", "Could not copy. Select them manually.");
+    }
+  }
   const [saving, setSaving] = React.useState<Record<string, boolean>>({});
   const [deleting, setDeleting] = React.useState<Record<string, boolean>>({});
   const [waiving, setWaiving] = React.useState<Record<string, boolean>>({});
@@ -186,32 +259,125 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
     }
   }
 
+  if (!groups.length) {
+    return <p className="rounded-2xl border border-border-c bg-surface px-6 py-10 text-center text-ink-soft">No registrations yet.</p>;
+  }
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-border-c bg-surface">
-      <div className="overflow-x-auto">
+    <div>
+      {/* Course picker: one list per course, never mixed. */}
+      <div role="tablist" aria-label="Course" className="mb-4 flex gap-2 overflow-x-auto pb-1 print:hidden">
+        {groups.map((g) => {
+          const active = g.scheduleId === courseId;
+          return (
+            <button
+              key={g.scheduleId}
+              role="tab"
+              aria-selected={active}
+              onClick={() => chooseCourse(g.scheduleId)}
+              className={cn(
+                "flex min-h-[44px] shrink-0 flex-col items-start rounded-xl border px-4 py-2 text-left transition",
+                active ? "border-navy-800 bg-navy-800 text-white" : "border-border-c bg-surface text-foreground hover:border-blue-400"
+              )}
+            >
+              <span className="max-w-[260px] truncate text-[13px] font-bold">{g.title}</span>
+              <span className={cn("text-[11.5px]", active ? "text-[#cfe0f8]" : "text-ink-soft")}>
+                {g.startDate ? formatDate(g.startDate) : "Date TBA"} · {g.count} registration{g.count === 1 ? "" : "s"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Per-course toolbar */}
+      <div className="mb-4 flex flex-wrap items-center gap-2.5 rounded-2xl border border-border-c bg-surface-alt p-4 print:hidden">
+        <div className="me-auto text-sm">
+          <p className="font-bold">{courseLabel}</p>
+          <p className="text-xs text-ink-soft">
+            {activeRows.length} active · {confirmedSeats} confirmed seat{confirmedSeats === 1 ? "" : "s"}
+          </p>
+        </div>
+        <button onClick={() => window.print()} className="inline-flex min-h-[38px] items-center gap-2 rounded-lg border border-blue-500 bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-800">
+          <Printer size={14} aria-hidden="true" /> Print list
+        </button>
+        <a
+          href={emails.length ? mailtoAllHref(adminEmail, emails, mailSubject, mailBody) : undefined}
+          aria-disabled={!emails.length}
+          onClick={(e) => {
+            if (!emails.length) {
+              e.preventDefault();
+              return;
+            }
+            if (mailClient === "gmail") {
+              e.preventDefault();
+              openGmail({ to: adminEmail, bcc: emails, subject: mailSubject, body: mailBody });
+            }
+          }}
+          className={cn(
+            "inline-flex min-h-[38px] items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition",
+            emails.length ? "border-border-c bg-surface hover:border-blue-400 hover:text-blue-600" : "cursor-not-allowed border-border-c bg-surface text-ink-soft"
+          )}
+        >
+          <Mail size={14} aria-hidden="true" /> Email all ({emails.length})
+        </a>
+        <div role="radiogroup" aria-label="Email program" className="flex rounded-lg border border-border-c bg-surface p-0.5">
+          {(["gmail", "default"] as MailClient[]).map((c) => (
+            <button
+              key={c}
+              type="button"
+              role="radio"
+              aria-checked={mailClient === c}
+              onClick={() => {
+                setMailClient(c);
+                storeMailClient(c);
+              }}
+              className={cn("min-h-[32px] rounded-md px-3 text-xs font-semibold transition", mailClient === c ? "bg-blue-100 text-blue-600" : "text-ink-soft hover:text-foreground")}
+            >
+              {c === "gmail" ? "Gmail" : "Mail app"}
+            </button>
+          ))}
+        </div>
+        <button onClick={() => copyList(emails, "emails")} disabled={!emails.length} className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-border-c bg-surface px-3 py-2 text-sm font-semibold transition hover:border-blue-400 hover:text-blue-600 disabled:opacity-50">
+          <Copy size={13} aria-hidden="true" /> Emails
+        </button>
+        <button onClick={() => copyList(phones, "phones")} disabled={!phones.length} className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-border-c bg-surface px-3 py-2 text-sm font-semibold transition hover:border-blue-400 hover:text-blue-600 disabled:opacity-50">
+          <Copy size={13} aria-hidden="true" /> Phones
+        </button>
+      </div>
+
+      {/* Printed header: only this course. */}
+      <div className="mb-4 hidden print:block">
+        <h2 className="text-xl font-bold">{courseLabel}</h2>
+        <p className="text-sm">
+          Registrations — {courseRows.length} · {confirmedSeats} confirmed seat{confirmedSeats === 1 ? "" : "s"} · printed {new Date().toLocaleDateString()}
+        </p>
+      </div>
+
+    <div className="overflow-hidden rounded-2xl border border-border-c bg-surface print:rounded-none print:border-0">
+      <div className="overflow-x-auto print:overflow-visible">
         <table className="w-full text-sm">
           <thead className="bg-surface-alt text-xs font-bold uppercase tracking-wide text-ink-soft">
             <tr>
+              <th className="px-4 py-3.5 text-left">#</th>
               <th className="px-6 py-3.5 text-left">Participant</th>
               <th className="px-6 py-3.5 text-left">Email</th>
               <th className="px-6 py-3.5 text-left">Phone</th>
-              <th className="px-6 py-3.5 text-left">Course</th>
               <th className="px-6 py-3.5 text-left">Seats</th>
               <th className="px-6 py-3.5 text-left">Amount</th>
               <th className="px-6 py-3.5 text-left">Payment Plan</th>
-              <th className="px-6 py-3.5 text-left">Contact</th>
+              <th className="px-6 py-3.5 text-left print:hidden">Contact</th>
               <th className="px-6 py-3.5 text-left">Status</th>
               <th className="px-6 py-3.5 text-left">Date</th>
             </tr>
           </thead>
           <tbody>
-            {rows.length ? (
-              rows.map((r) => (
-                <tr key={r.id} className="border-t border-border-c align-top">
-                  <td className="px-6 py-3.5">{r.full_name}</td>
+            {courseRows.length ? (
+              courseRows.map((r, i) => (
+                <tr key={r.id} className="border-t border-border-c align-top print:break-inside-avoid">
+                  <td className="px-4 py-3.5 text-ink-soft">{i + 1}</td>
+                  <td className="px-6 py-3.5 font-semibold">{r.full_name}</td>
                   <td className="px-6 py-3.5">{r.email}</td>
-                  <td className="px-6 py-3.5">{r.phone}</td>
-                  <td className="px-6 py-3.5">{r.course_title}</td>
+                  <td className="px-6 py-3.5" dir="ltr">{r.phone}</td>
                   <td className="px-6 py-3.5">{r.seats}</td>
                   <td className="px-6 py-3.5 font-bold text-foreground">{formatMoney(r.amount, r.currency)}</td>
                   <td className="px-6 py-3.5">
@@ -252,7 +418,7 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
                       <span className="text-xs text-ink-soft">Full</span>
                     )}
                   </td>
-                  <td className="px-6 py-3.5">
+                  <td className="px-6 py-3.5 print:hidden">
                     <div className="flex items-center gap-1.5">
                       {(() => {
                         const waDigits = digitsOnly(r.phone);
@@ -312,7 +478,7 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
                         onChange={(e) => changeStatus(r.id, e.target.value as RegistrationStatus)}
                         disabled={Boolean(saving[r.id])}
                         aria-label={`Change status for ${r.full_name}`}
-                        className="min-h-[32px] rounded-lg border border-border-c bg-surface px-2 py-1 text-xs font-semibold text-foreground outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 disabled:opacity-60"
+                        className="min-h-[32px] rounded-lg border border-border-c bg-surface px-2 py-1 text-xs font-semibold text-foreground outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 disabled:opacity-60 print:hidden"
                       >
                         {STATUS_OPTIONS.map((o) => (
                           <option key={o.value} value={o.value}>{o.label}</option>
@@ -325,12 +491,13 @@ export function RegistrationsTable({ initialRows }: { initialRows: RegistrationR
               ))
             ) : (
               <tr>
-                <td colSpan={10} className="px-6 py-8 text-center text-ink-soft">No registrations yet.</td>
+                <td colSpan={10} className="px-6 py-8 text-center text-ink-soft">No registrations for this course.</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   );
 }
