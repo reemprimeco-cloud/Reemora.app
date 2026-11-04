@@ -1,35 +1,69 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight, CalendarDays, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { reconcilePendingUPayments } from "@/lib/payment-reconciliation";
-import { formatMoney } from "@/lib/utils";
+import { formatDate, formatMoney } from "@/lib/utils";
 import { InstallAdminApp } from "@/components/admin/install-admin-app";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-interface RegistrationRow {
+type Course = { title: string; price: number; currency: string; is_published: boolean; registration_open: boolean };
+
+interface CohortRow {
   id: string;
-  full_name: string;
-  seats: number;
-  amount: number;
-  currency: string;
+  start_date: string | null;
   status: string;
-  created_at: string;
-  course_schedule: { courses: { title: string } | { title: string }[] | null } | { courses: { title: string } | { title: string }[] | null }[] | null;
+  seats_total: number;
+  seats_available: number;
+  courses: Course | Course[] | null;
+  registrations: { seats: number; status: string; amount: number }[] | null;
 }
 
-function courseTitleOf(r: RegistrationRow): string {
-  const sched = Array.isArray(r.course_schedule) ? r.course_schedule[0] : r.course_schedule;
-  const courses = sched?.courses;
-  const course = Array.isArray(courses) ? courses[0] : courses;
-  return course?.title ?? "—";
+interface Cohort {
+  id: string;
+  title: string;
+  startDate: string | null;
+  status: string;
+  open: boolean;
+  seatsTotal: number;
+  seatsLeft: number;
+  /** Registrations still in play (pending + accepted). */
+  registered: number;
+  confirmed: number;
+  pending: number;
+  revenue: number;
+  currency: string;
+  price: number;
+}
+
+function toCohort(row: CohortRow): Cohort | null {
+  const course = Array.isArray(row.courses) ? row.courses[0] : row.courses;
+  if (!course) return null;
+  const regs = row.registrations ?? [];
+  const active = regs.filter((r) => r.status === "pending" || r.status === "confirmed");
+  const confirmed = regs.filter((r) => r.status === "confirmed");
+  return {
+    id: row.id,
+    title: course.title,
+    startDate: row.start_date,
+    status: row.status,
+    open: course.is_published && course.registration_open && row.status !== "completed" && row.status !== "cancelled",
+    seatsTotal: row.seats_total,
+    seatsLeft: row.seats_available,
+    registered: active.reduce((n, r) => n + r.seats, 0),
+    confirmed: confirmed.reduce((n, r) => n + r.seats, 0),
+    pending: regs.filter((r) => r.status === "pending").reduce((n, r) => n + r.seats, 0),
+    revenue: confirmed.reduce((n, r) => n + Number(r.amount || 0), 0),
+    currency: course.currency,
+    price: Number(course.price),
+  };
 }
 
 export default async function AdminDashboardPage() {
-  let courseCount = 0;
-  let upcomingCohorts = 0;
-  let registrations: RegistrationRow[] = [];
+  let cohorts: Cohort[] = [];
 
   if (isSupabaseConfigured) {
     // Same settle-before-render as the Registrations page, so the two
@@ -37,80 +71,132 @@ export default async function AdminDashboardPage() {
     await reconcilePendingUPayments();
 
     const supabase = await createClient();
-    const [{ count: cCount }, { count: uCount }, { data: regs }] = await Promise.all([
-      supabase.from("courses").select("*", { count: "exact", head: true }),
-      supabase.from("course_schedule").select("*", { count: "exact", head: true }).eq("status", "upcoming"),
-      supabase
-        .from("registrations")
-        .select("id, full_name, seats, amount, currency, status, created_at, course_schedule(courses(title))")
-        .order("created_at", { ascending: false })
-        .limit(5),
-    ]);
-    courseCount = cCount ?? 0;
-    upcomingCohorts = uCount ?? 0;
-    registrations = (regs as unknown as RegistrationRow[]) ?? [];
+    const { data } = await supabase
+      .from("course_schedule")
+      .select("id, start_date, status, seats_total, seats_available, courses(title, price, currency, is_published, registration_open), registrations(seats, status, amount)")
+      .order("start_date", { ascending: true });
+    cohorts = ((data as unknown as CohortRow[]) ?? []).map(toCohort).filter((c): c is Cohort => c !== null);
   }
 
-  const totalSeats = registrations.reduce((sum, r) => sum + r.seats, 0);
+  const open = cohorts.filter((c) => c.open);
+  const today = new Date().toISOString().slice(0, 10);
+  // Not taking registrations, but still running or about to: worth a glance.
+  const others = cohorts.filter(
+    (c) => !c.open && (c.status === "ongoing" || (c.status === "upcoming" && (!c.startDate || c.startDate >= today)))
+  );
+  const totalRegistered = open.reduce((n, c) => n + c.registered, 0);
 
   return (
     <div>
       <h1 className="mb-7 text-2xl font-bold">Dashboard</h1>
       <InstallAdminApp compact />
 
-      <div className="mb-8 grid grid-cols-2 gap-5 lg:grid-cols-4">
-        <Kpi label="Total Courses" value={courseCount} />
-        <Kpi label="Upcoming Cohorts" value={upcomingCohorts} />
-        <Kpi label="Recent Registrations" value={registrations.length} />
-        <Kpi label="Seats Booked (recent)" value={totalSeats} />
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:gap-5">
+        <Kpi label="Open for registration" value={open.length} />
+        <Kpi label="Registered in open courses" value={totalRegistered} />
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border-c bg-surface">
-        <div className="border-b border-border-c px-6 py-5">
-          <h2 className="font-bold">Recent Registrations</h2>
+      <h2 className="mb-4 text-lg font-bold">Open for registration</h2>
+      {open.length ? (
+        <div className="mb-10 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {open.map((c) => (
+            <OpenCohortCard key={c.id} cohort={c} />
+          ))}
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-alt text-xs font-bold uppercase tracking-wide text-ink-soft">
-              <tr>
-                <th className="px-6 py-3.5 text-left">Participant</th>
-                <th className="px-6 py-3.5 text-left">Course</th>
-                <th className="px-6 py-3.5 text-left">Seats</th>
-                <th className="px-6 py-3.5 text-left">Amount</th>
-                <th className="px-6 py-3.5 text-left">Status</th>
-                <th className="px-6 py-3.5 text-left">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {registrations.length ? (
-                registrations.map((r) => (
-                  <tr key={r.id} className="border-t border-border-c">
-                    <td className="px-6 py-3.5">{r.full_name}</td>
-                    <td className="px-6 py-3.5">{courseTitleOf(r)}</td>
-                    <td className="px-6 py-3.5">{r.seats}</td>
-                    <td className="px-6 py-3.5">{formatMoney(r.amount, r.currency)}</td>
-                    <td className="px-6 py-3.5">
-                      <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-600">{r.status}</span>
-                    </td>
-                    <td className="px-6 py-3.5">{new Date(r.created_at).toLocaleDateString()}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-ink-soft">No registrations yet.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      ) : (
+        <p className="mb-10 rounded-2xl border border-dashed border-border-c bg-surface px-6 py-8 text-center text-sm text-ink-soft">
+          No course is open for registration right now. Open one from Courses → Registration Open.
+        </p>
+      )}
+
+      {others.length > 0 && (
+        <>
+          <h2 className="mb-4 text-lg font-bold">Other upcoming and running courses</h2>
+          <div className="overflow-hidden rounded-2xl border border-border-c bg-surface">
+            {others.map((c, i) => (
+              <Link
+                key={c.id}
+                href={`/admin/registrations?course=${c.id}`}
+                className={`flex items-center gap-4 px-5 py-4 transition hover:bg-surface-alt ${i ? "border-t border-border-c" : ""}`}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{c.title}</p>
+                  <p className="text-xs text-ink-soft">
+                    {c.startDate ? formatDate(c.startDate) : "Date TBA"} · {c.status === "ongoing" ? "Running now" : "Registration closed"}
+                  </p>
+                </div>
+                <span className="shrink-0 text-right">
+                  <strong className="block text-lg leading-none">{c.registered}</strong>
+                  <span className="text-[11px] text-ink-soft">registered</span>
+                </span>
+                <ArrowRight size={16} className="shrink-0 text-ink-soft" aria-hidden="true" />
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function OpenCohortCard({ cohort: c }: { cohort: Cohort }) {
+  const booked = Math.max(0, c.seatsTotal - c.seatsLeft);
+  const pct = c.seatsTotal ? Math.min(100, Math.round((booked / c.seatsTotal) * 100)) : 0;
+  const isFree = c.price <= 0;
+  return (
+    <div className="flex flex-col rounded-2xl border border-border-c bg-surface p-5 sm:p-6">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[17px] font-bold leading-snug">{c.title}</p>
+          <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-ink-soft">
+            <CalendarDays size={14} aria-hidden="true" /> {c.startDate ? formatDate(c.startDate) : "Date TBA"}
+          </p>
         </div>
+        <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700 dark:bg-green-950 dark:text-green-300">
+          Open
+        </span>
       </div>
+
+      <div className="mb-4 flex items-end gap-2">
+        <strong className="font-[family-name:var(--font-head)] text-[44px] leading-none">{c.registered}</strong>
+        <span className="mb-1 text-sm text-ink-soft">registered</span>
+      </div>
+
+      <div className="mb-2 h-2.5 overflow-hidden rounded-full bg-surface-alt" aria-hidden="true">
+        <div className="h-full rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
+      </div>
+      <p className="mb-4 text-sm text-ink-soft">
+        {booked} of {c.seatsTotal} seats booked · <strong className="text-foreground">{c.seatsLeft} left</strong>
+      </p>
+
+      <div className="mb-5 grid grid-cols-3 gap-2 text-center">
+        <Stat label="Accepted" value={String(c.confirmed)} />
+        <Stat label="Pending" value={String(c.pending)} />
+        <Stat label={isFree ? "Price" : "Collected"} value={isFree ? "Free" : formatMoney(c.revenue, c.currency)} />
+      </div>
+
+      <Link
+        href={`/admin/registrations?course=${c.id}`}
+        className="mt-auto inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-navy-800 px-5 text-sm font-semibold text-white transition hover:bg-blue-600"
+      >
+        <Users size={15} aria-hidden="true" /> View participants
+      </Link>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl bg-surface-alt px-2 py-2.5">
+      <strong className="block truncate text-[15px]">{value}</strong>
+      <span className="text-[11px] text-ink-soft">{label}</span>
     </div>
   );
 }
 
 function Kpi({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-border-c bg-surface p-5.5">
+    <div className="rounded-2xl border border-border-c bg-surface p-5">
       <span className="text-xs font-bold uppercase tracking-wide text-ink-soft">{label}</span>
       <strong className="mt-2 block font-[family-name:var(--font-head)] text-[28px]">{value}</strong>
     </div>

@@ -88,14 +88,26 @@ function groupByCourse(rows: RegistrationRow[]): CourseGroup[] {
   return [...map.values()].sort((a, b) => b.latest.localeCompare(a.latest));
 }
 
-export function RegistrationsTable({ initialRows, adminEmail }: { initialRows: RegistrationRow[]; adminEmail: string }) {
+export function RegistrationsTable({
+  initialRows,
+  adminEmail,
+  initialCourseId,
+}: {
+  initialRows: RegistrationRow[];
+  adminEmail: string;
+  /** Course cohort to open on (e.g. from a dashboard card); wins over the remembered one. */
+  initialCourseId?: string;
+}) {
   const [rows, setRows] = React.useState(initialRows);
   const groups = React.useMemo(() => groupByCourse(rows), [rows]);
-  const [courseId, setCourseId] = React.useState<string>(() => groups[0]?.scheduleId ?? "");
+  const [courseId, setCourseId] = React.useState<string>(() =>
+    initialCourseId && groups.some((g) => g.scheduleId === initialCourseId) ? initialCourseId : groups[0]?.scheduleId ?? ""
+  );
   const [mailClient, setMailClient] = React.useState<MailClient>("default");
   React.useEffect(() => {
     setMailClient(readMailClient());
     try {
+      if (initialCourseId && groups.some((g) => g.scheduleId === initialCourseId)) return;
       const saved = window.localStorage.getItem(COURSE_KEY);
       if (saved && groups.some((g) => g.scheduleId === saved)) setCourseId(saved);
     } catch {

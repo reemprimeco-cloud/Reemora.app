@@ -67,7 +67,8 @@ function secondInstallmentOf(r: DbRow): RegistrationRow["second_installment"] {
   return { id: second.id, amount: second.amount, status: second.status, due_date: second.due_date };
 }
 
-export default async function AdminRegistrationsPage() {
+export default async function AdminRegistrationsPage({ searchParams }: { searchParams: Promise<{ course?: string }> }) {
+  const { course: initialCourseId } = await searchParams;
   let rows: RegistrationRow[] = [];
   const settings = await getWebsiteSettings();
 
@@ -117,7 +118,7 @@ export default async function AdminRegistrationsPage() {
         Each course has its own list: pick it above the table to see, contact or print only its participants. Use the status dropdown on each row to move a registration through Pending → Accepted → Cancelled / Refunded / No-show / Waitlist. For UPayments registrations, status is a label only — seats are freed/reserved automatically by the payment webhook. For WhatsApp (manual) registrations, moving to Accepted reserves a seat and moving away from it releases the seat back, since there&apos;s no webhook to do that for you. For a split-payment registration where the student withdraws after paying the first half, use <strong>Waive</strong> next to the 2nd installment to stop chasing the remaining half — it won&apos;t be charged and the reminder job will skip it.
         </p>
       </details>
-      <RegistrationsTable initialRows={rows} adminEmail={settings.contact_email} />
+      <RegistrationsTable initialRows={rows} adminEmail={settings.contact_email} initialCourseId={initialCourseId} />
     </div>
   );
 }
