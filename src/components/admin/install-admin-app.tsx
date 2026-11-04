@@ -70,29 +70,29 @@ export function InstallAdminApp({ compact }: { compact?: boolean }) {
   if (compact) {
     if (installed || dismissed) return null;
     return (
-      <div className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-blue-400/40 bg-blue-050 px-4 py-3 text-sm">
+      <div dir="rtl" className="mb-6 flex flex-wrap items-center gap-3 rounded-2xl border border-blue-400/40 bg-blue-050 px-4 py-3 text-sm">
         <Smartphone size={18} className="shrink-0 text-blue-600" aria-hidden="true" />
         <span className="min-w-0 flex-1">
-          <strong>Get admin alerts on your phone.</strong>{" "}
+          <strong>تنبيهات الإدارة على الجوال.</strong>{" "}
           {ios ? (
             <>
-              In Safari tap <Share size={13} className="inline -mt-0.5" aria-hidden="true" /> Share → <strong>Add to Home Screen</strong>. The icon is named <strong>Reemora Admin</strong> and opens straight into this dashboard. Then enable notifications from{" "}
-              <Link href="/admin/settings" className="font-semibold text-blue-600 underline">Settings</Link> inside it.
+              من Safari: <Share size={13} className="inline -mt-0.5" aria-hidden="true" /> مشاركة ثم <strong>إضافة إلى الشاشة الرئيسية</strong>. يظهر التطبيق باسم <strong>Reemora Admin</strong> ويفتح على هذه اللوحة مباشرة، وبعدها تُفعَّل التنبيهات من{" "}
+              <Link href="/admin/settings" className="font-semibold text-blue-600 underline">الإعدادات</Link> داخله.
             </>
           ) : deferred ? (
-            <>Install Reemora Admin as an app, then turn on push notifications in Settings.</>
+            <>بعد تثبيت Reemora Admin كتطبيق، تُفعَّل التنبيهات من الإعدادات.</>
           ) : (
             <>
-              Add this page to your home screen, then enable push notifications in <Link href="/admin/settings" className="font-semibold text-blue-600 underline">Settings</Link>.
+              بعد إضافة هذه الصفحة إلى الشاشة الرئيسية، تُفعَّل التنبيهات من <Link href="/admin/settings" className="font-semibold text-blue-600 underline">الإعدادات</Link>.
             </>
           )}
         </span>
         {deferred && (
           <button type="button" onClick={install} className="inline-flex items-center gap-1.5 rounded-full bg-blue-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-navy-800">
-            <Download size={13} aria-hidden="true" /> Install
+            <Download size={13} aria-hidden="true" /> تثبيت
           </button>
         )}
-        <button type="button" onClick={dismiss} aria-label="Dismiss" className="rounded-full p-1.5 text-ink-soft hover:bg-surface hover:text-foreground">
+        <button type="button" onClick={dismiss} aria-label="إغلاق" className="rounded-full p-1.5 text-ink-soft hover:bg-surface hover:text-foreground">
           <X size={15} />
         </button>
       </div>

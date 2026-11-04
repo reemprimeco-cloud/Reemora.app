@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { reconcilePendingUPayments } from "@/lib/payment-reconciliation";
-import { formatDate, formatMoney } from "@/lib/utils";
+
 import { InstallAdminApp } from "@/components/admin/install-admin-app";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-type Course = { title: string; price: number; currency: string; is_published: boolean; registration_open: boolean };
+type Course = { title: string; title_ar: string | null; price: number; currency: string; is_published: boolean; registration_open: boolean };
 
 interface CohortRow {
   id: string;
@@ -47,7 +47,7 @@ function toCohort(row: CohortRow): Cohort | null {
   const confirmed = regs.filter((r) => r.status === "confirmed");
   return {
     id: row.id,
-    title: course.title,
+    title: course.title_ar?.trim() || course.title,
     startDate: row.start_date,
     status: row.status,
     open: course.is_published && course.registration_open && row.status !== "completed" && row.status !== "cancelled",
@@ -62,6 +62,20 @@ function toCohort(row: CohortRow): Cohort | null {
   };
 }
 
+/** Arabic month names with Western digits, so dates match the counts on
+ *  the same card (e.g. "19 نوفمبر 2026"). */
+function arDate(dateStr: string | null): string {
+  if (!dateStr) return "التاريخ لم يُحدد";
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("ar-KW-u-nu-latn", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function arMoney(amount: number, currency: string): string {
+  const kwd = currency.toUpperCase() === "KWD";
+  return `${amount.toFixed(kwd ? 3 : 2)} ${kwd ? "د.ك" : currency}`;
+}
+
 export default async function AdminDashboardPage() {
   let cohorts: Cohort[] = [];
 
@@ -73,7 +87,7 @@ export default async function AdminDashboardPage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("course_schedule")
-      .select("id, start_date, status, seats_total, seats_available, courses(title, price, currency, is_published, registration_open), registrations(seats, status, amount)")
+      .select("id, start_date, status, seats_total, seats_available, courses(title, title_ar, price, currency, is_published, registration_open), registrations(seats, status, amount)")
       .order("start_date", { ascending: true });
     cohorts = ((data as unknown as CohortRow[]) ?? []).map(toCohort).filter((c): c is Cohort => c !== null);
   }
@@ -87,16 +101,16 @@ export default async function AdminDashboardPage() {
   const totalRegistered = open.reduce((n, c) => n + c.registered, 0);
 
   return (
-    <div>
-      <h1 className="mb-7 text-2xl font-bold">Dashboard</h1>
+    <div dir="rtl" lang="ar">
+      <h1 className="mb-7 text-2xl font-bold">لوحة التحكم</h1>
       <InstallAdminApp compact />
 
       <div className="mb-8 grid grid-cols-2 gap-4 sm:gap-5">
-        <Kpi label="Open for registration" value={open.length} />
-        <Kpi label="Registered in open courses" value={totalRegistered} />
+        <Kpi label="دورات مفتوحة للتسجيل" value={open.length} />
+        <Kpi label="المسجلون في الدورات المفتوحة" value={totalRegistered} />
       </div>
 
-      <h2 className="mb-4 text-lg font-bold">Open for registration</h2>
+      <h2 className="mb-4 text-lg font-bold">مفتوحة للتسجيل</h2>
       {open.length ? (
         <div className="mb-10 grid grid-cols-1 gap-4 lg:grid-cols-2">
           {open.map((c) => (
@@ -105,13 +119,13 @@ export default async function AdminDashboardPage() {
         </div>
       ) : (
         <p className="mb-10 rounded-2xl border border-dashed border-border-c bg-surface px-6 py-8 text-center text-sm text-ink-soft">
-          No course is open for registration right now. Open one from Courses → Registration Open.
+          لا توجد دورة مفتوحة للتسجيل حالياً. يمكنك فتح التسجيل من صفحة الدورات.
         </p>
       )}
 
       {others.length > 0 && (
         <>
-          <h2 className="mb-4 text-lg font-bold">Other upcoming and running courses</h2>
+          <h2 className="mb-4 text-lg font-bold">دورات قادمة أو جارية أخرى</h2>
           <div className="overflow-hidden rounded-2xl border border-border-c bg-surface">
             {others.map((c, i) => (
               <Link
@@ -122,14 +136,14 @@ export default async function AdminDashboardPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{c.title}</p>
                   <p className="text-xs text-ink-soft">
-                    {c.startDate ? formatDate(c.startDate) : "Date TBA"} · {c.status === "ongoing" ? "Running now" : "Registration closed"}
+                    {arDate(c.startDate)} · {c.status === "ongoing" ? "جارية الآن" : "التسجيل مغلق"}
                   </p>
                 </div>
-                <span className="shrink-0 text-right">
+                <span className="shrink-0 text-center">
                   <strong className="block text-lg leading-none">{c.registered}</strong>
-                  <span className="text-[11px] text-ink-soft">registered</span>
+                  <span className="text-[11px] text-ink-soft">مسجّل</span>
                 </span>
-                <ArrowRight size={16} className="shrink-0 text-ink-soft" aria-hidden="true" />
+                <ArrowLeft size={16} className="shrink-0 text-ink-soft" aria-hidden="true" />
               </Link>
             ))}
           </div>
@@ -149,37 +163,37 @@ function OpenCohortCard({ cohort: c }: { cohort: Cohort }) {
         <div className="min-w-0">
           <p className="text-[17px] font-bold leading-snug">{c.title}</p>
           <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-ink-soft">
-            <CalendarDays size={14} aria-hidden="true" /> {c.startDate ? formatDate(c.startDate) : "Date TBA"}
+            <CalendarDays size={14} aria-hidden="true" /> {arDate(c.startDate)}
           </p>
         </div>
         <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-bold text-green-700 dark:bg-green-950 dark:text-green-300">
-          Open
+          مفتوحة
         </span>
       </div>
 
       <div className="mb-4 flex items-end gap-2">
         <strong className="font-[family-name:var(--font-head)] text-[44px] leading-none">{c.registered}</strong>
-        <span className="mb-1 text-sm text-ink-soft">registered</span>
+        <span className="mb-1 text-sm text-ink-soft">مسجّل</span>
       </div>
 
       <div className="mb-2 h-2.5 overflow-hidden rounded-full bg-surface-alt" aria-hidden="true">
         <div className="h-full rounded-full bg-blue-500" style={{ width: `${pct}%` }} />
       </div>
       <p className="mb-4 text-sm text-ink-soft">
-        {booked} of {c.seatsTotal} seats booked · <strong className="text-foreground">{c.seatsLeft} left</strong>
+        {booked} من {c.seatsTotal} مقعد محجوز · <strong className="text-foreground">متبقي {c.seatsLeft}</strong>
       </p>
 
       <div className="mb-5 grid grid-cols-3 gap-2 text-center">
-        <Stat label="Accepted" value={String(c.confirmed)} />
-        <Stat label="Pending" value={String(c.pending)} />
-        <Stat label={isFree ? "Price" : "Collected"} value={isFree ? "Free" : formatMoney(c.revenue, c.currency)} />
+        <Stat label="مقبول" value={String(c.confirmed)} />
+        <Stat label="قيد الانتظار" value={String(c.pending)} />
+        <Stat label={isFree ? "السعر" : "المحصّل"} value={isFree ? "مجانية" : arMoney(c.revenue, c.currency)} />
       </div>
 
       <Link
         href={`/admin/registrations?course=${c.id}`}
         className="mt-auto inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-navy-800 px-5 text-sm font-semibold text-white transition hover:bg-blue-600"
       >
-        <Users size={15} aria-hidden="true" /> View participants
+        <Users size={15} aria-hidden="true" /> عرض المشاركين
       </Link>
     </div>
   );
@@ -197,7 +211,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 function Kpi({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-2xl border border-border-c bg-surface p-5">
-      <span className="text-xs font-bold uppercase tracking-wide text-ink-soft">{label}</span>
+      <span className="text-[13px] font-bold text-ink-soft">{label}</span>
       <strong className="mt-2 block font-[family-name:var(--font-head)] text-[28px]">{value}</strong>
     </div>
   );
