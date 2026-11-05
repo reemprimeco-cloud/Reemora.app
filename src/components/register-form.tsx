@@ -133,7 +133,12 @@ export function RegisterForm({
       // Free course: registered and confirmed, no payment step at all.
       if (res.ok && data.free) {
         const shortRef = typeof data.registrationId === "string" ? data.registrationId.slice(0, 8) : "";
-        const params = new URLSearchParams({ course: course.title, free: "1", ...(shortRef ? { ref: shortRef } : {}) });
+        const params = new URLSearchParams({
+          course: course.title,
+          free: "1",
+          ...(data.alreadyRegistered ? { already: "1" } : {}),
+          ...(shortRef ? { ref: shortRef } : {}),
+        });
         window.location.href = `/register/thank-you?${params.toString()}`;
         return;
       }

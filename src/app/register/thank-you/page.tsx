@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 interface Props {
-  searchParams: Promise<{ course?: string; total?: string; ref?: string; free?: string }>;
+  searchParams: Promise<{ course?: string; total?: string; ref?: string; free?: string; already?: string }>;
 }
 
 export default async function RegisterThankYouPage({ searchParams }: Props) {
@@ -20,6 +20,7 @@ export default async function RegisterThankYouPage({ searchParams }: Props) {
   const dict = getDict(lang);
   const t = dict.thankYouPage;
   const isFree = params.free === "1";
+  const already = params.already === "1";
   const total = isFree ? t.freeTotal : params.total;
 
   return (
@@ -29,8 +30,8 @@ export default async function RegisterThankYouPage({ searchParams }: Props) {
         <div className="mx-auto max-w-[560px] px-6">
           <div className="rounded-[22px] border border-green-200 bg-green-50 p-7 text-center dark:border-green-900 dark:bg-green-950 sm:p-10">
             <CheckCircle2 className="mx-auto mb-4 text-green-600 dark:text-green-400" size={44} aria-hidden="true" />
-            <h1 className="mb-3 text-[26px] font-bold text-green-700 dark:text-green-300 sm:text-3xl">{isFree ? t.freeTitle : t.title}</h1>
-            <p className="mb-6 text-[15px] text-green-700 dark:text-green-300">{isFree ? t.freeBody : t.whatsappBody}</p>
+            <h1 className="mb-3 text-[26px] font-bold text-green-700 dark:text-green-300 sm:text-3xl">{already ? t.alreadyTitle : isFree ? t.freeTitle : t.title}</h1>
+            <p className="mb-6 text-[15px] text-green-700 dark:text-green-300">{already ? t.alreadyBody : isFree ? t.freeBody : t.whatsappBody}</p>
 
             {(params.course || total || params.ref) && (
               <div className="mb-6 space-y-2 rounded-xl border border-green-200 bg-surface p-4 text-start dark:border-green-900">

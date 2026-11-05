@@ -5,6 +5,7 @@ import { isSupabaseConfigured } from "@/lib/data/seed-courses";
 import { computeOrderTotal, computeSplitPayment, type Attendee } from "@/lib/course-utils";
 import { formatMoney } from "@/lib/utils";
 import { sendTelegramNotification } from "@/lib/telegram";
+import { sameName } from "@/lib/registration-match";
 import { sendWebPushToAdmins } from "@/lib/webpush";
 import { metaContextFromRequest, queueMetaEvent, toMetaValue } from "@/lib/meta-capi";
 import type { Json } from "@/lib/supabase/database.types";
@@ -32,6 +33,7 @@ function parseAttendee(raw: unknown): Attendee {
 }
 
 type ServiceClient = Awaited<ReturnType<typeof createServiceRoleClient>>;
+
 
 async function readPaymentMode(supabase: ServiceClient): Promise<"whatsapp_manual" | "upayment"> {
   const { data } = await supabase.from("website_settings").select("key, value").eq("key", "payment_mode");
@@ -133,24 +135,38 @@ export async function POST(request: Request) {
   const { subtotal, discount, total } = computeOrderTotal(course.price, seats);
   const isFree = total <= 0;
 
-  // Duplicate guard: someone who presses Register again (after an error,
-  // a slow network or the back button) gets their existing registration
-  // back instead of a second one.
+  // Duplicate guard: the same person pressing Register again (after an
+  // error, a slow network or the back button) gets their existing
+  // registration back instead of a second one. "Same person" means the
+  // same email AND the same name: relatives or friends often share one
+  // email address, and each of them is a separate registration.
   {
     let dupQuery = supabase
       .from("registrations")
-      .select("id, status, created_at")
+      .select("id, status, created_at, full_name")
       .eq("course_schedule_id", courseScheduleId)
       // Case-insensitive exact match: escape LIKE wildcards in the address.
       .ilike("email", email.replace(/[\\%_]/g, (c) => `\\${c}`))
       .in("status", ["pending", "confirmed"])
       .order("created_at", { ascending: false })
-      .limit(1);
+      .limit(20);
     if (!isFree) {
       dupQuery = dupQuery.gte("created_at", new Date(Date.now() - DUPLICATE_WINDOW_MINUTES * 60_000).toISOString());
     }
-    const { data: existing } = await dupQuery.maybeSingle();
+    const { data: sameEmail } = await dupQuery;
+    const existing = (sameEmail ?? []).find((r) => sameName(r.full_name, fullName)) ?? null;
     if (existing) {
+      // Never silent: the admin hears about every submission, repeats included.
+      await sendTelegramNotification(
+        [
+          "🔁 Repeat registration (already on the list, not added again)",
+          `Course: ${course.title}`,
+          `Name: ${fullName}`,
+          `Phone: ${phone}`,
+          `Email: ${email}`,
+          `Existing ref: ${existing.id.slice(0, 8)}`,
+        ].join("\n")
+      );
       if (isFree) {
         return NextResponse.json({ free: true, registrationId: existing.id, alreadyRegistered: true });
       }
