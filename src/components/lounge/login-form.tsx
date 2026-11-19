@@ -47,11 +47,18 @@ export function LoginForm() {
     setBanner(null);
     setBusy(true);
     const supabase = createClient();
-    await supabase.auth.resetPasswordForEmail(email.trim(), {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/auth/callback?next=/lounge/reset`,
     });
     setBusy(false);
-    // Always the same message — never reveal whether the email exists.
+    // The project-wide email cap is the one failure worth surfacing: it says
+    // nothing about whether the address has an account, and without it the
+    // member waits for an email that was never sent.
+    if (error && (error.status === 429 || /rate|too many|seconds/i.test(error.message))) {
+      setBanner({ type: "error", text: t.resetRateLimited });
+      return;
+    }
+    // Otherwise always the same message — never reveal whether the email exists.
     setBanner({ type: "info", text: t.resetSent });
   }
 
