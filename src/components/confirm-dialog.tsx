@@ -46,7 +46,7 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
             className="w-full max-w-[400px] rounded-[22px] bg-surface p-7 shadow-2xl"
           >
             <h2 id="confirm-dialog-title" className="mb-2 text-lg font-bold">{state.title}</h2>
-            <p id="confirm-dialog-message" className="mb-6 text-sm text-ink-soft">{state.message}</p>
+            <p id="confirm-dialog-message" className="mb-6 max-h-[50vh] overflow-y-auto whitespace-pre-line text-sm text-ink-soft">{state.message}</p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => handle(false)}

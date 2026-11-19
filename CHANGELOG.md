@@ -6,6 +6,7 @@ All notable changes to the Reemora platform are documented in this file. Format 
 
 ### Added
 
+- **Email set-password link (Admin → Lounge Members).** One button emails the Reemora "set your password" link to every approved member who has not really got into their account. Access means a password sign-in, a session used again, or any post, comment or chat; a link opened by a scanner doesn't count. The button previews the list first. Admins, members with access and anyone sent a link in the last 10 minutes are skipped (migration `0037`, `lounge_access_signals()`, service role only).
 - **Sign-in links survive WhatsApp.** "Copy sign-in link" and invite links now open `/auth/confirm`, which signs in only when the member taps **Continue**. Previously the link signed in on open, so WhatsApp's link preview used it up seconds after it was pasted and the member landed on the sign-in page. Older `/auth/callback?token_hash=` links are forwarded to the same page.
 - **Reemora-branded emails.** Lounge invitations ("set your password") and password resets, for members and admins, are sent from Reemora through Resend with a bilingual English/Arabic email and a "Reemora" subject. These links skip Supabase's mailer, so its hourly cap no longer applies. A reset can go to the same address once a minute at most.
 - **Safe rollout.** Branded sending switches on when `RESEND_API_KEY` is set (optional `EMAIL_FROM`, `EMAIL_REPLY_TO`). Until then, everything keeps using Supabase's own emails.

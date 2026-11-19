@@ -783,6 +783,10 @@ export interface Database {
         Args: Record<string, never>;
         Returns: boolean;
       };
+      lounge_access_signals: {
+        Args: Record<string, never>;
+        Returns: { user_id: string; has_access: boolean; recovery_sent_at: string | null }[];
+      };
       decrement_seats: {
         Args: { p_schedule_id: string; p_seats: number };
         Returns: undefined;

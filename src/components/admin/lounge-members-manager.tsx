@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, X, Ban, RotateCcw, Search, History, VolumeX, Volume2, ExternalLink, BadgeCheck, BadgeMinus } from "lucide-react";
+import { Check, X, Ban, RotateCcw, Search, History, VolumeX, Volume2, ExternalLink, BadgeCheck, BadgeMinus, Mail } from "lucide-react";
 import { VerifiedBadge } from "@/components/lounge/verified-badge";
 import { useToast } from "@/components/toast-provider";
 import { useConfirm } from "@/components/confirm-dialog";
@@ -106,6 +106,45 @@ export function LoungeMembersManager({ initialMembers }: { initialMembers: Admin
 
   const btn = "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition disabled:opacity-50";
 
+  const [mailing, setMailing] = React.useState(false);
+
+  /** Emails the Reemora "set your password" link to every approved member
+   *  who hasn't got into their account yet. Previews the list first. */
+  async function emailAccessLinks() {
+    setMailing(true);
+    try {
+      const res = await fetch("/api/admin/lounge/members/access-emails");
+      const data = (await res.json()) as { error?: string; enabled?: boolean; targets?: { user_id: string; name: string; email: string }[] };
+      if (!res.ok) throw new Error(data.error || "Could not load members.");
+      const targets = data.targets ?? [];
+      if (!data.enabled) throw new Error("Branded email isn't set up yet.");
+      if (targets.length === 0) {
+        showToast("success", "Every approved member already has access. Nothing to send.");
+        return;
+      }
+      const list = targets.map((t) => `• ${t.name} (${t.email})`).join("\n");
+      const ok = await confirm(
+        `Send the Reemora "set your password" email to ${targets.length} member${targets.length === 1 ? "" : "s"} who haven't got into their account yet? Members who already have access are skipped.\n\n${list}`,
+        "Email set-password link"
+      );
+      if (!ok) return;
+      const send = await fetch("/api/admin/lounge/members/access-emails", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds: targets.map((t) => t.user_id) }),
+      });
+      const result = (await send.json()) as { error?: string; sent?: number; failed?: { email: string; error: string }[] };
+      if (!send.ok) throw new Error(result.error || "Sending failed.");
+      const failed = result.failed ?? [];
+      if (failed.length) showToast("error", `Sent to ${result.sent}. Failed for ${failed.map((f) => f.email).join(", ")}.`);
+      else showToast("success", `Set-password email sent to ${result.sent} member${result.sent === 1 ? "" : "s"}.`);
+    } catch (err) {
+      showToast("error", err instanceof Error ? err.message : "Request failed");
+    } finally {
+      setMailing(false);
+    }
+  }
+
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center gap-3">
@@ -120,6 +159,16 @@ export function LoungeMembersManager({ initialMembers }: { initialMembers: Admin
           <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-soft" aria-hidden="true" />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, email or phone" aria-label="Search members" className="w-full rounded-full border border-border-c bg-surface py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-400" />
         </label>
+        <button
+          type="button"
+          onClick={emailAccessLinks}
+          disabled={mailing}
+          className="inline-flex min-h-11 items-center gap-2 rounded-full bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600 disabled:opacity-60"
+          title="Email the Reemora set-password link to approved members who haven't got into their account yet"
+        >
+          <Mail size={15} aria-hidden="true" />
+          {mailing ? "Working…" : "Email set-password link"}
+        </button>
       </div>
 
       {visible.length === 0 ? (
