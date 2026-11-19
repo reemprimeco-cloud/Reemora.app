@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { requestBrandedReset } from "@/lib/auth/request-reset";
 import { PasswordInput } from "@/components/password-input";
 
 function safeNext(value: string | null): string {
@@ -49,6 +50,16 @@ function LoginForm() {
     e.preventDefault();
     setNotice(null);
     setLoading(true);
+    const branded = await requestBrandedReset(email);
+    if (branded !== "fallback") {
+      setLoading(false);
+      setNotice(
+        branded === "sent"
+          ? { type: "info", text: "If that email belongs to an admin account, a reset link is on its way. Open it on this device to choose a new password." }
+          : { type: "error", text: "We couldn't send the email right now. Please try again in a few minutes." }
+      );
+      return;
+    }
     const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/auth/callback?next=/admin/reset`,

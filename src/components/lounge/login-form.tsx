@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { requestBrandedReset } from "@/lib/auth/request-reset";
 import { useLanguage } from "@/lib/i18n/context";
 import { Field, Banner, inputClass } from "@/components/lounge/form-field";
 import { PasswordInput } from "@/components/password-input";
@@ -46,6 +47,14 @@ export function LoginForm() {
     e.preventDefault();
     setBanner(null);
     setBusy(true);
+    // Reemora-branded email from our server first; Supabase's own reset
+    // email only while branded email is not configured.
+    const branded = await requestBrandedReset(email);
+    if (branded !== "fallback") {
+      setBusy(false);
+      setBanner(branded === "sent" ? { type: "info", text: t.resetSent } : { type: "error", text: t.resetRateLimited });
+      return;
+    }
     const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/auth/callback?next=/lounge/reset`,

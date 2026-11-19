@@ -1,6 +1,8 @@
 import type { Db } from "@/lib/lounge/api";
 import { logAudit } from "@/lib/lounge/api";
 import { notify } from "@/lib/lounge/notify";
+import { brandedEmailEnabled } from "@/lib/email/send";
+import { confirmLink, sendAuthLinkEmail } from "@/lib/email/auth-links";
 
 export type InviteChannel = "email" | "link";
 
@@ -27,11 +29,12 @@ function redirectTarget(siteUrl: string) {
   return `${siteUrl}/auth/callback?next=${encodeURIComponent("/lounge/reset?welcome=1")}`;
 }
 
-/** Builds a link our own callback can verify server-side (token_hash),
- *  instead of Supabase's default action link that returns the session in
- *  a URL fragment. */
+/** Where every invitation lands once the member taps "Continue" on
+ *  /auth/confirm: the set-your-password screen. */
+const WELCOME_NEXT = "/lounge/reset?welcome=1";
+
 function tokenHashLink(siteUrl: string, hashedToken: string, type: "invite" | "magiclink") {
-  return `${siteUrl}/auth/callback?token_hash=${encodeURIComponent(hashedToken)}&type=${type}&next=${encodeURIComponent("/lounge/reset?welcome=1")}`;
+  return confirmLink(siteUrl, hashedToken, type, WELCOME_NEXT);
 }
 
 /** Invite one person. Service-role only (called from the admin API).
@@ -43,8 +46,9 @@ function tokenHashLink(siteUrl: string, hashedToken: string, type: "invite" | "m
  *    one): approves it and sends a magic link instead.
  *  - Suspended members are left alone; the admin must reactivate first.
  *
- *  channel "email" sends through Supabase Auth's mailer (subject to its
- *  rate limits); "link" returns a URL to send by WhatsApp or by hand. */
+ *  channel "email" sends a Reemora-branded email when RESEND_API_KEY is set
+ *  (Supabase's mailer, with its hourly cap, otherwise); "link" returns a
+ *  URL to send by WhatsApp or by hand. */
 export async function inviteMember(service: Db, input: InviteInput, opts: { channel: InviteChannel; actorId: string; siteUrl: string }): Promise<InviteResult> {
   const email = input.email.trim().toLowerCase();
   const redirectTo = redirectTarget(opts.siteUrl);
@@ -56,7 +60,11 @@ export async function inviteMember(service: Db, input: InviteInput, opts: { chan
     let status: InviteResult["status"] = "invited";
 
     if (!userId) {
-      if (opts.channel === "email") {
+      if (opts.channel === "email" && brandedEmailEnabled()) {
+        const sent = await sendAuthLinkEmail(service, { email, type: "invite", kind: "welcome", next: WELCOME_NEXT, siteUrl: opts.siteUrl, name: input.fullName, data: { full_name: input.fullName } });
+        if (!sent.ok) return { email, ok: false, status: "error", message: sent.error };
+        userId = sent.userId;
+      } else if (opts.channel === "email") {
         const { data, error } = await service.auth.admin.inviteUserByEmail(email, { data: { full_name: input.fullName }, redirectTo });
         if (error) return { email, ok: false, status: "error", message: error.message };
         userId = data.user.id;
@@ -76,7 +84,12 @@ export async function inviteMember(service: Db, input: InviteInput, opts: { chan
       } else if (member) {
         status = "reactivated";
       }
-      if (opts.channel === "email") {
+      if (opts.channel === "email" && brandedEmailEnabled()) {
+        if (status !== "already_member") {
+          const sent = await sendAuthLinkEmail(service, { email, type: "magiclink", kind: "welcome", next: WELCOME_NEXT, siteUrl: opts.siteUrl, name: existingUser?.full_name || input.fullName });
+          if (!sent.ok) return { email, ok: false, status: "error", message: sent.error };
+        }
+      } else if (opts.channel === "email") {
         if (status !== "already_member") {
           // signInWithOtp sends Supabase's magic-link email; it must not create accounts.
           const { error } = await service.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo, shouldCreateUser: false } });

@@ -106,6 +106,9 @@ export const loungeEn = {
     welcomeSubtitle: "You've been invited by the Reemora team. Choose a password to finish setting up your account — your membership is already approved.",
     finishing: "Signing you in...",
     finishFailed: "This link has expired or was already used. Ask for a new invitation, or sign in if you already have a password.",
+    confirmTitle: "Sign in to the Reemora Lounge",
+    confirmBody: "Tap the button below to finish signing in. This link works once.",
+    confirmButton: "Continue",
   },
   profile: {
     editTitle: "Edit your profile",
@@ -518,6 +521,9 @@ export const loungeAr: LoungeDict = {
     welcomeSubtitle: "تمت دعوتك من فريق ريمورا. اختر كلمة مرور لإكمال إعداد حسابك — عضويتك معتمدة بالفعل.",
     finishing: "جارٍ تسجيل دخولك...",
     finishFailed: "انتهت صلاحية هذا الرابط أو تم استخدامه من قبل. اطلب دعوة جديدة، أو سجّل الدخول إن كانت لديك كلمة مرور.",
+    confirmTitle: "الدخول إلى مجتمع ريمورا",
+    confirmBody: "اضغط على الزر أدناه لإكمال تسجيل الدخول. هذا الرابط يعمل مرة واحدة فقط.",
+    confirmButton: "متابعة",
   },
   profile: {
     editTitle: "تعديل ملفك الشخصي",

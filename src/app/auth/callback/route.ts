@@ -5,7 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 /** Where Supabase Auth sends the browser after an email link is clicked
  *  (sign-up confirmation, password reset). Handles both link styles:
  *    ?code=...                  PKCE flow — exchange for a session
- *    ?token_hash=...&type=...   OTP flow  — verify directly
+ *    ?token_hash=...&type=...   OTP flow  — forwarded to /auth/confirm,
+ *                               which verifies on the person's tap
  *  Whatever happens, the email itself is already confirmed on Supabase's
  *  side by the time we're here, so on failure we still land the user on
  *  the sign-in page with a "confirmed" banner instead of an error wall. */
@@ -18,15 +19,23 @@ export async function GET(request: NextRequest) {
   // Only ever redirect inside the site.
   const next = nextRaw.startsWith("/") && !nextRaw.startsWith("//") ? nextRaw : "/lounge";
 
+  // One-time token links are never spent on a plain GET: link previews and
+  // mail scanners fetch them before the person taps. Hand them to
+  // /auth/confirm, which verifies only on an explicit tap.
+  if (tokenHash && type && !code) {
+    const confirm = new URL("/auth/confirm", origin);
+    confirm.searchParams.set("token_hash", tokenHash);
+    confirm.searchParams.set("type", type);
+    confirm.searchParams.set("next", next);
+    return NextResponse.redirect(confirm);
+  }
+
   const supabase = await createClient();
   let ok = false;
 
   try {
     if (code) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
-      ok = !error;
-    } else if (tokenHash && type) {
-      const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
       ok = !error;
     }
   } catch (err) {
