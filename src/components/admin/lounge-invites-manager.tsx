@@ -83,7 +83,7 @@ export function LoungeInvitesManager({ candidates: initial }: { candidates: Cand
 
   async function send(people: { fullName: string; email: string; phone: string | null }[], channel: "email" | "link") {
     if (!people.length) return;
-    if (channel === "email" && !(await confirm(`Send ${people.length} invitation email(s) through Supabase? Note: without custom SMTP, Supabase only sends a few emails per hour — use WhatsApp links for bigger batches.`, "Send invitations"))) return;
+    if (channel === "email" && !(await confirm(`Send ${people.length} invitation email${people.length === 1 ? "" : "s"} from Reemora? Each person gets the "Reemora Lounge — set your password" email (English and Arabic) with a one-time link.`, "Send invitations"))) return;
     setBusy(true);
     try {
       const res = await fetch("/api/admin/lounge/invites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ channel, invites: people }) });

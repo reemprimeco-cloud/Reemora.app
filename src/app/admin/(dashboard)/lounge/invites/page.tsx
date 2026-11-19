@@ -99,7 +99,7 @@ export default async function AdminLoungeInvitesPage() {
     <div>
       <h1 className="mb-2 text-2xl font-bold">Lounge Invitations</h1>
       <p className="mb-7 max-w-[760px] text-sm text-ink-soft">
-        Invite past course participants (or anyone, by email) straight into the Lounge. Invited people are pre-approved: they receive a link, choose a password and land in the community. Email goes through Supabase&apos;s mailer; WhatsApp links are generated here for you to send yourself.
+        Invite past course participants (or anyone, by email) straight into the Lounge. Invited people are pre-approved: they receive a link, choose a password and land in the community. Emails come from Reemora (hello@reemora.app) in English and Arabic; WhatsApp links are generated here for you to send yourself. Either way the link only signs in when the person taps Continue.
       </p>
       <LoungeInvitesManager candidates={candidates} />
     </div>

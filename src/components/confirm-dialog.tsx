@@ -3,8 +3,21 @@
 import * as React from "react";
 import { useCloseOnEscape } from "@/lib/use-close-on-escape";
 
-type ConfirmState = { title: string; message: string; resolve: (value: boolean) => void };
-type ConfirmFn = (message: string, title?: string) => Promise<boolean>;
+type ConfirmOptions = { confirmLabel?: string; destructive?: boolean };
+type ConfirmState = { title: string; message: string; confirmLabel: string; destructive: boolean; resolve: (value: boolean) => void };
+type ConfirmFn = (message: string, title?: string, options?: ConfirmOptions) => Promise<boolean>;
+
+const DEFAULT_TITLE = "Are you sure?";
+const DESTRUCTIVE = /delete|remove|suspend|revoke|reject|hide|withdraw|حذف|إزالة|سحب|إيقاف/i;
+
+/** The confirm button says what it does: an explicit label, else the
+ *  dialog's own title ("Send invitations", "Suspend member"), else
+ *  "Delete" for the untitled delete prompts. Red only when destructive. */
+function resolveButton(title: string | undefined, options?: ConfirmOptions) {
+  const confirmLabel = options?.confirmLabel ?? (title && title !== DEFAULT_TITLE ? title : "Delete");
+  const destructive = options?.destructive ?? DESTRUCTIVE.test(confirmLabel);
+  return { confirmLabel, destructive };
+}
 
 const ConfirmContext = React.createContext<ConfirmFn | null>(null);
 
@@ -17,9 +30,9 @@ export function useConfirm() {
 export function ConfirmProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = React.useState<ConfirmState | null>(null);
 
-  const confirmFn = React.useCallback<ConfirmFn>((message, title = "Are you sure?") => {
+  const confirmFn = React.useCallback<ConfirmFn>((message, title, options) => {
     return new Promise<boolean>((resolve) => {
-      setState({ message, title, resolve });
+      setState({ message, title: title ?? DEFAULT_TITLE, ...resolveButton(title, options), resolve });
     });
   }, []);
 
@@ -57,9 +70,9 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
               <button
                 onClick={() => handle(true)}
                 autoFocus
-                className="rounded-full border-2 border-transparent bg-red-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+                className={`rounded-full border-2 border-transparent px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 ${state.destructive ? "bg-red-500" : "bg-blue-500"}`}
               >
-                Delete
+                {state.confirmLabel}
               </button>
             </div>
           </div>
