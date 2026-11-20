@@ -25,6 +25,7 @@ export async function SiteFooter({ settings }: { settings: WebsiteSettings }) {
               <li><Link href="/" className="-my-2.5 inline-block py-2.5 hover:text-blue-400">{dict.footer.home}</Link></li>
               <li><Link href="/courses" className="-my-2.5 inline-block py-2.5 hover:text-blue-400">{dict.footer.courses}</Link></li>
               <li><Link href="/#about" className="-my-2.5 inline-block py-2.5 hover:text-blue-400">{dict.footer.aboutCv}</Link></li>
+              <li><Link href="/library" className="-my-2.5 inline-block py-2.5 hover:text-blue-400">{dict.footer.library}</Link></li>
             </ul>
           </div>
           <div>

@@ -29,7 +29,12 @@ const nextConfig: NextConfig = {
   // [[headers]] block, these apply regardless of host, so they stay
   // correct if the deployment target ever changes again.
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Claude Library PDFs shipped with the site download instead of
+      // replacing the page (uploaded ones get the same via ?download=).
+      { source: "/library/:file([^/]+\\.pdf)", headers: [{ key: "Content-Disposition", value: "attachment" }] },
+    ];
   },
 };
 

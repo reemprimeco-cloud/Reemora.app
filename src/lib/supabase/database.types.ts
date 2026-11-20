@@ -730,6 +730,50 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["portfolio"]["Insert"]>;
         Relationships: [];
       };
+      library_items: {
+        Row: {
+          id: string;
+          slug: string;
+          title: string;
+          title_ar: string | null;
+          description: string | null;
+          description_ar: string | null;
+          file_url: string;
+          storage_path: string | null;
+          file_name: string;
+          file_size: number | null;
+          page_count: number | null;
+          cover_url: string | null;
+          cover_storage_path: string | null;
+          is_published: boolean;
+          sort_order: number;
+          download_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          slug: string;
+          title: string;
+          title_ar?: string | null;
+          description?: string | null;
+          description_ar?: string | null;
+          file_url: string;
+          storage_path?: string | null;
+          file_name: string;
+          file_size?: number | null;
+          page_count?: number | null;
+          cover_url?: string | null;
+          cover_storage_path?: string | null;
+          is_published?: boolean;
+          sort_order?: number;
+          download_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["library_items"]["Insert"]>;
+        Relationships: [];
+      };
       contact_messages: {
         Row: {
           id: string;
@@ -782,6 +826,10 @@ export interface Database {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      library_record_download: {
+        Args: { p_id: string };
+        Returns: undefined;
       };
       lounge_access_signals: {
         Args: Record<string, never>;

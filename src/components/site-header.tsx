@@ -23,6 +23,7 @@ export function SiteHeader() {
       { href: "/#about", label: dict.nav.about },
       { href: "/#portfolio", label: dict.nav.projects },
       { href: "/#certificates", label: dict.nav.certificates },
+      { href: "/library", label: dict.nav.library },
       { href: "/lounge", label: dict.nav.lounge },
     ],
     [dict]
@@ -30,7 +31,7 @@ export function SiteHeader() {
 
   // Section links ("/#about") only match exactly; app sections like the
   // Lounge stay highlighted on their sub-pages too.
-  const isActive = (href: string) => (href === "/lounge" ? pathname.startsWith("/lounge") : pathname === href);
+  const isActive = (href: string) => (href === "/lounge" || href === "/library" ? pathname.startsWith(href) : pathname === href);
 
   React.useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -53,14 +54,14 @@ export function SiteHeader() {
           <Image src="/images/logo.png" alt="Reemora logo" width={170} height={44} priority className="h-9 w-auto sm:h-11 dark:brightness-0 dark:invert" />
         </Link>
 
-        <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Primary" className="hidden items-center gap-0.5 lg:flex">
           {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               aria-current={isActive(link.href) ? "page" : undefined}
               className={cn(
-                "rounded-full px-4 py-2.5 text-[14.5px] font-semibold transition-colors",
+                "whitespace-nowrap rounded-full px-3 py-2.5 text-[14px] font-semibold transition-colors xl:px-3.5",
                 isActive(link.href)
                   ? "bg-blue-100 text-blue-600"
                   : "text-foreground hover:bg-blue-100 hover:text-blue-600"
@@ -76,7 +77,7 @@ export function SiteHeader() {
           <ThemeToggle />
           <Link
             href="/courses"
-            className="hidden rounded-full border-2 border-transparent bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600 sm:inline-flex"
+            className="hidden whitespace-nowrap rounded-full border-2 border-transparent bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-600 sm:inline-flex lg:hidden xl:inline-flex"
           >
             {dict.nav.browseCourses}
           </Link>
@@ -84,7 +85,7 @@ export function SiteHeader() {
             aria-label={dict.nav.toggleMenu}
             aria-expanded={open}
             aria-controls="mobile-nav"
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-border-c active:scale-95 transition-transform md:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-border-c active:scale-95 transition-transform lg:hidden"
             onClick={() => setOpen((v) => !v)}
           >
             {open ? <X size={20} /> : <Menu size={20} />}
@@ -93,7 +94,7 @@ export function SiteHeader() {
       </div>
 
       {open && (
-        <nav id="mobile-nav" aria-label="Mobile" className="border-t border-border-c bg-surface px-6 pb-6 pt-3 md:hidden">
+        <nav id="mobile-nav" aria-label="Mobile" className="border-t border-border-c bg-surface px-6 pb-6 pt-3 lg:hidden">
           {links.map((link) => (
             <Link
               key={link.href}

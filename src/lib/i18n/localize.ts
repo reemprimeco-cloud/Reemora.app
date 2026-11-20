@@ -32,3 +32,4 @@ export const COURSE_FIELDS = ["title", "short_description", "description", "curr
 export const CATEGORY_FIELDS = ["name"] as const;
 export const TESTIMONIAL_FIELDS = ["student_name", "role_company", "quote"] as const;
 export const PORTFOLIO_FIELDS = ["title", "description", "category"] as const;
+export const LIBRARY_FIELDS = ["title", "description"] as const;
